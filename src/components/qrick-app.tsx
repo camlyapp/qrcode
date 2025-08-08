@@ -4,7 +4,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -70,6 +70,7 @@ export function QrickApp() {
   const [barcodeError, setBarcodeError] = useState<string | null>(null);
   const [barcodeHeight, setBarcodeHeight] = useState<number>(100);
   const [barcodeTextSize, setBarcodeTextSize] = useState<number>(20);
+  const [textColor, setTextColor] = useState<string>("#000000");
 
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -232,23 +233,38 @@ export function QrickApp() {
 
     try {
         let isValid = true;
-        JsBarcode(canvas, content, {
+        const tempCanvas = document.createElement('canvas');
+
+        JsBarcode(tempCanvas, content, {
             format: barcodeFormat,
             lineColor: fgColor,
-            background: bgColor,
+            background: 'rgba(0,0,0,0)',
             width: 4,
-            height: 160 * (barcodeHeight / 100),
-            fontSize: barcodeTextSize * 2,
-            displayValue: true,
+            height: 160,
+            displayValue: false,
             valid: (valid: boolean) => {
                 if (!valid) {
                      isValid = false;
                 }
             }
         });
+        
         if (!isValid) {
             setBarcodeError("Invalid content for the selected barcode format.");
+            return;
         }
+
+        const barcodeWidth = tempCanvas.width;
+        const barcodeHeightCalculated = tempCanvas.height * (barcodeHeight / 100);
+
+        if (ctx) {
+            ctx.drawImage(tempCanvas, (canvas.width - barcodeWidth) / 2, 0, barcodeWidth, barcodeHeightCalculated);
+            ctx.font = `${barcodeTextSize * 2}px monospace`;
+            ctx.fillStyle = textColor;
+            ctx.textAlign = 'center';
+            ctx.fillText(content, canvas.width / 2, barcodeHeightCalculated + (barcodeTextSize * 2));
+        }
+
     } catch (err: any) {
         setBarcodeError(err.message || "Error generating barcode.");
         const ctx = canvas?.getContext("2d");
@@ -256,7 +272,7 @@ export function QrickApp() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
     }
-  }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize]);
+  }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize, textColor]);
 
 
   useEffect(() => {
@@ -278,7 +294,7 @@ export function QrickApp() {
         }
         setBarcodeError(null);
       }
-  }, [drawQR, drawBarcode, content, size, generatorType, fgColor, bgColor]);
+  }, [drawQR, drawBarcode, content, size, generatorType, fgColor, bgColor, textColor]);
 
   const handleDownload = useCallback(() => {
     const canvas = canvasRef.current;
@@ -674,6 +690,15 @@ export function QrickApp() {
                           </div>
                       </div>
                   </div>
+                   <div className="grid gap-2">
+                        <Label htmlFor="text-color" className="flex items-center">
+                            <PaintBucket className="mr-2 h-4 w-4"/>
+                            Text Color
+                        </Label>
+                        <div className="relative">
+                            <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="p-1 h-9" />
+                        </div>
+                    </div>
                   <Separator />
                   <div className="grid gap-2">
                       <Label htmlFor="barcode-height">Height ({barcodeHeight}%)</Label>
@@ -699,7 +724,7 @@ export function QrickApp() {
                     ref={canvasRef} 
                     width={generatorType === 'qr' ? size : '1280'} 
                     height={generatorType === 'qr' ? size : '320'} 
-                    style={generatorType === 'barcode' ? { width: 320, height: 80 } : {}}
+                    style={generatorType === 'barcode' ? { width: 320, height: 80 + (barcodeTextSize * 2.5 / 2) } : {}}
                 />
               ) : (
                 <div style={{width: generatorType === 'qr' ? size : 320, height: generatorType === 'qr' ? size : 80}} className="bg-gray-100 flex items-center justify-center text-center text-red-500 rounded-lg p-4">
