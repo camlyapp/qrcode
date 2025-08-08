@@ -2,62 +2,87 @@
 
 import { useState, useEffect } from "react";
 import { Moon, Sun, QrCode } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { CardDescription, CardTitle } from "@/components/ui/card";
 
-type Theme = 'light' | 'dark';
+type Theme = "light" | "dark";
 
 export function Header() {
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setTheme] = useState<Theme>("light");
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('qrick-theme') as Theme | null;
-    setTheme(savedTheme || 'light');
+    const savedTheme = localStorage.getItem("qrick-theme") as Theme | null;
+    setTheme(savedTheme || "light");
+
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, []);
 
   useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('qrick-theme', 'dark');
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("qrick-theme", "dark");
     } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('qrick-theme', 'light');
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("qrick-theme", "light");
     }
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
   };
 
   return (
-    <header className="flex items-center justify-between p-4 border-b">
+    <header
+      className={cn(
+        "sticky top-0 z-50 w-full transition-all duration-300",
+        isScrolled
+          ? "border-b border-border/40 bg-background/95 backdrop-blur-sm"
+          : "bg-transparent"
+      )}
+    >
+      <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-3">
-          <div className="bg-primary text-primary-foreground rounded-full p-2">
+          <div className="bg-primary text-primary-foreground rounded-lg p-2.5">
             <QrCode className="h-5 w-5" />
           </div>
           <div>
-            <CardTitle className="text-lg font-headline">QRick</CardTitle>
+            <CardTitle className="text-xl font-headline font-bold tracking-tight">QRick</CardTitle>
             <CardDescription className="text-xs">
-              Generate and customize your barcodes and QR codes in real-time.
+              Generate custom codes in real-time.
             </CardDescription>
           </div>
         </div>
         <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={toggleTheme}>
-                        <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                        <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                        <span className="sr-only">Toggle theme</span>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>Toggle Theme</p>
-                </TooltipContent>
-            </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={toggleTheme}>
+                <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Toggle Theme</p>
+            </TooltipContent>
+          </Tooltip>
         </TooltipProvider>
+      </div>
     </header>
   );
 }

@@ -12,7 +12,7 @@ export function HeroSection() {
     };
 
     return (
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-40 bg-gradient-to-br from-background to-muted/40">
+        <section className="w-full pt-24 md:pt-32 lg:pt-40 xl:pt-48">
             <div className="container mx-auto text-center px-4 md:px-6">
                 <div className="space-y-4">
                     <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none">
