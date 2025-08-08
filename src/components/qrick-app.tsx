@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -326,13 +327,15 @@ export function QrickApp() {
                 try {
                     const tempCanvas = document.createElement('canvas');
                     let isValid = true;
+                    // Generate barcode at high resolution for quality
+                    const barcodeScale = 8;
                     JsBarcode(tempCanvas, content, {
                         format: barcodeFormat,
                         lineColor: fgColor,
                         background: 'rgba(0,0,0,0)',
-                        width: 2,
-                        height: 40,
-                        displayValue: false, // Text is handled separately for positioning
+                        width: 2 * barcodeScale,
+                        height: 40 * barcodeScale,
+                        displayValue: false,
                         valid: (valid: boolean) => { isValid = valid; }
                     });
                     
@@ -448,7 +451,7 @@ export function QrickApp() {
     // Common barcode properties
     const tempCanvas = document.createElement('canvas');
     try {
-      JsBarcode(tempCanvas, content, { format: barcodeFormat, displayValue: false });
+      JsBarcode(tempCanvas, content, { format: barcodeFormat, displayValue: false, width: 2 * 4, height: 40 * 4 });
     } catch(e) { console.error("barcode error"); }
     const barcodeWidth = tempCanvas.width || 200 * scale;
     const barcodeHeightVal = tempCanvas.height || 40 * scale;
@@ -1282,5 +1285,7 @@ export function QrickApp() {
   );
 
 }
+
+    
 
     
