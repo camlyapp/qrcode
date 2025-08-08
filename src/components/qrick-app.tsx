@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -122,62 +123,54 @@ export function QrickApp() {
   } : undefined;
 
   useEffect(() => {
-    if (qrStyle === 'dots') {
-      const canvas = qrRef.current?.querySelector('canvas');
-      if (canvas) {
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          // This is a hack to customize the rendering of the QR code modules
-          // We are monkey-patching the drawImage function of the canvas context
-          const originalDrawImage = ctx.drawImage;
-          (ctx as any).drawImage = (...args: any[]) => {
-            if (args.length === 9) {
-                // This is a module draw operation
-                const [image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight] = args;
-                
-                // Create a temporary canvas to analyze the module
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = sWidth;
-                tempCanvas.height = sHeight;
-                const tempCtx = tempCanvas.getContext('2d');
+    const canvas = qrRef.current?.querySelector('canvas');
+    if (canvas && qrStyle === 'dots') {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        const originalDrawImage = ctx.drawImage;
+        (ctx as any).drawImage = (...args: any[]) => {
+          if (args.length === 9) {
+              const [image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight] = args;
+              
+              const tempCanvas = document.createElement('canvas');
+              tempCanvas.width = sWidth;
+              tempCanvas.height = sHeight;
+              const tempCtx = tempCanvas.getContext('2d');
 
-                if (tempCtx) {
-                    tempCtx.drawImage(image, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
-                    const imageData = tempCtx.getImageData(0, 0, sWidth, sHeight);
-                    const isTransparent = imageData.data[3] === 0;
+              if (tempCtx) {
+                  tempCtx.drawImage(image, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
+                  const imageData = tempCtx.getImageData(0, 0, sWidth, sHeight);
+                  const isTransparent = imageData.data[3] === 0;
 
-                    if (!isTransparent) {
-                        ctx.save();
-                        // Use a circular clipping path to draw dots
-                        ctx.beginPath();
-                        ctx.arc(dx + dWidth / 2, dy + dHeight / 2, dWidth / 2.2, 0, 2 * Math.PI);
-                        ctx.clip();
-                        originalDrawImage.apply(ctx, args);
-                        ctx.restore();
-                    }
-                }
-            } else {
-                // This is likely the embedded image draw operation, pass it through
-                originalDrawImage.apply(ctx, args);
-            }
-          };
-        }
+                  if (!isTransparent) {
+                      ctx.save();
+                      ctx.beginPath();
+                      ctx.arc(dx + dWidth / 2, dy + dHeight / 2, dWidth / 2.2, 0, 2 * Math.PI);
+                      ctx.clip();
+                      originalDrawImage.apply(ctx, args);
+                      ctx.restore();
+                  }
+              }
+          } else {
+              originalDrawImage.apply(ctx, args);
+          }
+        };
       }
     }
   }, [content, size, level, bgColor, fgColor, imageSettings, qrStyle]);
 
   return (
-    <Card className="w-full max-w-4xl shadow-2xl">
+    <Card className="w-full max-w-3xl shadow-2xl">
       <CardHeader className="text-center p-4">
         <div className="mx-auto bg-primary text-primary-foreground rounded-full p-2 w-fit mb-2">
             <QrCode className="h-6 w-6" />
         </div>
-        <CardTitle className="text-2xl font-headline">QRick</CardTitle>
+        <CardTitle className="text-xl font-headline">QRick</CardTitle>
         <CardDescription className="text-xs">
           Generate and customize your QR code in real-time.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4 md:grid-cols-2 p-4">
+      <CardContent className="grid gap-2 md:grid-cols-2 p-4">
         <div className="grid gap-4">
             <Tabs defaultValue="content" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
