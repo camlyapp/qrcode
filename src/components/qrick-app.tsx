@@ -44,7 +44,7 @@ import { SVG } from "react-svg";
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
 type QRStyle = "squares" | "dots" | "rounded" | "fluid" | "wavy" | "diamond";
 type GradientType = "none" | "linear" | "radial";
-type GeneratorType = "qr" | "barcode" | "card";
+type GeneratorType = "qr" | "barcode";
 type BarcodeFormat = "CODE128" | "CODE128A" | "CODE128B" | "CODE128C" | "EAN13" | "EAN8" | "EAN5" | "EAN2" | "UPC" | "UPCE" | "CODE39" | "ITF14" | "ITF" | "MSI" | "MSI10" | "MSI11" | "MSI1010" | "MSI1110" | "pharmacode" | "codabar";
 
 const colorPresets = [
@@ -80,6 +80,7 @@ export function QrickApp() {
   const [textColor, setTextColor] = useState<string>("#000000");
 
   // Card states
+  const [generateCard, setGenerateCard] = useState<boolean>(false);
   const [cardTitle, setCardTitle] = useState<string>("John Doe");
   const [cardSubtitle, setCardSubtitle] = useState<string>("Software Engineer");
   const [cardBgColor, setCardBgColor] = useState<string>("#f0f0f0");
@@ -235,133 +236,120 @@ export function QrickApp() {
     });
   }, [content, size, level, fgColor, bgColor, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor]);
 
-  const drawBarcode = useCallback(() => {
+  const drawBarcodeOrCard = useCallback(() => {
     setBarcodeError(null);
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const displayWidth = 320;
-    const displayHeight = 80;
-    const scale = 4;
-    
-    canvas.width = displayWidth * scale;
-    canvas.height = (displayHeight + (barcodeTextSize * 2.5 / 2)) * scale;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    try {
-        let isValid = true;
-        const tempCanvas = document.createElement('canvas');
-
-        JsBarcode(tempCanvas, content, {
-            format: barcodeFormat,
-            lineColor: fgColor,
-            background: 'rgba(0,0,0,0)',
-            width: 2 * scale,
-            height: 80 * scale,
-            displayValue: false,
-            valid: (valid: boolean) => {
-                if (!valid) {
-                     isValid = false;
-                }
-            }
-        });
+    if (generateCard) {
+        // Card Drawing Logic
+        const cardWidth = 400;
+        const cardHeight = 225;
+        const scale = 4;
         
-        if (!isValid) {
-            setBarcodeError("Invalid content for the selected barcode format.");
-            return;
+        canvas.width = cardWidth * scale;
+        canvas.height = cardHeight * scale;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = cardBgColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = cardTextColor;
+        ctx.font = `${24 * scale}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(cardTitle, canvas.width / 2, 50 * scale);
+        
+        ctx.font = `${16 * scale}px sans-serif`;
+        ctx.fillText(cardSubtitle, canvas.width / 2, 80 * scale);
+        
+        try {
+            const tempCanvas = document.createElement('canvas');
+            let isValid = true;
+            JsBarcode(tempCanvas, content, {
+                format: barcodeFormat,
+                lineColor: fgColor,
+                background: 'rgba(0,0,0,0)',
+                width: 1.5 * scale,
+                height: 40 * scale,
+                displayValue: true,
+                fontOptions: "bold",
+                textAlign: "center",
+                textPosition: "bottom",
+                textMargin: 2 * scale,
+                fontSize: 12 * scale,
+                valid: (valid: boolean) => { isValid = valid; }
+            });
+            
+            if (!isValid) {
+                setBarcodeError("Invalid barcode content for card.");
+                return;
+            }
+
+            const barcodeWidth = tempCanvas.width;
+            const barcodeHeightCalculated = tempCanvas.height;
+            ctx.drawImage(tempCanvas, (canvas.width - barcodeWidth) / 2, 120 * scale, barcodeWidth, barcodeHeightCalculated);
+
+        } catch (err: any) {
+            setBarcodeError(err.message || "Error generating barcode for card.");
         }
 
-        const barcodeWidth = tempCanvas.width;
-        const barcodeHeightCalculated = tempCanvas.height * (barcodeHeight / 100);
+    } else {
+        // Barcode Drawing Logic
+        const displayWidth = 320;
+        const displayHeight = 80;
+        const scale = 4;
+        
+        canvas.width = displayWidth * scale;
+        canvas.height = (displayHeight + (barcodeTextSize * 2.5 / 2)) * scale;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        if (ctx) {
-            ctx.drawImage(tempCanvas, (canvas.width - barcodeWidth) / 2, 0, barcodeWidth, barcodeHeightCalculated);
-            ctx.font = `${barcodeTextSize * scale}px monospace`;
-            ctx.fillStyle = textColor;
-            ctx.textAlign = 'center';
-            ctx.fillText(content, canvas.width / 2, barcodeHeightCalculated + (barcodeTextSize * scale));
-        }
+        try {
+            const tempCanvas = document.createElement('canvas');
+             let isValid = true;
+            JsBarcode(tempCanvas, content, {
+                format: barcodeFormat,
+                lineColor: fgColor,
+                background: 'rgba(0,0,0,0)',
+                width: 2 * scale,
+                height: 80 * scale,
+                displayValue: false,
+                valid: (valid: boolean) => { isValid = valid; }
+            });
+            
+            if (!isValid) {
+                setBarcodeError("Invalid content for the selected barcode format.");
+                return;
+            }
 
-    } catch (err: any) {
-        setBarcodeError(err.message || "Error generating barcode.");
-        const ctx = canvas?.getContext("2d");
-        if (ctx) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const barcodeWidth = tempCanvas.width;
+            const barcodeHeightCalculated = tempCanvas.height * (barcodeHeight / 100);
+
+            if (ctx) {
+                ctx.drawImage(tempCanvas, (canvas.width - barcodeWidth) / 2, 0, barcodeWidth, barcodeHeightCalculated);
+                ctx.font = `${barcodeTextSize * scale}px monospace`;
+                ctx.fillStyle = textColor;
+                ctx.textAlign = 'center';
+                ctx.fillText(content, canvas.width / 2, barcodeHeightCalculated + (barcodeTextSize * scale));
+            }
+
+        } catch (err: any) {
+            setBarcodeError(err.message || "Error generating barcode.");
+            const ctx = canvas?.getContext("2d");
+            if (ctx) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
         }
     }
-  }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize, textColor]);
-
-  const drawCard = useCallback(() => {
-    setBarcodeError(null);
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const cardWidth = 400;
-    const cardHeight = 225;
-    const scale = 4;
-    
-    canvas.width = cardWidth * scale;
-    canvas.height = cardHeight * scale;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = cardBgColor;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.fillStyle = cardTextColor;
-    ctx.font = `${24 * scale}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText(cardTitle, canvas.width / 2, 50 * scale);
-    
-    ctx.font = `${16 * scale}px sans-serif`;
-    ctx.fillText(cardSubtitle, canvas.width / 2, 80 * scale);
-    
-    try {
-        let isValid = true;
-        const tempCanvas = document.createElement('canvas');
-
-        JsBarcode(tempCanvas, content, {
-            format: barcodeFormat,
-            lineColor: fgColor,
-            background: 'rgba(0,0,0,0)',
-            width: 1.5 * scale,
-            height: 40 * scale,
-            displayValue: true,
-            fontOptions: "bold",
-            textAlign: "center",
-            textPosition: "bottom",
-            textMargin: 2 * scale,
-            fontSize: 12 * scale,
-            lineColor: fgColor,
-            valid: (valid: boolean) => {
-                if (!valid) {
-                     isValid = false;
-                }
-            }
-        });
-        
-        if (!isValid) {
-            setBarcodeError("Invalid barcode content for card.");
-            return;
-        }
-
-        const barcodeWidth = tempCanvas.width;
-        const barcodeHeight = tempCanvas.height;
-        ctx.drawImage(tempCanvas, (canvas.width - barcodeWidth) / 2, 120 * scale, barcodeWidth, barcodeHeight);
-
-    } catch (err: any) {
-        setBarcodeError(err.message || "Error generating barcode for card.");
-    }
-
-  }, [cardTitle, cardSubtitle, cardBgColor, cardTextColor, content, barcodeFormat, fgColor, bgColor]);
+  }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize, textColor, generateCard, cardTitle, cardSubtitle, cardBgColor, cardTextColor]);
 
 
   useEffect(() => {
@@ -369,9 +357,7 @@ export function QrickApp() {
         if (generatorType === 'qr') {
             drawQR();
         } else if (generatorType === 'barcode') {
-            drawBarcode();
-        } else if (generatorType === 'card') {
-            drawCard();
+            drawBarcodeOrCard();
         }
       } else {
         const canvas = canvasRef.current;
@@ -379,13 +365,13 @@ export function QrickApp() {
         if (ctx) {
             if (generatorType === 'qr') {
                 ctx.clearRect(0,0,size,size);
-            } else if (generatorType === 'barcode' || generatorType === 'card') {
+            } else if (generatorType === 'barcode') {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
         }
         setBarcodeError(null);
       }
-  }, [drawQR, drawBarcode, drawCard, content, size, generatorType, fgColor, bgColor, textColor, cardTitle, cardSubtitle, cardBgColor, cardTextColor]);
+  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, cardTitle, cardSubtitle, cardBgColor, cardTextColor]);
 
   const handleDownload = useCallback(async (format: 'png' | 'jpeg' | 'svg') => {
     if (!content || barcodeError) {
@@ -398,44 +384,44 @@ export function QrickApp() {
     }
     
     const downloadLink = document.createElement("a");
-    const fileName = `${generatorType === 'qr' ? 'qr-code' : (generatorType === 'card' ? 'card' : barcodeFormat.toLowerCase())}.${format}`;
+    const fileName = `${generatorType === 'qr' ? 'qr-code' : (generateCard ? 'card' : barcodeFormat.toLowerCase())}.${format}`;
 
-    if (format === 'svg' && generatorType !== 'card') {
+    if (format === 'svg' && generatorType !== 'qr' && !generateCard) {
         let svgString = '';
-        if (generatorType === 'qr') {
-            svgString = await QRCode.toString(content, {
+        const svgNode = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        document.body.appendChild(svgNode);
+        try {
+            JsBarcode(svgNode, content, {
+                format: barcodeFormat,
+                lineColor: fgColor,
+                background: bgColor,
+                height: barcodeHeight * 0.8,
+                fontSize: barcodeTextSize,
+                fontOptions: "monospace",
+                textMargin: 5,
+                xmlns: "http://www.w3.org/2000/svg",
+            });
+            svgString = svgNode.outerHTML;
+        } catch (err: any) {
+            console.error(err);
+            setBarcodeError(err.message || "Error generating SVG barcode.");
+            document.body.removeChild(svgNode);
+            return;
+        }
+        document.body.removeChild(svgNode);
+        const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+        downloadLink.href = URL.createObjectURL(blob);
+    } else if (format === 'svg' && generatorType === 'qr') {
+         let svgString = await QRCode.toString(content, {
                 type: 'svg',
                 errorCorrectionLevel: level,
                 color: { dark: fgColor, light: bgColor }
             });
-
-        } else if (generatorType === 'barcode') {
-            const svgNode = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            document.body.appendChild(svgNode);
-            try {
-                JsBarcode(svgNode, content, {
-                    format: barcodeFormat,
-                    lineColor: fgColor,
-                    background: bgColor,
-                    height: barcodeHeight * 0.8,
-                    fontSize: barcodeTextSize,
-                    fontOptions: "monospace",
-                    textMargin: 5,
-                    xmlns: "http://www.w3.org/2000/svg",
-                });
-                svgString = svgNode.outerHTML;
-            } catch (err: any) {
-                console.error(err);
-                setBarcodeError(err.message || "Error generating SVG barcode.");
-                document.body.removeChild(svgNode);
-                return;
-            }
-            document.body.removeChild(svgNode);
-        }
         const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
         downloadLink.href = URL.createObjectURL(blob);
-    } else {
-        if (format === 'svg' && generatorType === 'card') {
+    }
+    else {
+        if (format === 'svg' && generateCard) {
              toast({
                 variant: "destructive",
                 title: "Not Supported",
@@ -458,7 +444,7 @@ export function QrickApp() {
       title: "Success",
       description: `Download started for ${fileName}.`,
     });
-  }, [toast, generatorType, barcodeFormat, barcodeError, content, level, fgColor, bgColor, barcodeHeight, barcodeTextSize, barcodeError]);
+  }, [toast, generatorType, barcodeFormat, barcodeError, content, level, fgColor, bgColor, barcodeHeight, barcodeTextSize, barcodeError, generateCard]);
 
   const applyPreset = (preset: {fg: string, bg: string}) => {
     setFgColor(preset.fg);
@@ -492,14 +478,14 @@ export function QrickApp() {
     setGeneratorType(newType);
     if (newType === 'qr') {
         setContent('https://firebase.google.com');
-    } else if (newType === 'barcode' || newType === 'card') {
+    } else if (newType === 'barcode') {
         handleBarcodeFormatChange(barcodeFormat, true);
     }
   }
 
   const handleBarcodeFormatChange = (value: BarcodeFormat, forceContent?: boolean) => {
     setBarcodeFormat(value);
-    if (forceContent || generatorType === 'barcode' || generatorType === 'card') {
+    if (forceContent || generatorType === 'barcode') {
         switch (value) {
             case 'CODE128':
             case 'CODE128B':
@@ -572,10 +558,9 @@ export function QrickApp() {
       <CardContent className="grid gap-4 md:grid-cols-[340px_1fr] p-4">
         <div className="grid gap-4">
           <Tabs defaultValue="qr" value={generatorType} onValueChange={handleGeneratorTypeChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="qr"><QrCode className="mr-2"/>QR Code</TabsTrigger>
                 <TabsTrigger value="barcode"><Barcode className="mr-2"/>Barcode</TabsTrigger>
-                <TabsTrigger value="card"><CreditCard className="mr-2"/>Card</TabsTrigger>
             </TabsList>
 
             <TabsContent value="qr" className="pt-4">
@@ -817,71 +802,84 @@ export function QrickApp() {
                       />
                   </div>
                   <Separator />
-                  <div className="grid gap-2">
-                        <Label>Colors</Label>
-                        <div className="flex items-center gap-4">
+                   <div className="flex items-center space-x-2">
+                        <Switch id="generate-card" checked={generateCard} onCheckedChange={setGenerateCard} />
+                        <Label htmlFor="generate-card" className="flex items-center gap-2 cursor-pointer">
+                           <CreditCard className="h-4 w-4" />
+                           Generate on Card
+                        </Label>
+                    </div>
+                  <Separator />
+                   {generateCard ? (
+                    <div className="grid gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="card-title">Title</Label>
+                          <Input id="card-title" value={cardTitle} onChange={(e) => setCardTitle(e.target.value)} />
+                      </div>
+                      <div className="grid gap-2">
+                          <Label htmlFor="card-subtitle">Subtitle</Label>
+                          <Input id="card-subtitle" value={cardSubtitle} onChange={(e) => setCardSubtitle(e.target.value)} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="card-bg-color">Card BG</Label>
+                            <Input id="card-bg-color" type="color" value={cardBgColor} onChange={(e) => setCardBgColor(e.target.value)} className="p-1 h-9" />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="card-text-color">Card Text</Label>
+                            <Input id="card-text-color" type="color" value={cardTextColor} onChange={(e) => setCardTextColor(e.target.value)} className="p-1 h-9" />
+                        </div>
+                     </div>
+                      <div className="grid gap-2">
+                        <Label>Barcode Colors</Label>
+                         <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2">
                                 <Label htmlFor="barcode-fg-color" className="text-xs">Bar</Label>
                                 <Input id="barcode-fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-0 h-6 w-6" />
                             </div>
-                             <div className="flex items-center gap-2">
-                                <Label htmlFor="barcode-bg-color" className="text-xs">BG</Label>
-                                <Input id="barcode-bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-0 h-6 w-6" />
-                            </div>
-                             <div className="flex items-center gap-2">
-                                <Label htmlFor="text-color" className="text-xs">Text</Label>
-                                <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="p-0 h-6 w-6" />
+                        </div>
+                      </div>
+                    </div>
+                   ) : (
+                    <div className="grid gap-4">
+                        <div className="grid gap-2">
+                            <Label>Colors</Label>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                    <Label htmlFor="barcode-fg-color" className="text-xs">Bar</Label>
+                                    <Input id="barcode-fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-0 h-6 w-6" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Label htmlFor="barcode-bg-color" className="text-xs">BG</Label>
+                                    <Input id="barcode-bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-0 h-6 w-6" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Label htmlFor="text-color" className="text-xs">Text</Label>
+                                    <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="p-0 h-6 w-6" />
+                                </div>
                             </div>
                         </div>
+                        <Separator />
+                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="barcode-height">Height ({barcodeHeight}%)</Label>
+                            <Slider id="barcode-height" min={50} max={150} value={[barcodeHeight]} onValueChange={(v) => setBarcodeHeight(v[0])} />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="barcode-text-size" className="flex items-center">
+                            <CaseSensitive className="mr-2 h-4 w-4"/>
+                            Text Size ({barcodeTextSize}px)
+                            </Label>
+                            <Slider id="barcode-text-size" min={10} max={30} value={[barcodeTextSize]} onValueChange={(v) => setBarcodeTextSize(v[0])} />
+                        </div>
+                      </div>
                     </div>
-                  <Separator />
-                   <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="barcode-height">Height ({barcodeHeight}%)</Label>
-                        <Slider id="barcode-height" min={50} max={150} value={[barcodeHeight]} onValueChange={(v) => setBarcodeHeight(v[0])} />
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="barcode-text-size" className="flex items-center">
-                          <CaseSensitive className="mr-2 h-4 w-4"/>
-                          Text Size ({barcodeTextSize}px)
-                        </Label>
-                        <Slider id="barcode-text-size" min={10} max={30} value={[barcodeTextSize]} onValueChange={(v) => setBarcodeTextSize(v[0])} />
-                    </div>
-                  </div>
+                   )}
+                  
                 </div>
               </ScrollArea>
             </TabsContent>
 
-            <TabsContent value="card" className="pt-4">
-              <ScrollArea className="h-[28rem]">
-                <div className="grid gap-4 pr-4">
-                  <div className="grid gap-2">
-                      <Label htmlFor="card-title">Title</Label>
-                      <Input id="card-title" value={cardTitle} onChange={(e) => setCardTitle(e.target.value)} />
-                  </div>
-                  <div className="grid gap-2">
-                      <Label htmlFor="card-subtitle">Subtitle</Label>
-                      <Input id="card-subtitle" value={cardSubtitle} onChange={(e) => setCardSubtitle(e.target.value)} />
-                  </div>
-                  <Separator />
-                  <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                          <Label htmlFor="card-bg-color">Background</Label>
-                          <Input id="card-bg-color" type="color" value={cardBgColor} onChange={(e) => setCardBgColor(e.target.value)} className="p-1 h-9" />
-                      </div>
-                      <div className="grid gap-2">
-                          <Label htmlFor="card-text-color">Text Color</Label>
-                          <Input id="card-text-color" type="color" value={cardTextColor} onChange={(e) => setCardTextColor(e.target.value)} className="p-1 h-9" />
-                      </div>
-                  </div>
-                  <Separator />
-                  <div className="grid gap-2">
-                    <Label>Barcode Settings</Label>
-                    <p className="text-xs text-muted-foreground">Configure the barcode in the "Barcode" tab. The content and type from there will be used on this card.</p>
-                  </div>
-                </div>
-              </ScrollArea>
-            </TabsContent>
           </Tabs>
         </div>
         
@@ -890,11 +888,11 @@ export function QrickApp() {
               {content && !barcodeError ? (
                 <canvas 
                     ref={canvasRef} 
-                    width={generatorType === 'qr' ? size : (generatorType === 'card' ? 1600 : 1280)} 
-                    height={generatorType === 'qr' ? size : (generatorType === 'card' ? 900 : 320 + (barcodeTextSize * 2.5 / 2))}
+                    width={generatorType === 'qr' ? size : (generateCard ? 1600 : 1280)} 
+                    height={generatorType === 'qr' ? size : (generateCard ? 900 : 320 + (barcodeTextSize * 2.5 / 2))}
                     style={
-                        generatorType === 'barcode' ? { width: 320, height: 80 + (barcodeTextSize * 2.5 / 2) } : 
-                        (generatorType === 'card' ? { width: 400, height: 225 } : {width: size, height: size})
+                        (generatorType === 'barcode' && !generateCard) ? { width: 320, height: 80 + (barcodeTextSize * 2.5 / 2) } : 
+                        (generateCard ? { width: 400, height: 225 } : {width: size, height: size})
                     }
                 />
               ) : (
