@@ -3,7 +3,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -32,7 +32,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
-type QRStyle = "squares" | "dots" | "rounded" | "fluid" | "wavy";
+type QRStyle = "squares" | "dots" | "rounded" | "fluid" | "wavy" | "diamond";
 
 const colorPresets = [
     { name: "Classic", fg: "#000000", bg: "#ffffff" },
@@ -100,6 +100,14 @@ export function QrickApp() {
                         ctx.moveTo(moduleX, moduleY + moduleSize / 2);
                         ctx.quadraticCurveTo(moduleX + moduleSize / 2, moduleY - moduleSize / 2, moduleX + moduleSize, moduleY + moduleSize / 2);
                         ctx.quadraticCurveTo(moduleX + moduleSize / 2, moduleY + moduleSize * 1.5, moduleX, moduleY + moduleSize / 2);
+                        ctx.closePath();
+                        ctx.fill();
+                    } else if (qrStyle === 'diamond') {
+                        ctx.beginPath();
+                        ctx.moveTo(moduleX + moduleSize / 2, moduleY);
+                        ctx.lineTo(moduleX + moduleSize, moduleY + moduleSize / 2);
+                        ctx.lineTo(moduleX + moduleSize / 2, moduleY + moduleSize);
+                        ctx.lineTo(moduleX, moduleY + moduleSize / 2);
                         ctx.closePath();
                         ctx.fill();
                     } else if (qrStyle === 'rounded' || qrStyle === 'fluid') {
@@ -312,6 +320,10 @@ export function QrickApp() {
                                   <RadioGroupItem value="wavy" id="style-wavy" />
                                   Wavy
                               </Label>
+                              <Label htmlFor="style-diamond" className="flex items-center gap-2 cursor-pointer text-sm">
+                                  <RadioGroupItem value="diamond" id="style-diamond" />
+                                  Diamond
+                              </Label>
                           </RadioGroup>
                         </div>
                         <Separator />
@@ -397,5 +409,7 @@ export function QrickApp() {
     </Card>
   );
 }
+
+    
 
     
