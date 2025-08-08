@@ -1,11 +1,12 @@
 
+
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
 import QRCodeStyling, { type DotType, type CornerSquareType, type CornerDotType } from "qr-code-styling";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2, Sun, Moon, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Star, Plus, AlignLeft, AlignCenter, AlignRight, Pilcrow, Edit, ImagePlus, Shapes, Wifi, MessageSquare } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2, Sun, Moon, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Star, Plus, AlignLeft, AlignCenter, AlignRight, Pilcrow, Edit, ImagePlus, Shapes, Wifi, MessageSquare, MapPin, Calendar, User, VenetianMask, Rss, Instagram, Facebook, Linkedin, Twitter, Youtube, AtSign, Building, Briefcase } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -53,7 +54,7 @@ type ResizeHandle = 'tl' | 'tr' | 'bl' | 'br';
 type BarcodeTextPosition = 'top' | 'bottom';
 type QrTextPosition = "top" | "bottom" | "left" | "right";
 type QRStylingEngine = "legacy" | "styling";
-type QrDataType = 'text' | 'wifi' | 'sms' | 'phone' | 'email';
+type QrDataType = 'text' | 'wifi' | 'sms' | 'phone' | 'email' | 'vcard' | 'geolocation' | 'event' | 'whatsapp' | 'facebook' | 'twitter' | 'instagram' | 'linkedin' | 'youtube' | 'tiktok';
 
 
 interface CardElement {
@@ -107,6 +108,16 @@ const qrDataTypes: { id: QrDataType, label: string, icon: React.ReactNode }[] = 
   { id: 'sms', label: 'SMS', icon: <MessageSquare className="h-5 w-5" /> },
   { id: 'phone', label: 'Phone', icon: <Phone className="h-5 w-5" /> },
   { id: 'email', label: 'Email', icon: <Mail className="h-5 w-5" /> },
+  { id: 'vcard', label: 'vCard', icon: <User className="h-5 w-5" /> },
+  { id: 'geolocation', label: 'Location', icon: <MapPin className="h-5 w-5" /> },
+  { id: 'event', label: 'Event', icon: <Calendar className="h-5 w-5" /> },
+  { id: 'whatsapp', label: 'WhatsApp', icon: <MessageSquare className="h-5 w-5" /> },
+  { id: 'facebook', label: 'Facebook', icon: <Facebook className="h-5 w-5" /> },
+  { id: 'twitter', label: 'Twitter/X', icon: <Twitter className="h-5 w-5" /> },
+  { id: 'instagram', label: 'Instagram', icon: <Instagram className="h-5 w-5" /> },
+  { id: 'linkedin', label: 'LinkedIn', icon: <Linkedin className="h-5 w-5" /> },
+  { id: 'youtube', label: 'YouTube', icon: <Youtube className="h-5 w-5" /> },
+  { id: 'tiktok', label: 'TikTok', icon: <Rss className="h-5 w-5" /> },
 ];
 
 
@@ -160,8 +171,8 @@ export function QrickApp() {
   
   // QR Data type states
   const [qrDataType, setQrDataType] = useState<QrDataType>('text');
-  const [wifiSsid, setWifiSsid] = useState<string>('MyNetwork');
-  const [wifiPassword, setWifiPassword] = useState<string>('password123');
+  const [wifiSsid, setWifiSsid] = useState<string>('');
+  const [wifiPassword, setWifiPassword] = useState<string>('');
   const [wifiEncryption, setWifiEncryption] = useState<'WPA' | 'WEP' | 'nopass'>('WPA');
   const [smsPhone, setSmsPhone] = useState<string>('');
   const [smsMessage, setSmsMessage] = useState<string>('');
@@ -169,9 +180,63 @@ export function QrickApp() {
   const [emailTo, setEmailTo] = useState<string>('');
   const [emailSubject, setEmailSubject] = useState<string>('');
   const [emailBody, setEmailBody] = useState<string>('');
+  
+  // vCard States
+  const [vCardFirstName, setVCardFirstName] = useState('');
+  const [vCardLastName, setVCardLastName] = useState('');
+  const [vCardOrg, setVCardOrg] = useState('');
+  const [vCardTitle, setVCardTitle] = useState('');
+  const [vCardPhone, setVCardPhone] = useState('');
+  const [vCardEmail, setVCardEmail] = useState('');
+  const [vCardWebsite, setVCardWebsite] = useState('');
+  const [vCardAddress, setVCardAddress] = useState('');
+
+  // Geolocation States
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
+
+  // Event States
+  const [eventTitle, setEventTitle] = useState('');
+  const [eventLocation, setEventLocation] = useState('');
+  const [eventStart, setEventStart] = useState('');
+  const [eventEnd, setEventEnd] = useState('');
+  const [eventDescription, setEventDescription] = useState('');
+
+  // WhatsApp State
+  const [whatsappPhone, setWhatsappPhone] = useState('');
+
+  // Social Media States
+  const [socialUsername, setSocialUsername] = useState('');
+
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+
 
   useEffect(() => {
     let newContent = '';
+    const formatVCard = () => {
+        let vcard = 'BEGIN:VCARD\nVERSION:3.0\n';
+        vcard += `N:${vCardLastName};${vCardFirstName}\n`;
+        vcard += `FN:${vCardFirstName} ${vCardLastName}\n`;
+        if (vCardOrg) vcard += `ORG:${vCardOrg}\n`;
+        if (vCardTitle) vcard += `TITLE:${vCardTitle}\n`;
+        if (vCardPhone) vcard += `TEL;TYPE=WORK,VOICE:${vCardPhone}\n`;
+        if (vCardEmail) vcard += `EMAIL:${vCardEmail}\n`;
+        if (vCardWebsite) vcard += `URL:${vCardWebsite}\n`;
+        if (vCardAddress) vcard += `ADR;TYPE=WORK:;;${vCardAddress}\n`;
+        vcard += 'END:VCARD';
+        return vcard;
+    };
+    const formatEvent = () => {
+        let vevent = 'BEGIN:VEVENT\n';
+        if (eventTitle) vevent += `SUMMARY:${eventTitle}\n`;
+        if (eventLocation) vevent += `LOCATION:${eventLocation}\n`;
+        if (eventStart) vevent += `DTSTART:${eventStart.replace(/-/g, '').replace(/:/g, '')}00Z\n`;
+        if (eventEnd) vevent += `DTEND:${eventEnd.replace(/-/g, '').replace(/:/g, '')}00Z\n`;
+        if (eventDescription) vevent += `DESCRIPTION:${eventDescription}\n`;
+        vevent += 'END:VEVENT';
+        return `BEGIN:VCALENDAR\nVERSION:2.0\n${vevent}\nEND:VCALENDAR`;
+    };
+
     switch (qrDataType) {
       case 'wifi':
         newContent = `WIFI:T:${wifiEncryption};S:${wifiSsid};P:${wifiPassword};;`;
@@ -187,13 +252,47 @@ export function QrickApp() {
         const body = encodeURIComponent(emailBody);
         newContent = `mailto:${emailTo}?subject=${subject}&body=${body}`;
         break;
+      case 'vcard':
+        newContent = formatVCard();
+        break;
+      case 'geolocation':
+        newContent = `geo:${latitude},${longitude}`;
+        break;
+      case 'event':
+        newContent = formatEvent();
+        break;
+      case 'whatsapp':
+        newContent = `https://wa.me/${whatsappPhone}`;
+        break;
+      case 'facebook':
+        newContent = `https://www.facebook.com/${socialUsername}`;
+        break;
+      case 'twitter':
+        newContent = `https://twitter.com/${socialUsername}`;
+        break;
+      case 'instagram':
+        newContent = `https://www.instagram.com/${socialUsername}`;
+        break;
+      case 'linkedin':
+        newContent = `https://www.linkedin.com/in/${socialUsername}`;
+        break;
+      case 'youtube':
+        newContent = youtubeUrl;
+        break;
+      case 'tiktok':
+        newContent = `https://www.tiktok.com/@${socialUsername}`;
+        break;
       case 'text':
       default:
         // do not change content if it is already text
         return;
     }
     setContent(newContent);
-  }, [qrDataType, wifiSsid, wifiPassword, wifiEncryption, smsPhone, smsMessage, phone, emailTo, emailSubject, emailBody]);
+  }, [qrDataType, wifiSsid, wifiPassword, wifiEncryption, smsPhone, smsMessage, phone, emailTo, emailSubject, emailBody,
+      vCardFirstName, vCardLastName, vCardOrg, vCardTitle, vCardPhone, vCardEmail, vCardWebsite, vCardAddress,
+      latitude, longitude,
+      eventTitle, eventLocation, eventStart, eventEnd, eventDescription,
+      whatsappPhone, socialUsername, youtubeUrl]);
 
   const handleQrDataTypeChange = (value: QrDataType) => {
     setQrDataType(value);
@@ -213,6 +312,13 @@ export function QrickApp() {
         case 'email':
             setContent(`mailto:${emailTo}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`);
             break;
+        case 'vcard': setContent(''); break;
+        case 'geolocation': setContent(''); break;
+        case 'event': setContent(''); break;
+        case 'whatsapp': setContent(''); break;
+        case 'facebook': case 'twitter': case 'instagram': case 'linkedin': case 'tiktok':
+            setSocialUsername(''); setContent(''); break;
+        case 'youtube': setYoutubeUrl(''); setContent(''); break;
     }
   };
 
@@ -1534,11 +1640,20 @@ export function QrickApp() {
                          <ScrollArea className="w-full whitespace-nowrap">
                             <RadioGroup value={qrDataType} onValueChange={(v) => handleQrDataTypeChange(v as QrDataType)} className="flex gap-2 pb-2">
                                 {qrDataTypes.map(item => (
-                                    <Label key={item.id} htmlFor={`qr-data-type-${item.id}`} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer w-20 h-20 text-center">
-                                        <RadioGroupItem value={item.id} id={`qr-data-type-${item.id}`} className="sr-only" />
-                                        {item.icon}
-                                        <span className="text-xs font-normal mt-1">{item.label}</span>
-                                    </Label>
+                                    <TooltipProvider key={item.id}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Label htmlFor={`qr-data-type-${item.id}`} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer w-16 h-16 text-center">
+                                                    <RadioGroupItem value={item.id} id={`qr-data-type-${item.id}`} className="sr-only" />
+                                                    {item.icon}
+                                                    <span className="text-xs font-normal mt-1 hidden sm:block">{item.label}</span>
+                                                </Label>
+                                            </TooltipTrigger>
+                                            <TooltipContent className="block sm:hidden">
+                                                <p>{item.label}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                 ))}
                             </RadioGroup>
                             <ScrollBar orientation="horizontal" />
@@ -1562,11 +1677,11 @@ export function QrickApp() {
                         <div className="grid gap-4 p-4 border rounded-lg">
                             <div className="grid gap-2">
                                 <Label htmlFor="wifi-ssid">SSID (Network Name)</Label>
-                                <Input id="wifi-ssid" value={wifiSsid} onChange={(e) => setWifiSsid(e.target.value)} />
+                                <Input id="wifi-ssid" placeholder="MyNetwork" value={wifiSsid} onChange={(e) => setWifiSsid(e.target.value)} />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="wifi-password">Password</Label>
-                                <Input id="wifi-password" type="password" value={wifiPassword} onChange={(e) => setWifiPassword(e.target.value)} />
+                                <Input id="wifi-password" type="password" placeholder="password123" value={wifiPassword} onChange={(e) => setWifiPassword(e.target.value)} />
                             </div>
                             <div className="grid gap-2">
                                 <Label>Encryption</Label>
@@ -1582,11 +1697,11 @@ export function QrickApp() {
                         <div className="grid gap-4 p-4 border rounded-lg">
                             <div className="grid gap-2">
                                 <Label htmlFor="sms-phone">Phone Number</Label>
-                                <Input id="sms-phone" type="tel" value={smsPhone} onChange={(e) => setSmsPhone(e.target.value)} />
+                                <Input id="sms-phone" type="tel" placeholder="+1234567890" value={smsPhone} onChange={(e) => setSmsPhone(e.target.value)} />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="sms-message">Message</Label>
-                                <Textarea id="sms-message" value={smsMessage} onChange={(e) => setSmsMessage(e.target.value)} />
+                                <Textarea id="sms-message" placeholder="Hello!" value={smsMessage} onChange={(e) => setSmsMessage(e.target.value)} />
                             </div>
                         </div>
                     )}
@@ -1594,7 +1709,7 @@ export function QrickApp() {
                         <div className="grid gap-4 p-4 border rounded-lg">
                             <div className="grid gap-2">
                                 <Label htmlFor="phone-number">Phone Number</Label>
-                                <Input id="phone-number" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                                <Input id="phone-number" type="tel" placeholder="+1234567890" value={phone} onChange={(e) => setPhone(e.target.value)} />
                             </div>
                         </div>
                     )}
@@ -1602,18 +1717,67 @@ export function QrickApp() {
                         <div className="grid gap-4 p-4 border rounded-lg">
                             <div className="grid gap-2">
                                 <Label htmlFor="email-to">To</Label>
-                                <Input id="email-to" type="email" value={emailTo} onChange={(e) => setEmailTo(e.target.value)} />
+                                <Input id="email-to" type="email" placeholder="recipient@example.com" value={emailTo} onChange={(e) => setEmailTo(e.target.value)} />
                             </div>
                              <div className="grid gap-2">
                                 <Label htmlFor="email-subject">Subject</Label>
-                                <Input id="email-subject" value={emailSubject} onChange={(e) => setEmailSubject(e.target.value)} />
+                                <Input id="email-subject" placeholder="Email Subject" value={emailSubject} onChange={(e) => setEmailSubject(e.target.value)} />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="email-body">Body</Label>
-                                <Textarea id="email-body" value={emailBody} onChange={(e) => setEmailBody(e.target.value)} />
+                                <Textarea id="email-body" placeholder="Email body content..." value={emailBody} onChange={(e) => setEmailBody(e.target.value)} />
                             </div>
                         </div>
                     )}
+                     {qrDataType === 'vcard' && (
+                        <ScrollArea className="h-96">
+                            <div className="grid gap-4 p-4 border rounded-lg pr-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Input placeholder="First Name" value={vCardFirstName} onChange={(e) => setVCardFirstName(e.target.value)} />
+                                    <Input placeholder="Last Name" value={vCardLastName} onChange={(e) => setVCardLastName(e.target.value)} />
+                                </div>
+                                <Input placeholder="Organization" value={vCardOrg} onChange={(e) => setVCardOrg(e.target.value)} />
+                                <Input placeholder="Job Title" value={vCardTitle} onChange={(e) => setVCardTitle(e.target.value)} />
+                                <Input type="tel" placeholder="Phone" value={vCardPhone} onChange={(e) => setVCardPhone(e.target.value)} />
+                                <Input type="email" placeholder="Email" value={vCardEmail} onChange={(e) => setVCardEmail(e.target.value)} />
+                                <Input type="url" placeholder="Website" value={vCardWebsite} onChange={(e) => setVCardWebsite(e.target.value)} />
+                                <Textarea placeholder="Address" value={vCardAddress} onChange={(e) => setVCardAddress(e.target.value)} />
+                            </div>
+                        </ScrollArea>
+                    )}
+                    {qrDataType === 'geolocation' && (
+                        <div className="grid gap-4 p-4 border rounded-lg">
+                            <Input placeholder="Latitude (e.g., 40.7128)" value={latitude} onChange={(e) => setLatitude(e.target.value)} />
+                            <Input placeholder="Longitude (e.g., -74.0060)" value={longitude} onChange={(e) => setLongitude(e.target.value)} />
+                        </div>
+                    )}
+                    {qrDataType === 'event' && (
+                        <div className="grid gap-4 p-4 border rounded-lg">
+                            <Input placeholder="Event Title" value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} />
+                            <Input placeholder="Location" value={eventLocation} onChange={(e) => setEventLocation(e.target.value)} />
+                            <div className="grid grid-cols-2 gap-4">
+                                <Input type="datetime-local" placeholder="Start Time" value={eventStart} onChange={(e) => setEventStart(e.target.value)} />
+                                <Input type="datetime-local" placeholder="End Time" value={eventEnd} onChange={(e) => setEventEnd(e.target.value)} />
+                            </div>
+                            <Textarea placeholder="Description" value={eventDescription} onChange={(e) => setEventDescription(e.target.value)} />
+                        </div>
+                    )}
+                     {qrDataType === 'whatsapp' && (
+                        <div className="grid gap-4 p-4 border rounded-lg">
+                           <Input type="tel" placeholder="Phone number (with country code)" value={whatsappPhone} onChange={(e) => setWhatsappPhone(e.target.value)} />
+                        </div>
+                    )}
+                    {['facebook', 'twitter', 'instagram', 'linkedin', 'tiktok'].includes(qrDataType) && (
+                        <div className="grid gap-4 p-4 border rounded-lg">
+                           <Input placeholder="Username or Profile ID" value={socialUsername} onChange={(e) => setSocialUsername(e.target.value)} />
+                        </div>
+                    )}
+                     {qrDataType === 'youtube' && (
+                        <div className="grid gap-4 p-4 border rounded-lg">
+                           <Input type="url" placeholder="YouTube Video or Channel URL" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} />
+                        </div>
+                    )}
+
 
                     <Tabs defaultValue="style">
                         <TabsList className="grid w-full grid-cols-4">
@@ -2255,4 +2419,5 @@ export function QrickApp() {
     
 
     
+
 
