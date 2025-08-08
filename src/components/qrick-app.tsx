@@ -4,7 +4,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2, Sun, Moon, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Star, Plus, AlignLeft, AlignCenter, AlignRight, Pilcrow, Edit } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2, Sun, Moon, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Star, Plus, AlignLeft, AlignCenter, AlignRight, Pilcrow, Edit, ImagePlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -77,6 +77,15 @@ interface QrTextElement {
     isVertical: boolean;
 }
 
+interface QrImageElement {
+    id: string;
+    url: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
 
 const colorPresets = [
     { name: "Classic", fg: "#000000", bg: "#ffffff" },
@@ -112,6 +121,7 @@ export function QrickApp() {
   const [showBarcodeText, setShowBarcodeText] = useState<boolean>(true);
   const [barcodeTextPosition, setBarcodeTextPosition] = useState<BarcodeTextPosition>('bottom');
   const [qrTextElements, setQrTextElements] = useState<QrTextElement[]>([]);
+  const [qrImageElements, setQrImageElements] = useState<QrImageElement[]>([]);
   const [selectedQrText, setSelectedQrText] = useState<string | null>(null);
 
 
@@ -133,6 +143,7 @@ export function QrickApp() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const qrImageInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const cardBgInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -378,12 +389,42 @@ export function QrickApp() {
                 ctx.drawImage(img, imgX, imgY, imageSize, imageSize);
             };
         }
+
+        // Draw multiple images
+        qrImageElements.forEach(element => {
+            const elImg = new Image();
+            elImg.crossOrigin = "anonymous";
+            elImg.src = element.url;
+            elImg.onload = () => {
+                ctx.drawImage(elImg, element.x, element.y, element.width, element.height);
+            };
+            ctx.drawImage(elImg, element.x, element.y, element.width, element.height);
+        });
+
+        // Draw selection box and handles for images
+        const selectedImage = qrImageElements.find(el => el.id === selectedElement);
+        if (selectedImage) {
+            ctx.strokeStyle = 'rgba(0, 123, 255, 0.7)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(selectedImage.x, selectedImage.y, selectedImage.width, selectedImage.height);
+            const handleSize = 8;
+            const handles = {
+                tl: { x: selectedImage.x - handleSize / 2, y: selectedImage.y - handleSize / 2 },
+                tr: { x: selectedImage.x + selectedImage.width - handleSize / 2, y: selectedImage.y - handleSize / 2 },
+                bl: { x: selectedImage.x - handleSize / 2, y: selectedImage.y + selectedImage.height - handleSize / 2 },
+                br: { x: selectedImage.x + selectedImage.width - handleSize / 2, y: selectedImage.y + selectedImage.height - handleSize / 2 },
+            };
+            ctx.fillStyle = 'rgba(0, 123, 255, 0.9)';
+            Object.values(handles).forEach(handle => {
+                ctx.fillRect(handle.x, handle.y, handleSize, handleSize);
+            });
+        }
     })
     .catch(err => {
         setBarcodeError("Error generating QR code. The content may be too long for the selected error correction level.");
         console.error(err);
     });
-  }, [content, size, level, fgColor, bgColor, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, qrTextElements]);
+  }, [content, size, level, fgColor, bgColor, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, qrTextElements, qrImageElements, selectedElement]);
 
     const drawBarcodeOrCard = useCallback(() => {
         setBarcodeError(null);
@@ -766,7 +807,7 @@ export function QrickApp() {
         }
         setBarcodeError(null);
       }
-  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, barcodeHeight, barcodeTextSize, level, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, generateCard, cardElements, selectedElement, showBarcodeText, barcodeTextPosition, qrTextElements]);
+  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, barcodeHeight, barcodeTextSize, level, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, generateCard, cardElements, selectedElement, showBarcodeText, barcodeTextPosition, qrTextElements, qrImageElements]);
 
     const getPointerPosition = (e: React.MouseEvent | React.TouchEvent) => {
         const canvas = canvasRef.current;
@@ -791,7 +832,7 @@ export function QrickApp() {
         };
     };
 
-    const getResizeHandle = (pos: {x: number, y: number}, element: CardElement): ResizeHandle | null => {
+    const getResizeHandle = (pos: {x: number, y: number}, element: CardElement | QrImageElement): ResizeHandle | null => {
         const handleSize = 10;
         if (pos.x >= element.x - handleSize && pos.x <= element.x + handleSize &&
             pos.y >= element.y - handleSize && pos.y <= element.y + handleSize) return 'tl';
@@ -805,12 +846,20 @@ export function QrickApp() {
     };
 
     const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
-        if (!generateCard) return;
         e.preventDefault();
         const pos = getPointerPosition(e);
         
+        let elements: (CardElement | QrImageElement)[] = [];
+        if (generateCard) {
+            elements = cardElements;
+        } else if (generatorType === 'qr') {
+            elements = qrImageElements;
+        } else {
+            return;
+        }
+
         if (selectedElement) {
-            const element = cardElements.find(el => el.id === selectedElement);
+            const element = elements.find(el => el.id === selectedElement);
             if(element) {
                 const handle = getResizeHandle(pos, element);
                 if (handle) {
@@ -820,7 +869,7 @@ export function QrickApp() {
             }
         }
 
-        const clickedElement = [...cardElements].reverse().find(el => 
+        const clickedElement = [...elements].reverse().find(el => 
             pos.x >= el.x && pos.x <= el.x + el.width &&
             pos.y >= el.y && pos.y <= el.y + el.height
         );
@@ -838,8 +887,21 @@ export function QrickApp() {
         const pos = getPointerPosition(e);
         e.preventDefault();
         
+        let elements: (CardElement | QrImageElement)[] = [];
+        let setElements: React.Dispatch<React.SetStateAction<any[]>>;
+
+        if (generateCard) {
+            elements = cardElements;
+            setElements = setCardElements as React.Dispatch<React.SetStateAction<any[]>>;
+        } else if (generatorType === 'qr') {
+            elements = qrImageElements;
+            setElements = setQrImageElements as React.Dispatch<React.SetStateAction<any[]>>;
+        } else {
+            return;
+        }
+
         if (resizingState) {
-            setCardElements(prev => prev.map(el => {
+            setElements(prev => prev.map(el => {
                 if (el.id === resizingState.elementId) {
                     let { x, y, width, height } = el;
                     const originalX = el.x;
@@ -872,7 +934,7 @@ export function QrickApp() {
                     const newWidth = Math.max(width, 20);
                     const newHeight = Math.max(height, 20);
                     
-                    if (el.type === 'text') {
+                    if (el.type === 'text' && generateCard) {
                         const aspectRatio = el.width / (el.fontSize || 16);
                         const newFontSize = newWidth / aspectRatio;
                         return { ...el, x, y, width: newWidth, height: newHeight, fontSize: newFontSize };
@@ -883,13 +945,13 @@ export function QrickApp() {
                 return el;
             }));
         } else if (draggingElement) {
-            setCardElements(prev => prev.map(el =>
+            setElements(prev => prev.map(el =>
                 el.id === draggingElement
                     ? { ...el, x: pos.x - dragOffset.x, y: pos.y - dragOffset.y }
                     : el
             ));
-        } else if (generateCard) {
-            const currentSelected = cardElements.find(el => el.id === selectedElement);
+        } else if (generateCard || generatorType === 'qr') {
+            const currentSelected = elements.find(el => el.id === selectedElement);
             let handleCursor = 'default';
             if (currentSelected) {
                 const handle = getResizeHandle(pos, currentSelected);
@@ -897,7 +959,7 @@ export function QrickApp() {
                 else if (handle === 'tr' || handle === 'bl') handleCursor = 'nesw-resize';
             }
              if (handleCursor === 'default') {
-                const currentHoveredElement = [...cardElements].reverse().find(el => 
+                const currentHoveredElement = [...elements].reverse().find(el => 
                     pos.x >= el.x && pos.x <= el.x + el.width &&
                     pos.y >= el.y && pos.y <= el.y + el.height
                 );
@@ -1050,6 +1112,27 @@ export function QrickApp() {
     }
   };
 
+  const handleQrImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const newImage: QrImageElement = {
+            id: `qrimage-${Date.now()}`,
+            url: reader.result as string,
+            x: 50,
+            y: 50,
+            width: 100,
+            height: 100,
+        };
+        setQrImageElements(prev => [...prev, newImage]);
+        setSelectedElement(newImage.id);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -1085,6 +1168,7 @@ export function QrickApp() {
   };
 
   const triggerFileSelect = () => fileInputRef.current?.click();
+  const triggerQrImageSelect = () => qrImageInputRef.current?.click();
   const triggerLogoSelect = () => logoInputRef.current?.click();
   const triggerCardBgSelect = () => cardBgInputRef.current?.click();
 
@@ -1099,6 +1183,7 @@ export function QrickApp() {
     if (!value) return;
     const newType = value as GeneratorType;
     setGeneratorType(newType);
+    setSelectedElement(null);
     if (newType === 'qr') {
         setContent('https://firebase.google.com');
     } else if (newType === 'barcode') {
@@ -1193,7 +1278,11 @@ export function QrickApp() {
 
   const deleteSelectedElement = () => {
     if (selectedElement) {
-      setCardElements(prev => prev.filter(el => el.id !== selectedElement));
+        if (generateCard) {
+            setCardElements(prev => prev.filter(el => el.id !== selectedElement));
+        } else if (generatorType === 'qr') {
+            setQrImageElements(prev => prev.filter(el => el.id !== selectedElement));
+        }
       setSelectedElement(null);
     }
   };
@@ -1255,9 +1344,19 @@ export function QrickApp() {
       setSelectedQrText(null);
   }
 
+  const removeQrImageElement = (id: string) => {
+      setQrImageElements(prev => prev.filter(el => el.id !== id));
+      if (selectedElement === id) {
+          setSelectedElement(null);
+      }
+  }
+
   const selectedQrTextElement = qrTextElements.find(el => el.id === selectedQrText);
 
   const currentSelectedElement = cardElements.find(el => el.id === selectedElement);
+  const currentSelectedQrImage = qrImageElements.find(el => el.id === selectedElement);
+  const isQrImageSelected = generatorType === 'qr' && !!currentSelectedQrImage;
+
 
   return (
     <Card className="w-full max-w-4xl shadow-2xl">
@@ -1285,6 +1384,7 @@ export function QrickApp() {
                         <TabsList>
                             <TabsTrigger value="style"><Palette className="mr-2"/>Style</TabsTrigger>
                             <TabsTrigger value="text"><Text className="mr-2"/>Text</TabsTrigger>
+                            <TabsTrigger value="images"><ImageIcon className="mr-2"/>Images</TabsTrigger>
                         </TabsList>
                         <TabsContent value="style" className="pt-4">
                             <ScrollArea className="h-96">
@@ -1517,6 +1617,38 @@ export function QrickApp() {
                                             </div>
                                         ))}
                                     </div>
+                                </div>
+                            </ScrollArea>
+                        </TabsContent>
+                        <TabsContent value="images" className="pt-4">
+                            <ScrollArea className="h-96">
+                                <div className="grid gap-4 pr-4">
+                                    <Input type="file" ref={qrImageInputRef} onChange={handleQrImageUpload} accept="image/*" className="hidden"/>
+                                    <Button onClick={triggerQrImageSelect} variant="outline" size="sm">
+                                        <ImagePlus className="mr-2" /> Add Image
+                                    </Button>
+                                    <div className="grid gap-2">
+                                        {qrImageElements.map(el => (
+                                            <div key={el.id} className="flex items-center justify-between p-2 border rounded-lg">
+                                                <img src={el.url} alt="Uploaded image" className="h-8 w-8 object-cover rounded-md" />
+                                                <span className="truncate flex-1 px-2 text-xs text-muted-foreground">Image Element</span>
+                                                <div className="flex items-center gap-1">
+                                                    <Button variant="ghost" size="icon" onClick={() => removeQrImageElement(el.id)} className="h-7 w-7"><Trash2 className="text-red-500 h-4 w-4" /></Button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                     {isQrImageSelected && (
+                                        <div className="grid gap-4 p-4 border rounded-lg">
+                                            <div className="flex justify-between items-center">
+                                                <Label className="font-bold">Selected Image</Label>
+                                                <Button variant="ghost" size="icon" onClick={deleteSelectedElement} className="h-7 w-7">
+                                                    <Trash2 className="text-red-500" />
+                                                </Button>
+                                            </div>
+                                            <p className="text-sm text-muted-foreground">Move or resize the selected image on the canvas.</p>
+                                        </div>
+                                     )}
                                 </div>
                             </ScrollArea>
                         </TabsContent>
@@ -1789,7 +1921,7 @@ export function QrickApp() {
                     height={getCanvasDisplaySize().height}
                     style={
                         (generatorType === 'barcode' && !generateCard) ? { width: 320, height: (showBarcodeText ? 80 + (barcodeTextSize * 2.5) : 80), cursor: 'default' } : 
-                        (generateCard ? { width: 400, height: 225, cursor: cursorStyle } : { width: getCanvasDisplaySize().width, height: getCanvasDisplaySize().height, maxWidth: 320, cursor: 'default'})
+                        (generateCard ? { width: 400, height: 225, cursor: cursorStyle } : { width: getCanvasDisplaySize().width, height: getCanvasDisplaySize().height, maxWidth: 320, cursor: cursorStyle})
                     }
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
@@ -1841,5 +1973,7 @@ export function QrickApp() {
   );
 
 }
+
+    
 
     
