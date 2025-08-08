@@ -118,7 +118,7 @@ export function QrickApp() {
   } : undefined;
 
   return (
-    <Card className="w-full max-w-lg shadow-2xl">
+    <Card className="w-full max-w-4xl shadow-2xl">
       <CardHeader className="text-center">
         <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-2">
             <QrCode className="h-8 w-8" />
@@ -128,119 +128,121 @@ export function QrickApp() {
           Generate and customize your QR code in real-time.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-6">
-        <Tabs defaultValue="content" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="content"><Text className="mr-2"/>Content</TabsTrigger>
-                <TabsTrigger value="style"><Palette className="mr-2"/>Style</TabsTrigger>
-            </TabsList>
-            <TabsContent value="content" className="pt-4">
-                 <div className="grid gap-6">
-                    <div className="grid gap-2">
-                        <Label htmlFor="content">Content</Label>
-                        <Input
-                        id="content"
-                        placeholder="Enter URL or text"
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        className="text-base"
-                        />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
+      <CardContent className="grid gap-8 md:grid-cols-2 p-6">
+        <div className="grid gap-6">
+            <Tabs defaultValue="content" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="content"><Text className="mr-2"/>Content</TabsTrigger>
+                    <TabsTrigger value="style"><Palette className="mr-2"/>Style</TabsTrigger>
+                </TabsList>
+                <TabsContent value="content" className="pt-6">
+                     <div className="grid gap-6">
                         <div className="grid gap-2">
-                        <Label htmlFor="size">Size (px)</Label>
-                        <Input
-                            id="size"
-                            type="number"
-                            min="64"
-                            max="1024"
-                            step="32"
-                            value={size}
-                            onChange={(e) => setSize(parseInt(e.target.value, 10) || 64)}
-                        />
+                            <Label htmlFor="content">Content</Label>
+                            <Input
+                            id="content"
+                            placeholder="Enter URL or text"
+                            value={content}
+                            onChange={(e) => setContent(e.target.value)}
+                            className="text-base"
+                            />
                         </div>
-                        <div className="grid gap-2">
-                        <Label htmlFor="level">Error Correction</Label>
-                        <Select
-                            value={level}
-                            onValueChange={(value: ErrorCorrectionLevel) => setLevel(value)}
-                        >
-                            <SelectTrigger id="level">
-                            <SelectValue placeholder="Select level" />
-                            </SelectTrigger>
-                            <SelectContent>
-                            <SelectItem value="L">Low (L)</SelectItem>
-                            <SelectItem value="M">Medium (M)</SelectItem>
-                            <SelectItem value="Q">Quartile (Q)</SelectItem>
-                            <SelectItem value="H">High (H)</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        </div>
-                    </div>
-                </div>
-            </TabsContent>
-            <TabsContent value="style" className="pt-4">
-                <div className="grid gap-6">
-                    <div className="grid gap-2">
-                        <Label>Color Presets</Label>
-                        <div className="flex flex-wrap gap-2">
-                            {colorPresets.map(preset => (
-                                <Button key={preset.name} variant="outline" size="sm" onClick={() => applyPreset(preset)}>
-                                    <span className="w-3 h-3 rounded-full mr-2" style={{backgroundColor: preset.fg}}></span>
-                                    {preset.name}
-                                </Button>
-                            ))}
-                        </div>
-                    </div>
-                    <Separator />
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="fg-color">Foreground</Label>
-                            <div className="relative">
-                                <Input id="fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-1 h-10" />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                            <Label htmlFor="size">Size (px)</Label>
+                            <Input
+                                id="size"
+                                type="number"
+                                min="64"
+                                max="1024"
+                                step="32"
+                                value={size}
+                                onChange={(e) => setSize(parseInt(e.target.value, 10) || 64)}
+                            />
                             </div>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="bg-color">Background</Label>
-                            <div className="relative">
-                                <Input id="bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-1 h-10" />
+                            <div className="grid gap-2">
+                            <Label htmlFor="level">Error Correction</Label>
+                            <Select
+                                value={level}
+                                onValueChange={(value: ErrorCorrectionLevel) => setLevel(value)}
+                            >
+                                <SelectTrigger id="level">
+                                <SelectValue placeholder="Select level" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                <SelectItem value="L">Low (L)</SelectItem>
+                                <SelectItem value="M">Medium (M)</SelectItem>
+                                <SelectItem value="Q">Quartile (Q)</SelectItem>
+                                <SelectItem value="H">High (H)</SelectItem>
+                                </SelectContent>
+                            </Select>
                             </div>
                         </div>
                     </div>
-                    <Separator />
-                    <div className="grid gap-4">
+                </TabsContent>
+                <TabsContent value="style" className="pt-6">
+                    <div className="grid gap-6">
                         <div className="grid gap-2">
-                          <Label>Center Image</Label>
-                           <Input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden"/>
-                           <Button variant="outline" onClick={triggerFileSelect}>
-                               <ImageIcon className="mr-2" />
-                               {imageUrl ? "Change Image" : "Upload Image"}
-                           </Button>
-                           {imageUrl && (
-                                <Button variant="destructive" size="sm" onClick={removeImage}>
-                                    <X className="mr-2" />
-                                    Remove Image
-                                </Button>
-                           )}
+                            <Label>Color Presets</Label>
+                            <div className="flex flex-wrap gap-2">
+                                {colorPresets.map(preset => (
+                                    <Button key={preset.name} variant="outline" size="sm" onClick={() => applyPreset(preset)}>
+                                        <span className="w-3 h-3 rounded-full mr-2" style={{backgroundColor: preset.fg}}></span>
+                                        {preset.name}
+                                    </Button>
+                                ))}
+                            </div>
                         </div>
-                        {imageUrl && (
-                            <>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="image-size">Image Size ({imageSize}px)</Label>
-                                    <Slider id="image-size" min={20} max={size / 3} value={[imageSize]} onValueChange={(v) => setImageSize(v[0])} />
+                        <Separator />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="fg-color">Foreground</Label>
+                                <div className="relative">
+                                    <Input id="fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-1 h-10" />
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                    <Switch id="excavate" checked={excavate} onCheckedChange={setExcavate} />
-                                    <Label htmlFor="excavate">Clear space for image</Label>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="bg-color">Background</Label>
+                                <div className="relative">
+                                    <Input id="bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-1 h-10" />
                                 </div>
-                            </>
-                        )}
+                            </div>
+                        </div>
+                        <Separator />
+                        <div className="grid gap-4">
+                            <div className="grid gap-2">
+                              <Label>Center Image</Label>
+                               <Input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden"/>
+                               <Button variant="outline" onClick={triggerFileSelect}>
+                                   <ImageIcon className="mr-2" />
+                                   {imageUrl ? "Change Image" : "Upload Image"}
+                               </Button>
+                               {imageUrl && (
+                                    <Button variant="destructive" size="sm" onClick={removeImage}>
+                                        <X className="mr-2" />
+                                        Remove Image
+                                    </Button>
+                               )}
+                            </div>
+                            {imageUrl && (
+                                <>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="image-size">Image Size ({imageSize}px)</Label>
+                                        <Slider id="image-size" min={20} max={size / 3} value={[imageSize]} onValueChange={(v) => setImageSize(v[0])} />
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Switch id="excavate" checked={excavate} onCheckedChange={setExcavate} />
+                                        <Label htmlFor="excavate">Clear space for image</Label>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
-                </div>
-            </TabsContent>
-        </Tabs>
+                </TabsContent>
+            </Tabs>
+        </div>
         
-        <div className="flex justify-center items-center">
+        <div className="flex justify-center items-center rounded-lg bg-muted p-4">
             <div ref={qrRef} className="p-4 bg-white rounded-lg shadow-inner transition-all duration-300 ease-in-out" aria-label="QR Code Preview">
               {content ? (
                 <QRCodeCanvas
