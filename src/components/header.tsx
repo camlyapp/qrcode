@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Moon, Sun, QrCode } from "lucide-react";
+import Image from "next/image";
+import { Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
@@ -58,8 +59,8 @@ export function Header() {
     >
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-3">
-          <div className="bg-primary text-primary-foreground rounded-lg p-2.5">
-            <QrCode className="h-5 w-5" />
+          <div className="bg-primary text-primary-foreground rounded-lg p-2">
+            <Image src="/camly.png" alt="QRick Logo" width={24} height={24} className="h-6 w-6" />
           </div>
           <div>
             <CardTitle className="text-xl font-headline font-bold tracking-tight">QRick</CardTitle>
