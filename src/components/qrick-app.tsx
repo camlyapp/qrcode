@@ -357,24 +357,23 @@ export function QrickApp() {
 
     const qrXBase = textSpace.left;
     const qrYBase = textSpace.top;
+    const qrRightBase = qrXBase + size;
+    const qrBottomBase = qrYBase + size;
 
     // Calculate total space needed for images
     const imageSpace = { top: 0, bottom: 0, left: 0, right: 0 };
     qrImageElements.forEach(imageEl => {
-        const qrRight = qrXBase + size;
-        const qrBottom = qrYBase + size;
-        
         if (imageEl.x < qrXBase) {
             imageSpace.left = Math.max(imageSpace.left, qrXBase - imageEl.x);
         }
         if (imageEl.y < qrYBase) {
             imageSpace.top = Math.max(imageSpace.top, qrYBase - imageEl.y);
         }
-        if (imageEl.x + imageEl.width > qrRight) {
-            imageSpace.right = Math.max(imageSpace.right, (imageEl.x + imageEl.width) - qrRight);
+        if (imageEl.x + imageEl.width > qrRightBase) {
+            imageSpace.right = Math.max(imageSpace.right, (imageEl.x + imageEl.width) - qrRightBase);
         }
-        if (imageEl.y + imageEl.height > qrBottom) {
-            imageSpace.bottom = Math.max(imageSpace.bottom, (imageEl.y + imageEl.height) - qrBottom);
+        if (imageEl.y + imageEl.height > qrBottomBase) {
+            imageSpace.bottom = Math.max(imageSpace.bottom, (imageEl.y + imageEl.height) - qrBottomBase);
         }
     });
 
@@ -1638,8 +1637,8 @@ export function QrickApp() {
 
 
   return (
-    <Card className="w-full max-w-4xl shadow-2xl">
-      <CardContent className="grid gap-4 md:grid-cols-[340px_1fr] p-4 pt-6">
+    <Card className="w-full max-w-6xl shadow-2xl">
+      <CardContent className="grid gap-8 md:grid-cols-[400px_1fr] p-4 pt-6">
         <div className="grid gap-4">
           <Tabs defaultValue="qr" value={generatorType} onValueChange={handleGeneratorTypeChange} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
