@@ -100,9 +100,15 @@ export function QrickApp() {
                     } else if (qrStyle === 'corner-shield' && isFinderPattern) {
                         const radius = 0.5 * moduleSize;
                         ctx.beginPath();
-                        ctx.moveTo(moduleX + moduleSize / 2, moduleY);
-                        ctx.lineTo(moduleX + moduleSize, moduleY + moduleSize);
-                        ctx.lineTo(moduleX, moduleY + moduleSize);
+                        ctx.moveTo(moduleX, moduleY + radius);
+                        ctx.lineTo(moduleX, moduleY + moduleSize - radius);
+                        ctx.quadraticCurveTo(moduleX, moduleY + moduleSize, moduleX + radius, moduleY + moduleSize);
+                        ctx.lineTo(moduleX + moduleSize - radius, moduleY + moduleSize);
+                        ctx.quadraticCurveTo(moduleX + moduleSize, moduleY + moduleSize, moduleX + moduleSize, moduleY + moduleSize - radius);
+                        ctx.lineTo(moduleX + moduleSize, moduleY + radius);
+                        ctx.quadraticCurveTo(moduleX + moduleSize, moduleY, moduleX + moduleSize - radius, moduleY);
+                        ctx.lineTo(moduleX + radius, moduleY);
+                        ctx.quadraticCurveTo(moduleX, moduleY, moduleX, moduleY + radius);
                         ctx.closePath();
                         ctx.fill();
                     } else if (qrStyle === 'wavy') {
@@ -423,3 +429,5 @@ export function QrickApp() {
     </Card>
   );
 }
+
+    
