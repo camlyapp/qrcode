@@ -168,24 +168,24 @@ export function QrickApp() {
 
   return (
     <Card className="w-full max-w-4xl shadow-2xl">
-      <CardHeader className="text-center">
-        <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-2">
-            <QrCode className="h-8 w-8" />
+      <CardHeader className="text-center p-4">
+        <div className="mx-auto bg-primary text-primary-foreground rounded-full p-2 w-fit mb-2">
+            <QrCode className="h-6 w-6" />
         </div>
-        <CardTitle className="text-3xl font-headline">QRick</CardTitle>
-        <CardDescription>
+        <CardTitle className="text-2xl font-headline">QRick</CardTitle>
+        <CardDescription className="text-xs">
           Generate and customize your QR code in real-time.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-8 md:grid-cols-2 p-6">
-        <div className="grid gap-6">
+      <CardContent className="grid gap-4 md:grid-cols-2 p-4">
+        <div className="grid gap-4">
             <Tabs defaultValue="content" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="content"><Text className="mr-2"/>Content</TabsTrigger>
                     <TabsTrigger value="style"><Palette className="mr-2"/>Style</TabsTrigger>
                 </TabsList>
-                <TabsContent value="content" className="pt-6">
-                     <div className="grid gap-6">
+                <TabsContent value="content" className="pt-4">
+                     <div className="grid gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="content">Content</Label>
                             <Input
@@ -193,7 +193,7 @@ export function QrickApp() {
                             placeholder="Enter URL or text"
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
-                            className="text-base"
+                            className="text-sm"
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -229,16 +229,16 @@ export function QrickApp() {
                         </div>
                     </div>
                 </TabsContent>
-                <TabsContent value="style" className="pt-6">
-                    <div className="grid gap-6">
+                <TabsContent value="style" className="pt-4">
+                    <div className="grid gap-4">
                         <div className="grid gap-2">
                           <Label>Module Style</Label>
                           <RadioGroup defaultValue="squares" value={qrStyle} onValueChange={(v) => setQrStyle(v as QRStyle)} className="flex gap-4">
-                              <Label htmlFor="style-squares" className="flex items-center gap-2 cursor-pointer">
+                              <Label htmlFor="style-squares" className="flex items-center gap-2 cursor-pointer text-sm">
                                   <RadioGroupItem value="squares" id="style-squares" />
                                   Squares
                               </Label>
-                              <Label htmlFor="style-dots" className="flex items-center gap-2 cursor-pointer">
+                              <Label htmlFor="style-dots" className="flex items-center gap-2 cursor-pointer text-sm">
                                   <RadioGroupItem value="dots" id="style-dots" />
                                   Dots
                               </Label>
@@ -261,29 +261,29 @@ export function QrickApp() {
                             <div className="grid gap-2">
                                 <Label htmlFor="fg-color">Foreground</Label>
                                 <div className="relative">
-                                    <Input id="fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-1 h-10" />
+                                    <Input id="fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-1 h-9" />
                                 </div>
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="bg-color">Background</Label>
                                 <div className="relative">
-                                    <Input id="bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-1 h-10" />
+                                    <Input id="bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-1 h-9" />
                                 </div>
                             </div>
                         </div>
                         <Separator />
-                        <div className="grid gap-4">
+                        <div className="grid gap-3">
                             <div className="grid gap-2">
                               <Label>Center Image</Label>
                                <Input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden"/>
-                               <Button variant="outline" onClick={triggerFileSelect}>
+                               <Button variant="outline" size="sm" onClick={triggerFileSelect}>
                                    <ImageIcon className="mr-2" />
                                    {imageUrl ? "Change Image" : "Upload Image"}
                                </Button>
                                {imageUrl && (
-                                    <Button variant="destructive" size="sm" onClick={removeImage}>
+                                    <Button variant="destructive" size="xs" onClick={removeImage}>
                                         <X className="mr-2" />
-                                        Remove Image
+                                        Remove
                                     </Button>
                                )}
                             </div>
@@ -305,8 +305,8 @@ export function QrickApp() {
             </Tabs>
         </div>
         
-        <div className="flex justify-center items-center rounded-lg bg-muted p-4">
-            <div ref={qrRef} className="p-4 bg-white rounded-lg shadow-inner transition-all duration-300 ease-in-out" aria-label="QR Code Preview">
+        <div className="flex justify-center items-center rounded-lg bg-muted p-2">
+            <div ref={qrRef} className="p-2 bg-white rounded-md shadow-inner transition-all duration-300 ease-in-out" aria-label="QR Code Preview">
               {content ? (
                 <QRCodeCanvas
                     key={`${qrStyle}-${content}-${size}-${level}-${bgColor}-${fgColor}-${JSON.stringify(imageSettings)}`}
@@ -327,8 +327,8 @@ export function QrickApp() {
         </div>
 
       </CardContent>
-      <CardFooter>
-        <Button onClick={handleDownload} className="w-full text-lg py-6" disabled={!content}>
+      <CardFooter className="p-4">
+        <Button onClick={handleDownload} className="w-full text-base py-5" disabled={!content}>
           <Download className="mr-2 h-5 w-5" />
           Download PNG
         </Button>
