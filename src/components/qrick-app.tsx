@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { QRCodeCanvas } from "qrcode.react";
-import { Download, QrCode } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
 
@@ -30,6 +32,12 @@ export function QrickApp() {
   const [content, setContent] = useState<string>("https://firebase.google.com");
   const [size, setSize] = useState<number>(256);
   const [level, setLevel] = useState<ErrorCorrectionLevel>("M");
+  const [fgColor, setFgColor] = useState<string>("#000000");
+  const [bgColor, setBgColor] = useState<string>("#ffffff");
+  const [imageUrl, setImageUrl] = useState<string>("");
+  const [imageSize, setImageSize] = useState<number>(60);
+  const [excavate, setExcavate] = useState<boolean>(true);
+
   const qrRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -62,6 +70,13 @@ export function QrickApp() {
       description: "QR code download started.",
     });
   }, [toast]);
+
+  const imageSettings = imageUrl ? {
+    src: imageUrl,
+    height: imageSize,
+    width: imageSize,
+    excavate: excavate,
+  } : undefined;
 
   return (
     <Card className="w-full max-w-lg shadow-2xl">
@@ -117,6 +132,43 @@ export function QrickApp() {
               </Select>
             </div>
           </div>
+            <Separator />
+            <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="fg-color">Foreground</Label>
+                    <div className="relative">
+                        <Input id="fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-1 h-10" />
+                    </div>
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="bg-color">Background</Label>
+                    <div className="relative">
+                        <Input id="bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-1 h-10" />
+                    </div>
+                </div>
+            </div>
+            <Separator />
+            <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="image-url">Image URL (optional)</Label>
+                  <div className="relative">
+                      <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="image-url" placeholder="https://example.com/logo.png" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} className="pl-9" />
+                  </div>
+                </div>
+                {imageUrl && (
+                    <>
+                        <div className="grid gap-2">
+                            <Label htmlFor="image-size">Image Size (px)</Label>
+                            <Input id="image-size" type="range" min="20" max={size / 3} value={imageSize} onChange={(e) => setImageSize(parseInt(e.target.value, 10))} />
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Switch id="excavate" checked={excavate} onCheckedChange={setExcavate} />
+                            <Label htmlFor="excavate">Clear space for image</Label>
+                        </div>
+                    </>
+                )}
+            </div>
         </div>
         
         <div className="flex justify-center items-center">
@@ -126,8 +178,9 @@ export function QrickApp() {
                     value={content}
                     size={size}
                     level={level}
-                    bgColor="#ffffff"
-                    fgColor="#000000"
+                    bgColor={bgColor}
+                    fgColor={fgColor}
+                    imageSettings={imageSettings}
                 />
               ) : (
                 <div style={{width: size, height: size}} className="bg-gray-100 flex items-center justify-center text-center text-gray-500 rounded-lg p-4">
