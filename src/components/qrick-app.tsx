@@ -171,8 +171,35 @@ export function QrickApp() {
         }
     });
 
-    const canvasWidth = size + textSpace.left + textSpace.right;
-    const canvasHeight = size + textSpace.top + textSpace.bottom;
+    // Calculate total space needed for images
+    const imageSpace = { top: 0, bottom: 0, left: 0, right: 0 };
+    qrImageElements.forEach(imageEl => {
+        const qrRight = textSpace.left + size;
+        const qrBottom = textSpace.top + size;
+        
+        if (imageEl.x < textSpace.left) {
+            imageSpace.left = Math.max(imageSpace.left, textSpace.left - imageEl.x);
+        }
+        if (imageEl.y < textSpace.top) {
+            imageSpace.top = Math.max(imageSpace.top, textSpace.top - imageEl.y);
+        }
+        if (imageEl.x + imageEl.width > qrRight) {
+            imageSpace.right = Math.max(imageSpace.right, (imageEl.x + imageEl.width) - qrRight);
+        }
+        if (imageEl.y + imageEl.height > qrBottom) {
+            imageSpace.bottom = Math.max(imageSpace.bottom, (imageEl.y + imageEl.height) - qrBottom);
+        }
+    });
+
+    const totalSpace = {
+        top: textSpace.top + imageSpace.top,
+        bottom: textSpace.bottom + imageSpace.bottom,
+        left: textSpace.left + imageSpace.left,
+        right: textSpace.right + imageSpace.right,
+    };
+
+    const canvasWidth = size + totalSpace.left + totalSpace.right;
+    const canvasHeight = size + totalSpace.top + totalSpace.bottom;
     
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
@@ -192,9 +219,12 @@ export function QrickApp() {
             ctx.textBaseline = "middle";
             let textX = 0;
             if (textEl.position === 'left') {
-                textX = textSpace.left - (textEl.size / 2) - textEl.margin;
+                textX = totalSpace.left - textSpace.left + (textEl.size / 2) + textEl.margin;
+                if(imageSpace.left > 0) textX = imageSpace.left + (textEl.size / 2) + textEl.margin;
+
             } else { // right
-                textX = canvasWidth - textSpace.right + (textEl.size / 2) + textEl.margin;
+                textX = canvasWidth - totalSpace.right + textSpace.right - (textEl.size / 2) - textEl.margin;
+                 if(imageSpace.right > 0) textX = canvasWidth - imageSpace.right - (textEl.size / 2) - textEl.margin;
             }
             const textY = canvasHeight / 2;
             
@@ -210,19 +240,21 @@ export function QrickApp() {
 
             switch (textEl.position) {
                 case 'top':
-                    textY = textSpace.top - (textEl.size / 2) - textEl.margin;
-                    textX = textEl.align === 'center' ? canvasWidth / 2 : (textEl.align === 'left' ? textSpace.left : canvasWidth - textSpace.right);
+                    textY = totalSpace.top - textSpace.top + (textEl.size / 2) + textEl.margin;
+                    if(imageSpace.top > 0) textY = imageSpace.top + (textEl.size / 2) + textEl.margin;
+                    textX = textEl.align === 'center' ? canvasWidth / 2 : (textEl.align === 'left' ? totalSpace.left : canvasWidth - totalSpace.right);
                     break;
                 case 'bottom':
-                    textY = canvasHeight - textSpace.bottom + (textEl.size / 2) + textEl.margin;
-                    textX = textEl.align === 'center' ? canvasWidth / 2 : (textEl.align === 'left' ? textSpace.left : canvasWidth - textSpace.right);
+                    textY = canvasHeight - totalSpace.bottom + textSpace.bottom - (textEl.size / 2) - textEl.margin;
+                     if(imageSpace.bottom > 0) textY = canvasHeight - imageSpace.bottom - (textEl.size / 2) - textEl.margin;
+                    textX = textEl.align === 'center' ? canvasWidth / 2 : (textEl.align === 'left' ? totalSpace.left : canvasWidth - totalSpace.right);
                     break;
                 case 'left':
-                    textX = textSpace.left - (ctx.measureText(textEl.text).width / 2) - textEl.margin;
+                    textX = totalSpace.left - (ctx.measureText(textEl.text).width / 2) - textEl.margin;
                     textY = canvasHeight / 2;
                     break;
                 case 'right':
-                    textX = canvasWidth - textSpace.right + (ctx.measureText(textEl.text).width / 2) + textEl.margin;
+                    textX = canvasWidth - totalSpace.right + (ctx.measureText(textEl.text).width / 2) + textEl.margin;
                     textY = canvasHeight / 2;
                     break;
             }
@@ -231,8 +263,8 @@ export function QrickApp() {
         ctx.restore();
     });
     
-    const qrX = textSpace.left;
-    const qrY = textSpace.top;
+    const qrX = totalSpace.left;
+    const qrY = totalSpace.top;
     const qrSize = size;
     const margin = 8;
     const qrWithMarginSize = qrSize - margin * 2;
