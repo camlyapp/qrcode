@@ -3,7 +3,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +33,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
 type QRStyle = "squares" | "dots" | "rounded" | "fluid" | "wavy" | "diamond";
+type GradientType = "none" | "linear" | "radial";
 
 const colorPresets = [
     { name: "Classic", fg: "#000000", bg: "#ffffff" },
@@ -56,6 +57,10 @@ export function QrickApp() {
   const [excavate, setExcavate] = useState<boolean>(true);
   const [qrStyle, setQrStyle] = useState<QRStyle>("squares");
   const [useShieldCorners, setUseShieldCorners] = useState<boolean>(false);
+  const [gradientType, setGradientType] = useState<GradientType>("none");
+  const [gradientStartColor, setGradientStartColor] = useState<string>("#8A2BE2");
+  const [gradientEndColor, setGradientEndColor] = useState<string>("#4682B4");
+
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -84,8 +89,22 @@ export function QrickApp() {
         ctx.clearRect(0, 0, size, size);
         ctx.fillStyle = bgColor;
         ctx.fillRect(0, 0, size, size);
+        
+        if (gradientType !== 'none') {
+            let gradient: CanvasGradient;
+            if (gradientType === 'linear') {
+                gradient = ctx.createLinearGradient(0, 0, size, size);
+            } else { // radial
+                gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+            }
+            gradient.addColorStop(0, gradientStartColor);
+            gradient.addColorStop(1, gradientEndColor);
+            ctx.fillStyle = gradient;
+        } else {
+            ctx.fillStyle = fgColor;
+        }
 
-        ctx.fillStyle = fgColor;
+
         for (let row = 0; row < moduleCount; row++) {
             for (let col = 0; col < moduleCount; col++) {
                 if (qrCode.modules.get(row, col)) {
@@ -185,7 +204,7 @@ export function QrickApp() {
     .catch(err => {
         console.error(err);
     });
-  }, [content, size, level, fgColor, bgColor, qrStyle, imageUrl, imageSize, excavate, useShieldCorners]);
+  }, [content, size, level, fgColor, bgColor, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor]);
 
   useEffect(() => {
       if (content) {
@@ -230,6 +249,7 @@ export function QrickApp() {
   const applyPreset = (preset: {fg: string, bg: string}) => {
     setFgColor(preset.fg);
     setBgColor(preset.bg);
+    setGradientType("none");
   }
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -370,7 +390,7 @@ export function QrickApp() {
                             <div className="grid gap-2">
                                 <Label htmlFor="fg-color">Foreground</Label>
                                 <div className="relative">
-                                    <Input id="fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-1 h-9" />
+                                    <Input id="fg-color" type="color" value={fgColor} onChange={(e) => { setFgColor(e.target.value); setGradientType("none"); }} className="p-1 h-9" />
                                 </div>
                             </div>
                             <div className="grid gap-2">
@@ -379,6 +399,40 @@ export function QrickApp() {
                                     <Input id="bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-1 h-9" />
                                 </div>
                             </div>
+                        </div>
+                         <Separator />
+                         <div className="grid gap-3">
+                            <div className="flex items-center space-x-2">
+                                <Switch id="gradient-switch" checked={gradientType !== 'none'} onCheckedChange={(checked) => setGradientType(checked ? 'linear' : 'none')} />
+                                <Label htmlFor="gradient-switch" className="cursor-pointer">Use Gradient</Label>
+                            </div>
+                            {gradientType !== 'none' && (
+                                <>
+                                    <div className="grid gap-2">
+                                        <Label>Gradient Type</Label>
+                                        <RadioGroup value={gradientType} onValueChange={(v) => setGradientType(v as GradientType)} className="flex gap-4">
+                                            <Label htmlFor="gradient-linear" className="flex items-center gap-2 cursor-pointer text-sm">
+                                                <RadioGroupItem value="linear" id="gradient-linear" />
+                                                <GitCommitHorizontal className="h-4 w-4" /> Linear
+                                            </Label>
+                                            <Label htmlFor="gradient-radial" className="flex items-center gap-2 cursor-pointer text-sm">
+                                                <RadioGroupItem value="radial" id="gradient-radial" />
+                                                <CircleDot className="h-4 w-4" /> Radial
+                                            </Label>
+                                        </RadioGroup>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="gradient-start">Start Color</Label>
+                                            <Input id="gradient-start" type="color" value={gradientStartColor} onChange={(e) => setGradientStartColor(e.target.value)} className="p-1 h-9" />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="gradient-end">End Color</Label>
+                                            <Input id="gradient-end" type="color" value={gradientEndColor} onChange={(e) => setGradientEndColor(e.target.value)} className="p-1 h-9" />
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                         <Separator />
                         <div className="grid gap-3">
@@ -436,3 +490,5 @@ export function QrickApp() {
     </Card>
   );
 }
+
+    
