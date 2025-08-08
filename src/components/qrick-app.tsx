@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { QRCodeCanvas } from "qrcode.react";
-import { Download, QrCode, Image as ImageIcon, Palette, Text } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +27,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
 
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
 
@@ -51,6 +52,7 @@ export function QrickApp() {
   const [excavate, setExcavate] = useState<boolean>(true);
 
   const qrRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const handleDownload = useCallback(() => {
@@ -86,6 +88,26 @@ export function QrickApp() {
   const applyPreset = (preset: {fg: string, bg: string}) => {
     setFgColor(preset.fg);
     setBgColor(preset.bg);
+  }
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const triggerFileSelect = () => fileInputRef.current?.click();
+
+  const removeImage = () => {
+    setImageUrl("");
+    if(fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
   }
 
   const imageSettings = imageUrl ? {
@@ -188,11 +210,18 @@ export function QrickApp() {
                     <Separator />
                     <div className="grid gap-4">
                         <div className="grid gap-2">
-                          <Label htmlFor="image-url">Center Image URL (optional)</Label>
-                          <div className="relative">
-                              <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                              <Input id="image-url" placeholder="https://example.com/logo.png" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} className="pl-9" />
-                          </div>
+                          <Label>Center Image</Label>
+                           <Input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden"/>
+                           <Button variant="outline" onClick={triggerFileSelect}>
+                               <ImageIcon className="mr-2" />
+                               {imageUrl ? "Change Image" : "Upload Image"}
+                           </Button>
+                           {imageUrl && (
+                                <Button variant="destructive" size="sm" onClick={removeImage}>
+                                    <X className="mr-2" />
+                                    Remove Image
+                                </Button>
+                           )}
                         </div>
                         {imageUrl && (
                             <>
