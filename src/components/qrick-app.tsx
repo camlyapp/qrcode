@@ -249,7 +249,6 @@ export function QrickApp() {
     if (!canvas) return;
 
     if (generateCard) {
-        // Card Drawing Logic
         const cardWidth = 400;
         const cardHeight = 225;
         const scale = 4;
@@ -261,15 +260,52 @@ export function QrickApp() {
         if (!ctx) return;
         
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Background
         ctx.fillStyle = cardBgColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Card design elements
+        switch (cardDesign) {
+            case 'modern':
+                ctx.fillStyle = cardAccentColor;
+                ctx.fillRect(0, 0, 100 * scale, canvas.height);
+                break;
+            case 'sleek':
+                ctx.fillStyle = cardAccentColor;
+                ctx.fillRect(0, 0, canvas.width, 60 * scale);
+                break;
+            case 'professional':
+                ctx.strokeStyle = cardAccentColor;
+                ctx.lineWidth = 2 * scale;
+                ctx.beginPath();
+                ctx.moveTo(50 * scale, 95 * scale);
+                ctx.lineTo(canvas.width - 50 * scale, 95 * scale);
+                ctx.stroke();
+                break;
+            case 'vcard':
+                ctx.fillStyle = cardAccentColor;
+                ctx.fillRect(0, 0, canvas.width, 60 * scale);
+                break;
+        }
+
+        // --- All text and barcode elements would be defined in a layout object here ---
+        // This is a simplified example of the refactoring direction.
+        // A full implementation would have a more dynamic layout system.
         
-        // Draw card based on design
+        const elements = [
+            // Title
+            { type: 'text', content: cardTitle, font: `bold ${24 * scale}px sans-serif`, color: cardTextColor, x: canvas.width / 2, y: 50 * scale, align: 'center' },
+            // Subtitle
+            { type: 'text', content: cardSubtitle, font: `${16 * scale}px sans-serif`, color: cardTextColor, x: canvas.width / 2, y: 80 * scale, align: 'center' },
+            // Barcode
+            { type: 'barcode', x: (canvas.width - 200 * scale) / 2, y: 120 * scale, width: 200 * scale, height: 40 * scale }
+        ];
+
+        // This is a placeholder for where a more dynamic layout system would be.
+        // The actual rendering logic from before is preserved but should be replaced by a loop over a layout definition.
         if (cardDesign === 'modern') {
             const accentWidth = 100 * scale;
-            ctx.fillStyle = cardAccentColor;
-            ctx.fillRect(0, 0, accentWidth, canvas.height);
-
             ctx.fillStyle = cardTextColor;
             ctx.font = `bold ${22 * scale}px sans-serif`;
             ctx.textAlign = 'left';
@@ -279,9 +315,6 @@ export function QrickApp() {
             ctx.fillText(cardSubtitle, (accentWidth + 20 * scale), 90 * scale);
         } else if (cardDesign === 'sleek') {
             const accentHeight = 60 * scale;
-            ctx.fillStyle = cardAccentColor;
-            ctx.fillRect(0, 0, canvas.width, accentHeight);
-            
             ctx.fillStyle = cardBgColor; // color for text on accent
             ctx.font = `bold ${20 * scale}px sans-serif`;
             ctx.textAlign = 'left';
@@ -298,18 +331,7 @@ export function QrickApp() {
             
             ctx.font = `${14 * scale}px sans-serif`;
             ctx.fillText(cardSubtitle, canvas.width / 2, 75 * scale);
-
-            ctx.strokeStyle = cardAccentColor;
-            ctx.lineWidth = 2 * scale;
-            ctx.beginPath();
-            ctx.moveTo(50 * scale, 95 * scale);
-            ctx.lineTo(canvas.width - 50 * scale, 95 * scale);
-            ctx.stroke();
-
         } else if (cardDesign === 'vcard') {
-            ctx.fillStyle = cardAccentColor;
-            ctx.fillRect(0, 0, canvas.width, 60 * scale);
-
             ctx.fillStyle = cardBgColor;
             ctx.font = `bold ${20 * scale}px sans-serif`;
             ctx.textAlign = 'left';
@@ -318,7 +340,7 @@ export function QrickApp() {
             ctx.fillText(cardSubtitle, 20 * scale, 50 * scale);
 
             ctx.fillStyle = cardTextColor;
-            ctx.font = `14px sans-serif`;
+            ctx.font = `${14 * scale}px sans-serif`;
             const infoStartY = 80 * scale;
             const infoSpacing = 25 * scale;
             
@@ -336,6 +358,8 @@ export function QrickApp() {
             ctx.fillText(cardSubtitle, canvas.width / 2, 80 * scale);
         }
 
+
+        // Barcode Drawing on Card
         try {
             const tempCanvas = document.createElement('canvas');
             let isValid = true;
@@ -362,36 +386,37 @@ export function QrickApp() {
             const barcodeWidth = tempCanvas.width;
             const barcodeHeightCalculated = tempCanvas.height;
             
-            let barcodeX = (canvas.width - barcodeWidth) / 2;
-            let barcodeY;
+            let barcodeX, barcodeY;
             switch(cardDesign) {
                 case 'modern':
-                    barcodeY = 120 * scale;
                     barcodeX = (canvas.width - barcodeWidth + 100 * scale) / 2
+                    barcodeY = 120 * scale;
                     break;
                 case 'sleek':
+                    barcodeX = (canvas.width - barcodeWidth) / 2;
                     barcodeY = 110 * scale;
                     break;
                  case 'professional':
+                    barcodeX = (canvas.width - barcodeWidth) / 2;
                     barcodeY = 115 * scale;
                     break;
                 case 'vcard':
-                    barcodeY = 155 * scale;
                     barcodeX = canvas.width - barcodeWidth - 20 * scale;
+                    barcodeY = 155 * scale;
                     break;
                 default: // classic
+                    barcodeX = (canvas.width - barcodeWidth) / 2;
                     barcodeY = 120 * scale;
             }
             
             ctx.drawImage(tempCanvas, barcodeX, barcodeY, barcodeWidth, barcodeHeightCalculated);
-
 
         } catch (err: any) {
             setBarcodeError(err.message || "Error generating barcode for card.");
         }
 
     } else {
-        // Barcode Drawing Logic
+        // Barcode-only Drawing Logic
         const displayWidth = 320;
         const displayHeight = 80;
         const scale = 4;
@@ -465,7 +490,7 @@ export function QrickApp() {
         }
         setBarcodeError(null);
       }
-  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, cardTitle, cardSubtitle, cardEmail, cardPhone, cardWebsite, cardBgColor, cardTextColor, cardDesign, cardAccentColor]);
+  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, cardTitle, cardSubtitle, cardEmail, cardPhone, cardWebsite, cardBgColor, cardTextColor, cardDesign, cardAccentColor, barcodeHeight, barcodeTextSize, level, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, generateCard]);
 
   const handleDownload = useCallback(async (format: 'png' | 'jpeg' | 'svg') => {
     if (!content || barcodeError) {
@@ -538,7 +563,7 @@ export function QrickApp() {
       title: "Success",
       description: `Download started for ${fileName}.`,
     });
-  }, [toast, generatorType, barcodeFormat, barcodeError, content, level, fgColor, bgColor, barcodeHeight, barcodeTextSize, barcodeError, generateCard]);
+  }, [toast, generatorType, barcodeFormat, barcodeError, content, level, fgColor, bgColor, barcodeHeight, barcodeTextSize, generateCard]);
 
   const applyPreset = (preset: {fg: string, bg: string}) => {
     setFgColor(preset.fg);
@@ -1063,6 +1088,3 @@ export function QrickApp() {
       </CardFooter>
     </Card>
   );
-}
-
-    
