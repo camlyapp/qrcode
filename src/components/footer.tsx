@@ -15,15 +15,6 @@ export function Footer() {
             <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary"><Linkedin className="h-5 w-5" /></a>
         </div>
         <p className="flex items-center justify-center md:justify-end">
-          Made with <Heart className="mx-1 h-4 w-4 text-red-500" /> by{' '}
-          <a
-            href="https://firebase.google.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-1 font-semibold text-primary hover:underline"
-          >
-            Firebase
-          </a>
         </p>
       </div>
     </footer>
