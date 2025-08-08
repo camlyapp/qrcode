@@ -14,18 +14,17 @@ export function Header() {
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('qrick-theme') as Theme | null;
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const defaultTheme = savedTheme || (prefersDark ? 'dark' : 'light');
-    setTheme(defaultTheme);
+    setTheme(savedTheme || 'light');
   }, []);
 
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
+      localStorage.setItem('qrick-theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
+      localStorage.setItem('qrick-theme', 'light');
     }
-    localStorage.setItem('qrick-theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
