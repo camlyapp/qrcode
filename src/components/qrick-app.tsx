@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { Download, QrCode, Image as ImageIcon, Palette, Text, X } from "lucide-react";
 
@@ -26,10 +26,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
 
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
+type QRStyle = "squares" | "dots";
 
 const colorPresets = [
     { name: "Classic", fg: "#000000", bg: "#ffffff" },
@@ -38,6 +40,7 @@ const colorPresets = [
     { name: "Sunset", fg: "#FF4500", bg: "#FFF8DC" },
     { name: "Royal", fg: "#4169E1", bg: "#F8F8FF" },
     { name: "Charcoal", fg: "#36454F", bg: "#F5F5F5" },
+    { name: "Mint", fg: "#3EB489", bg: "#F5FFFA" },
 ];
 
 
@@ -50,6 +53,7 @@ export function QrickApp() {
   const [imageUrl, setImageUrl] = useState<string>("");
   const [imageSize, setImageSize] = useState<number>(60);
   const [excavate, setExcavate] = useState<boolean>(true);
+  const [qrStyle, setQrStyle] = useState<QRStyle>("squares");
 
   const qrRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -117,6 +121,50 @@ export function QrickApp() {
     excavate: excavate,
   } : undefined;
 
+  useEffect(() => {
+    if (qrStyle === 'dots') {
+      const canvas = qrRef.current?.querySelector('canvas');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          const originalDrawImage = ctx.drawImage;
+          ctx.drawImage = function (...args) {
+            if (args.length === 9) {
+              const [image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight] = args;
+              const tempCanvas = document.createElement('canvas');
+              tempCanvas.width = sWidth;
+              tempCanvas.height = sHeight;
+              const tempCtx = tempCanvas.getContext('2d');
+              if (tempCtx) {
+                tempCtx.drawImage(image, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
+                const imageData = tempCtx.getImageData(0, 0, sWidth, sHeight);
+                const data = imageData.data;
+                for (let i = 0; i < data.length; i += 4) {
+                  // If pixel is not transparent
+                  if (data[i + 3] !== 0) {
+                     data[i] = 255;
+                     data[i+1] = 255;
+                     data[i+2] = 255;
+                  }
+                }
+                tempCtx.putImageData(imageData, 0, 0);
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(dx + dWidth / 2, dy + dHeight / 2, dWidth / 2.2, 0, 2 * Math.PI);
+                ctx.clip();
+                originalDrawImage.apply(ctx, [tempCanvas, 0, 0, sWidth, sHeight, dx, dy, dWidth, dHeight]);
+                ctx.restore();
+              }
+            } else {
+              originalDrawImage.apply(ctx, args as any);
+            }
+          };
+        }
+      }
+    }
+  }, [content, size, level, bgColor, fgColor, imageSettings, qrStyle]);
+
   return (
     <Card className="w-full max-w-4xl shadow-2xl">
       <CardHeader className="text-center">
@@ -183,6 +231,20 @@ export function QrickApp() {
                 <TabsContent value="style" className="pt-6">
                     <div className="grid gap-6">
                         <div className="grid gap-2">
+                          <Label>Module Style</Label>
+                          <RadioGroup defaultValue="squares" value={qrStyle} onValueChange={(v) => setQrStyle(v as QRStyle)} className="flex gap-4">
+                              <Label htmlFor="style-squares" className="flex items-center gap-2 cursor-pointer">
+                                  <RadioGroupItem value="squares" id="style-squares" />
+                                  Squares
+                              </Label>
+                              <Label htmlFor="style-dots" className="flex items-center gap-2 cursor-pointer">
+                                  <RadioGroupItem value="dots" id="style-dots" />
+                                  Dots
+                              </Label>
+                          </RadioGroup>
+                        </div>
+                        <Separator />
+                        <div className="grid gap-2">
                             <Label>Color Presets</Label>
                             <div className="flex flex-wrap gap-2">
                                 {colorPresets.map(preset => (
@@ -246,12 +308,15 @@ export function QrickApp() {
             <div ref={qrRef} className="p-4 bg-white rounded-lg shadow-inner transition-all duration-300 ease-in-out" aria-label="QR Code Preview">
               {content ? (
                 <QRCodeCanvas
+                    key={qrStyle}
                     value={content}
                     size={size}
                     level={level}
                     bgColor={bgColor}
                     fgColor={fgColor}
                     imageSettings={imageSettings}
+                    renderAs="canvas"
+                    includeMargin={true}
                 />
               ) : (
                 <div style={{width: size, height: size}} className="bg-gray-100 flex items-center justify-center text-center text-gray-500 rounded-lg p-4">
