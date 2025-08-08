@@ -346,6 +346,18 @@ export function QrickApp() {
     setBarcodeFormat(value);
     if (forceContent || generatorType === 'barcode') {
         switch (value) {
+            case 'CODE128':
+                setContent('Example 1234');
+                break;
+            case 'CODE128A':
+                setContent('EXAMPLE');
+                break;
+            case 'CODE128B':
+                setContent('Example 1234');
+                break;
+            case 'CODE128C':
+                setContent('12345678');
+                break;
             case 'EAN13':
                 setContent('1234567890128');
                 break;
@@ -358,12 +370,6 @@ export function QrickApp() {
             case 'EAN2':
                 setContent('12');
                 break;
-            case 'CODE128':
-            case 'CODE128A':
-            case 'CODE128B':
-            case 'CODE128C':
-                setContent('Example 1234');
-                break;
             case 'UPC':
                 setContent('123456789012');
                 break;
@@ -371,7 +377,7 @@ export function QrickApp() {
                 setContent('01234567');
                 break;
             case 'CODE39':
-                setContent('CODE39');
+                setContent('CODE39 EXAMPLE');
                 break;
             case 'ITF14':
                 setContent('12345678901231');
@@ -384,16 +390,16 @@ export function QrickApp() {
             case 'MSI11':
             case 'MSI1010':
             case 'MSI1110':
-                setContent('123456');
+                setContent('123456789');
                 break;
             case 'pharmacode':
-                setContent('12345');
+                setContent('1337');
                 break;
             case 'codabar':
                 setContent('A12345B');
                 break;
             default:
-                setContent('');
+                setContent('Example');
                 break;
         }
     }
