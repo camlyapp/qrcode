@@ -95,6 +95,7 @@ export function QrickApp() {
   const [barcodeHeight, setBarcodeHeight] = useState<number>(100);
   const [barcodeTextSize, setBarcodeTextSize] = useState<number>(20);
   const [textColor, setTextColor] = useState<string>("#000000");
+  const [showBarcodeText, setShowBarcodeText] = useState<boolean>(true);
 
   // Card states
   const [generateCard, setGenerateCard] = useState<boolean>(false);
@@ -372,11 +373,13 @@ export function QrickApp() {
                             }
                             ctx.drawImage(tempCanvas, element.x, element.y, element.width, element.height);
                             
-                            // Draw barcode text separately if needed
-                            ctx.font = `${barcodeTextSize * scale}px monospace`;
-                            ctx.fillStyle = textColor;
-                            ctx.textAlign = 'center';
-                            ctx.fillText(element.content, element.x + element.width / 2, element.y + element.height + (barcodeTextSize * scale));
+                            if (showBarcodeText) {
+                                // Draw barcode text separately if needed
+                                ctx.font = `${barcodeTextSize * scale}px monospace`;
+                                ctx.fillStyle = textColor;
+                                ctx.textAlign = 'center';
+                                ctx.fillText(element.content, element.x + element.width / 2, element.y + element.height + (barcodeTextSize * scale));
+                            }
 
                         } catch (err: any) {
                             setBarcodeError(err.message || "Error generating barcode for card.");
@@ -428,7 +431,8 @@ export function QrickApp() {
             const scale = 4;
             
             canvas.width = displayWidth * scale;
-            canvas.height = (displayHeight + (barcodeTextSize * 2.5 / 2)) * scale;
+            const canvasHeight = showBarcodeText ? (displayHeight + (barcodeTextSize * 2.5 / 2)) * scale : displayHeight * scale;
+            canvas.height = canvasHeight;
             
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
@@ -460,10 +464,12 @@ export function QrickApp() {
 
                 if (ctx) {
                     ctx.drawImage(tempCanvas, (canvas.width - barcodeWidth) / 2, 0, barcodeWidth, barcodeHeightCalculated);
-                    ctx.font = `${barcodeTextSize * scale}px monospace`;
-                    ctx.fillStyle = textColor;
-                    ctx.textAlign = 'center';
-                    ctx.fillText(content, canvas.width / 2, barcodeHeightCalculated + (barcodeTextSize * scale));
+                    if (showBarcodeText) {
+                        ctx.font = `${barcodeTextSize * scale}px monospace`;
+                        ctx.fillStyle = textColor;
+                        ctx.textAlign = 'center';
+                        ctx.fillText(content, canvas.width / 2, barcodeHeightCalculated + (barcodeTextSize * scale));
+                    }
                 }
 
             } catch (err: any) {
@@ -474,14 +480,14 @@ export function QrickApp() {
                 }
             }
         }
-    }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize, textColor, generateCard, cardBgColor, cardTextColor, cardDesign, cardAccentColor, cardElements, selectedElement, cardBgImageUrl]);
+    }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize, textColor, showBarcodeText, generateCard, cardBgColor, cardTextColor, cardDesign, cardAccentColor, cardElements, selectedElement, cardBgImageUrl]);
 
   const getTextMetrics = (text: string, font: string, fontSize: number, ctx: CanvasRenderingContext2D) => {
     ctx.font = `bold ${fontSize}px ${font}`;
     const metrics = ctx.measureText(text);
     let height = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
-    if (isNaN(height)) {
-        // Fallback for browsers that don't support these properties
+    if (isNaN(height) || height === 0) {
+        // Fallback for browsers that don't support these properties or return 0
         height = fontSize * 1.2;
     }
     return {
@@ -620,7 +626,7 @@ export function QrickApp() {
         }
         setBarcodeError(null);
       }
-  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, barcodeHeight, barcodeTextSize, level, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, generateCard, cardElements, selectedElement]);
+  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, barcodeHeight, barcodeTextSize, level, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, generateCard, cardElements, selectedElement, showBarcodeText]);
 
     const getPointerPosition = (e: React.MouseEvent | React.TouchEvent) => {
         const canvas = canvasRef.current;
@@ -790,7 +796,7 @@ export function QrickApp() {
                 lineColor: fgColor,
                 background: bgColor,
                 height: barcodeHeight * 0.8,
-                fontSize: barcodeTextSize,
+                fontSize: showBarcodeText ? barcodeTextSize : 0,
                 fontOptions: "monospace",
                 textMargin: 5,
                 xmlns: "http://www.w3.org/2000/svg",
@@ -838,7 +844,7 @@ export function QrickApp() {
       title: "Success",
       description: `Download started for ${fileName}.`,
     });
-  }, [toast, generatorType, barcodeFormat, barcodeError, content, level, fgColor, bgColor, barcodeHeight, barcodeTextSize, generateCard]);
+  }, [toast, generatorType, barcodeFormat, barcodeError, content, level, fgColor, bgColor, barcodeHeight, barcodeTextSize, generateCard, showBarcodeText]);
 
   const applyPreset = (preset: {fg: string, bg: string}) => {
     setFgColor(preset.fg);
@@ -1422,6 +1428,12 @@ export function QrickApp() {
                                     </Button>
                                 </div>
                                 <p className="text-sm text-muted-foreground">Move or resize the selected {currentSelectedElement.type} on the canvas.</p>
+                                {currentSelectedElement.type === 'barcode' && (
+                                    <div className="flex items-center space-x-2 mt-2">
+                                        <Switch id="show-barcode-text" checked={showBarcodeText} onCheckedChange={setShowBarcodeText} />
+                                        <Label htmlFor="show-barcode-text">Show Text</Label>
+                                    </div>
+                                )}
                             </div>
                          )}
 
@@ -1448,18 +1460,22 @@ export function QrickApp() {
                         </div>
                         <Separator />
                         <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="barcode-height">Height ({barcodeHeight}%)</Label>
-                            <Slider id="barcode-height" min={50} max={150} value={[barcodeHeight]} onValueChange={(v) => setBarcodeHeight(v[0])} />
+                            <div className="grid gap-2">
+                                <Label htmlFor="barcode-height">Height ({barcodeHeight}%)</Label>
+                                <Slider id="barcode-height" min={50} max={150} value={[barcodeHeight]} onValueChange={(v) => setBarcodeHeight(v[0])} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="barcode-text-size" className="flex items-center">
+                                <CaseSensitive className="mr-2 h-4 w-4"/>
+                                Text Size ({barcodeTextSize}px)
+                                </Label>
+                                <Slider id="barcode-text-size" min={10} max={30} value={[barcodeTextSize]} onValueChange={(v) => setBarcodeTextSize(v[0])} />
+                            </div>
                         </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="barcode-text-size" className="flex items-center">
-                            <CaseSensitive className="mr-2 h-4 w-4"/>
-                            Text Size ({barcodeTextSize}px)
-                            </Label>
-                            <Slider id="barcode-text-size" min={10} max={30} value={[barcodeTextSize]} onValueChange={(v) => setBarcodeTextSize(v[0])} />
+                        <div className="flex items-center space-x-2">
+                            <Switch id="show-barcode-text-standalone" checked={showBarcodeText} onCheckedChange={setShowBarcodeText} />
+                            <Label htmlFor="show-barcode-text-standalone">Show Text</Label>
                         </div>
-                      </div>
                     </div>
                    )}
                   
@@ -1476,9 +1492,9 @@ export function QrickApp() {
                 <canvas 
                     ref={canvasRef} 
                     width={generatorType === 'qr' ? size : (generateCard ? 1600 : 1280)} 
-                    height={generatorType === 'qr' ? size : (generateCard ? 900 : 320 + (barcodeTextSize * 2.5 / 2))}
+                    height={generatorType === 'qr' ? size : (generateCard ? 900 : (showBarcodeText ? 320 + (barcodeTextSize * 2.5) : 320))}
                     style={
-                        (generatorType === 'barcode' && !generateCard) ? { width: 320, height: 80 + (barcodeTextSize * 2.5 / 2), cursor: 'default' } : 
+                        (generatorType === 'barcode' && !generateCard) ? { width: 320, height: (showBarcodeText ? 80 + (barcodeTextSize * 2.5 / 2) : 80), cursor: 'default' } : 
                         (generateCard ? { width: 400, height: 225, cursor: cursorStyle } : {width: size, height: size, cursor: 'default'})
                     }
                     onMouseDown={handleMouseDown}
@@ -1518,3 +1534,5 @@ export function QrickApp() {
   );
 
 }
+
+    
