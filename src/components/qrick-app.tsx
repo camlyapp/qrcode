@@ -5,7 +5,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -846,6 +846,52 @@ export function QrickApp() {
     });
   }, [toast, generatorType, barcodeFormat, barcodeError, content, level, fgColor, bgColor, barcodeHeight, barcodeTextSize, generateCard, showBarcodeText]);
 
+  const handleShare = async () => {
+    if (!content || barcodeError) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: barcodeError || "Could not find code to share.",
+      });
+      return;
+    }
+    
+    try {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const dataUrl = canvas.toDataURL('image/png');
+        const blob = await (await fetch(dataUrl)).blob();
+        const file = new File([blob], `${generatorType}-code.png`, { type: 'image/png' });
+
+        if (navigator.share) {
+            await navigator.share({
+                title: 'QRick Code',
+                text: `Here is my ${generatorType === 'qr' ? 'QR code' : 'barcode'}.`,
+                files: [file],
+            });
+            toast({
+                title: "Shared!",
+                description: "The code was shared successfully.",
+            });
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Not Supported",
+                description: "Web Share API is not supported in your browser.",
+            });
+        }
+    } catch (err) {
+        console.error("Share failed:", err);
+        toast({
+            variant: "destructive",
+            title: "Share Failed",
+            description: "An error occurred while trying to share.",
+        });
+    }
+  };
+
+
   const applyPreset = (preset: {fg: string, bg: string}) => {
     setFgColor(preset.fg);
     setBgColor(preset.bg);
@@ -1514,7 +1560,7 @@ export function QrickApp() {
         </div>
 
       </CardContent>
-      <CardFooter className="p-4">
+      <CardFooter className="p-4 flex gap-2">
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button className="w-full text-base py-5" disabled={!content || !!barcodeError}>
@@ -1529,6 +1575,18 @@ export function QrickApp() {
                 <DropdownMenuItem onClick={() => handleDownload('svg')}>SVG</DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                     <Button variant="outline" size="icon" className="h-auto" onClick={handleShare} disabled={!content || !!barcodeError}>
+                        <Share2 className="h-5 w-5" />
+                     </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Share</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
       </CardFooter>
     </Card>
   );
