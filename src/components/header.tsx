@@ -63,7 +63,7 @@ export function Header() {
     >
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-3">
-          <div className="bg-primary text-primary-foreground rounded-lg p-2">
+          <div className="rounded-lg p-2">
             <Image src="/camly.png" alt="QRick Logo" width={24} height={24} className="h-6 w-6" />
           </div>
           <div>
