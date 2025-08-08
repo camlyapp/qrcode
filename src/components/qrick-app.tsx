@@ -3,7 +3,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -32,7 +32,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
-type QRStyle = "squares" | "dots" | "rounded";
+type QRStyle = "squares" | "dots" | "rounded" | "fluid";
 
 const colorPresets = [
     { name: "Classic", fg: "#000000", bg: "#ffffff" },
@@ -95,17 +95,32 @@ export function QrickApp() {
                         ctx.beginPath();
                         ctx.arc(moduleX + moduleSize / 2, moduleY + moduleSize / 2, (moduleSize / 2.2), 0, 2 * Math.PI);
                         ctx.fill();
-                    } else if (qrStyle === 'rounded') {
+                    } else if (qrStyle === 'rounded' || qrStyle === 'fluid') {
+                        const radius = (qrStyle === 'fluid' ? 0.5 : 0.25) * moduleSize;
+                        
+                        const top = row > 0 && qrCode.modules.get(row - 1, col);
+                        const bottom = row < moduleCount - 1 && qrCode.modules.get(row + 1, col);
+                        const left = col > 0 && qrCode.modules.get(row, col - 1);
+                        const right = col < moduleCount - 1 && qrCode.modules.get(row, col + 1);
+
                         ctx.beginPath();
-                        ctx.moveTo(moduleX + moduleSize * 0.25, moduleY);
-                        ctx.lineTo(moduleX + moduleSize * 0.75, moduleY);
-                        ctx.quadraticCurveTo(moduleX + moduleSize, moduleY, moduleX + moduleSize, moduleY + moduleSize * 0.25);
-                        ctx.lineTo(moduleX + moduleSize, moduleY + moduleSize * 0.75);
-                        ctx.quadraticCurveTo(moduleX + moduleSize, moduleY + moduleSize, moduleX + moduleSize * 0.75, moduleY + moduleSize);
-                        ctx.lineTo(moduleX + moduleSize * 0.25, moduleY + moduleSize);
-                        ctx.quadraticCurveTo(moduleX, moduleY + moduleSize, moduleX, moduleY + moduleSize * 0.75);
-                        ctx.lineTo(moduleX, moduleY + moduleSize * 0.25);
-                        ctx.quadraticCurveTo(moduleX, moduleY, moduleX + moduleSize * 0.25, moduleY);
+                        ctx.moveTo(moduleX + radius, moduleY);
+                        ctx.lineTo(moduleX + moduleSize - radius, moduleY);
+                        if (!top && !right) ctx.quadraticCurveTo(moduleX + moduleSize, moduleY, moduleX + moduleSize, moduleY + radius);
+                        else ctx.lineTo(moduleX + moduleSize, moduleY + radius);
+
+                        ctx.lineTo(moduleX + moduleSize, moduleY + moduleSize - radius);
+                        if (!bottom && !right) ctx.quadraticCurveTo(moduleX + moduleSize, moduleY + moduleSize, moduleX + moduleSize - radius, moduleY + moduleSize);
+                        else ctx.lineTo(moduleX + moduleSize - radius, moduleY + moduleSize);
+
+                        ctx.lineTo(moduleX + radius, moduleY + moduleSize);
+                        if (!bottom && !left) ctx.quadraticCurveTo(moduleX, moduleY + moduleSize, moduleX, moduleY + moduleSize - radius);
+                        else ctx.lineTo(moduleX, moduleY + moduleSize - radius);
+
+                        ctx.lineTo(moduleX, moduleY + radius);
+                        if (!top && !left) ctx.quadraticCurveTo(moduleX, moduleY, moduleX + radius, moduleY);
+                        else ctx.lineTo(moduleX + radius, moduleY);
+
                         ctx.closePath();
                         ctx.fill();
                     } else {
@@ -281,6 +296,10 @@ export function QrickApp() {
                               <Label htmlFor="style-rounded" className="flex items-center gap-2 cursor-pointer text-sm">
                                   <RadioGroupItem value="rounded" id="style-rounded" />
                                   Rounded
+                              </Label>
+                              <Label htmlFor="style-fluid" className="flex items-center gap-2 cursor-pointer text-sm">
+                                  <RadioGroupItem value="fluid" id="style-fluid" />
+                                  Fluid
                               </Label>
                           </RadioGroup>
                         </div>
