@@ -4,7 +4,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -44,7 +44,7 @@ import { SVG } from "react-svg";
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
 type QRStyle = "squares" | "dots" | "rounded" | "fluid" | "wavy" | "diamond";
 type GradientType = "none" | "linear" | "radial";
-type GeneratorType = "qr" | "barcode";
+type GeneratorType = "qr" | "barcode" | "card";
 type BarcodeFormat = "CODE128" | "CODE128A" | "CODE128B" | "CODE128C" | "EAN13" | "EAN8" | "EAN5" | "EAN2" | "UPC" | "UPCE" | "CODE39" | "ITF14" | "ITF" | "MSI" | "MSI10" | "MSI11" | "MSI1010" | "MSI1110" | "pharmacode" | "codabar";
 
 const colorPresets = [
@@ -79,6 +79,12 @@ export function QrickApp() {
   const [barcodeTextSize, setBarcodeTextSize] = useState<number>(20);
   const [textColor, setTextColor] = useState<string>("#000000");
 
+  // Card states
+  const [cardTitle, setCardTitle] = useState<string>("John Doe");
+  const [cardSubtitle, setCardSubtitle] = useState<string>("Software Engineer");
+  const [cardBgColor, setCardBgColor] = useState<string>("#f0f0f0");
+  const [cardTextColor, setCardTextColor] = useState<string>("#000000");
+
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -88,6 +94,9 @@ export function QrickApp() {
     setBarcodeError(null);
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    canvas.width = size;
+    canvas.height = size;
 
     QRCode.toDataURL(content, {
         errorCorrectionLevel: level,
@@ -288,13 +297,81 @@ export function QrickApp() {
     }
   }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize, textColor]);
 
+  const drawCard = useCallback(() => {
+    setBarcodeError(null);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const cardWidth = 400;
+    const cardHeight = 225;
+    const scale = 4;
+    
+    canvas.width = cardWidth * scale;
+    canvas.height = cardHeight * scale;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = cardBgColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.fillStyle = cardTextColor;
+    ctx.font = `${24 * scale}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(cardTitle, canvas.width / 2, 50 * scale);
+    
+    ctx.font = `${16 * scale}px sans-serif`;
+    ctx.fillText(cardSubtitle, canvas.width / 2, 80 * scale);
+    
+    try {
+        let isValid = true;
+        const tempCanvas = document.createElement('canvas');
+
+        JsBarcode(tempCanvas, content, {
+            format: barcodeFormat,
+            lineColor: fgColor,
+            background: 'rgba(0,0,0,0)',
+            width: 1.5 * scale,
+            height: 40 * scale,
+            displayValue: true,
+            fontOptions: "bold",
+            textAlign: "center",
+            textPosition: "bottom",
+            textMargin: 2 * scale,
+            fontSize: 12 * scale,
+            lineColor: fgColor,
+            valid: (valid: boolean) => {
+                if (!valid) {
+                     isValid = false;
+                }
+            }
+        });
+        
+        if (!isValid) {
+            setBarcodeError("Invalid barcode content for card.");
+            return;
+        }
+
+        const barcodeWidth = tempCanvas.width;
+        const barcodeHeight = tempCanvas.height;
+        ctx.drawImage(tempCanvas, (canvas.width - barcodeWidth) / 2, 120 * scale, barcodeWidth, barcodeHeight);
+
+    } catch (err: any) {
+        setBarcodeError(err.message || "Error generating barcode for card.");
+    }
+
+  }, [cardTitle, cardSubtitle, cardBgColor, cardTextColor, content, barcodeFormat, fgColor, bgColor]);
+
 
   useEffect(() => {
       if (content) {
         if (generatorType === 'qr') {
             drawQR();
-        } else {
+        } else if (generatorType === 'barcode') {
             drawBarcode();
+        } else if (generatorType === 'card') {
+            drawCard();
         }
       } else {
         const canvas = canvasRef.current;
@@ -302,13 +379,13 @@ export function QrickApp() {
         if (ctx) {
             if (generatorType === 'qr') {
                 ctx.clearRect(0,0,size,size);
-            } else {
+            } else if (generatorType === 'barcode' || generatorType === 'card') {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
         }
         setBarcodeError(null);
       }
-  }, [drawQR, drawBarcode, content, size, generatorType, fgColor, bgColor, textColor]);
+  }, [drawQR, drawBarcode, drawCard, content, size, generatorType, fgColor, bgColor, textColor, cardTitle, cardSubtitle, cardBgColor, cardTextColor]);
 
   const handleDownload = useCallback(async (format: 'png' | 'jpeg' | 'svg') => {
     if (!content || barcodeError) {
@@ -321,9 +398,9 @@ export function QrickApp() {
     }
     
     const downloadLink = document.createElement("a");
-    const fileName = `${generatorType === 'qr' ? 'qr-code' : barcodeFormat.toLowerCase()}.${format}`;
+    const fileName = `${generatorType === 'qr' ? 'qr-code' : (generatorType === 'card' ? 'card' : barcodeFormat.toLowerCase())}.${format}`;
 
-    if (format === 'svg') {
+    if (format === 'svg' && generatorType !== 'card') {
         let svgString = '';
         if (generatorType === 'qr') {
             svgString = await QRCode.toString(content, {
@@ -332,7 +409,7 @@ export function QrickApp() {
                 color: { dark: fgColor, light: bgColor }
             });
 
-        } else {
+        } else if (generatorType === 'barcode') {
             const svgNode = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             document.body.appendChild(svgNode);
             try {
@@ -358,6 +435,14 @@ export function QrickApp() {
         const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
         downloadLink.href = URL.createObjectURL(blob);
     } else {
+        if (format === 'svg' && generatorType === 'card') {
+             toast({
+                variant: "destructive",
+                title: "Not Supported",
+                description: "SVG download is not supported for cards yet.",
+            });
+            return;
+        }
         const canvas = canvasRef.current;
         if (!canvas) return;
         const dataUrl = canvas.toDataURL(`image/${format}`, 1.0);
@@ -407,14 +492,14 @@ export function QrickApp() {
     setGeneratorType(newType);
     if (newType === 'qr') {
         setContent('https://firebase.google.com');
-    } else {
+    } else if (newType === 'barcode' || newType === 'card') {
         handleBarcodeFormatChange(barcodeFormat, true);
     }
   }
 
   const handleBarcodeFormatChange = (value: BarcodeFormat, forceContent?: boolean) => {
     setBarcodeFormat(value);
-    if (forceContent || generatorType === 'barcode') {
+    if (forceContent || generatorType === 'barcode' || generatorType === 'card') {
         switch (value) {
             case 'CODE128':
             case 'CODE128B':
@@ -487,9 +572,10 @@ export function QrickApp() {
       <CardContent className="grid gap-4 md:grid-cols-[340px_1fr] p-4">
         <div className="grid gap-4">
           <Tabs defaultValue="qr" value={generatorType} onValueChange={handleGeneratorTypeChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="qr"><QrCode className="mr-2"/>QR Code</TabsTrigger>
                 <TabsTrigger value="barcode"><Barcode className="mr-2"/>Barcode</TabsTrigger>
+                <TabsTrigger value="card"><CreditCard className="mr-2"/>Card</TabsTrigger>
             </TabsList>
 
             <TabsContent value="qr" className="pt-4">
@@ -765,17 +851,51 @@ export function QrickApp() {
                 </div>
               </ScrollArea>
             </TabsContent>
+
+            <TabsContent value="card" className="pt-4">
+              <ScrollArea className="h-[28rem]">
+                <div className="grid gap-4 pr-4">
+                  <div className="grid gap-2">
+                      <Label htmlFor="card-title">Title</Label>
+                      <Input id="card-title" value={cardTitle} onChange={(e) => setCardTitle(e.target.value)} />
+                  </div>
+                  <div className="grid gap-2">
+                      <Label htmlFor="card-subtitle">Subtitle</Label>
+                      <Input id="card-subtitle" value={cardSubtitle} onChange={(e) => setCardSubtitle(e.target.value)} />
+                  </div>
+                  <Separator />
+                  <div className="grid grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                          <Label htmlFor="card-bg-color">Background</Label>
+                          <Input id="card-bg-color" type="color" value={cardBgColor} onChange={(e) => setCardBgColor(e.target.value)} className="p-1 h-9" />
+                      </div>
+                      <div className="grid gap-2">
+                          <Label htmlFor="card-text-color">Text Color</Label>
+                          <Input id="card-text-color" type="color" value={cardTextColor} onChange={(e) => setCardTextColor(e.target.value)} className="p-1 h-9" />
+                      </div>
+                  </div>
+                  <Separator />
+                  <div className="grid gap-2">
+                    <Label>Barcode Settings</Label>
+                    <p className="text-xs text-muted-foreground">Configure the barcode in the "Barcode" tab. The content and type from there will be used on this card.</p>
+                  </div>
+                </div>
+              </ScrollArea>
+            </TabsContent>
           </Tabs>
         </div>
         
         <div className="flex justify-center items-center rounded-lg bg-muted p-2">
-            <div className="p-2 bg-white rounded-md shadow-inner transition-all duration-300 ease-in-out" aria-label="Barcode Preview">
+            <div className="p-2 bg-white rounded-md shadow-inner transition-all duration-300 ease-in-out" aria-label="Preview">
               {content && !barcodeError ? (
                 <canvas 
                     ref={canvasRef} 
-                    width={generatorType === 'qr' ? size : '1280'} 
-                    height={generatorType === 'qr' ? size : '320'} 
-                    style={generatorType === 'barcode' ? { width: 320, height: 80 + (barcodeTextSize * 2.5 / 2) } : {}}
+                    width={generatorType === 'qr' ? size : (generatorType === 'card' ? 1600 : 1280)} 
+                    height={generatorType === 'qr' ? size : (generatorType === 'card' ? 900 : 320 + (barcodeTextSize * 2.5 / 2))}
+                    style={
+                        generatorType === 'barcode' ? { width: 320, height: 80 + (barcodeTextSize * 2.5 / 2) } : 
+                        (generatorType === 'card' ? { width: 400, height: 225 } : {width: size, height: size})
+                    }
                 />
               ) : (
                 <div style={{width: generatorType === 'qr' ? size : 320, height: generatorType === 'qr' ? size : 80 + (barcodeTextSize * 2.5 / 2)}} className="bg-gray-100 flex items-center justify-center text-center text-red-500 rounded-lg p-4">
@@ -807,6 +927,3 @@ export function QrickApp() {
 }
 
     
-
-    
-
