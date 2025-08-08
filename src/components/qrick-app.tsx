@@ -4,7 +4,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2, Sun, Moon, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Star, Plus, AlignLeft, AlignCenter, AlignRight, Pilcrow, Edit, ImagePlus } from "lucide-react";
+import QRCodeStyling, { type DotType, type CornerSquareType, type CornerDotType } from "qr-code-styling";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2, Sun, Moon, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Star, Plus, AlignLeft, AlignCenter, AlignRight, Pilcrow, Edit, ImagePlus, Shapes } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +52,7 @@ type CardDesign = "classic" | "modern" | "sleek" | "professional" | "vcard" | "m
 type ResizeHandle = 'tl' | 'tr' | 'bl' | 'br';
 type BarcodeTextPosition = 'top' | 'bottom';
 type QrTextPosition = "top" | "bottom" | "left" | "right";
+type QRStylingEngine = "legacy" | "styling";
 
 interface CardElement {
     id: string;
@@ -124,6 +126,12 @@ export function QrickApp() {
   const [qrImageElements, setQrImageElements] = useState<QrImageElement[]>([]);
   const [selectedQrText, setSelectedQrText] = useState<string | null>(null);
 
+  // New QR Styling states
+  const [qrStylingEngine, setQrStylingEngine] = useState<QRStylingEngine>("legacy");
+  const [dotStyle, setDotStyle] = useState<DotType>("square");
+  const [cornerSquareStyle, setCornerSquareStyle] = useState<CornerSquareType>("square");
+  const [cornerDotStyle, setCornerDotStyle] = useState<CornerDotType>("square");
+
 
   // Card states
   const [generateCard, setGenerateCard] = useState<boolean>(false);
@@ -148,7 +156,7 @@ export function QrickApp() {
   const cardBgInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const drawQR = useCallback(() => {
+  const drawQR = useCallback(async () => {
     setBarcodeError(null);
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -207,6 +215,222 @@ export function QrickApp() {
     // Fill background for the entire canvas
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    
+    const qrX = totalSpace.left;
+    const qrY = totalSpace.top;
+    const qrSize = size;
+    const margin = qrStylingEngine === 'styling' ? 0 : 8;
+    const qrWithMarginSize = qrSize - margin * 2;
+
+
+    if (qrStylingEngine === 'styling') {
+        const qrCode = new QRCodeStyling({
+            width: qrWithMarginSize,
+            height: qrWithMarginSize,
+            data: content,
+            image: imageUrl,
+            margin: 0,
+            qrOptions: {
+                errorCorrectionLevel: level,
+            },
+            dotsOptions: {
+                color: fgColor,
+                type: dotStyle,
+                gradient: gradientType === 'none' ? undefined : {
+                    type: gradientType,
+                    colorStops: [
+                        { offset: 0, color: gradientStartColor },
+                        { offset: 1, color: gradientEndColor }
+                    ]
+                }
+            },
+            cornersSquareOptions: {
+                color: fgColor,
+                type: cornerSquareStyle,
+            },
+            cornersDotOptions: {
+                color: fgColor,
+                type: cornerDotStyle
+            },
+            backgroundOptions: {
+                color: bgColor
+            },
+            imageOptions: {
+                hideBackgroundDots: excavate,
+                imageSize: imageSize / qrWithMarginSize,
+                margin: 4
+            }
+        });
+        
+        const qrBlob = await qrCode.getRawData("png");
+        if(qrBlob) {
+            const qrImage = new Image();
+            qrImage.src = URL.createObjectURL(qrBlob);
+            await new Promise((resolve) => {
+                qrImage.onload = resolve;
+            });
+            ctx.drawImage(qrImage, qrX + margin, qrY + margin);
+        }
+
+    } else {
+         QRCode.toDataURL(content, {
+            errorCorrectionLevel: level,
+            width: qrWithMarginSize,
+            margin: 1, 
+            color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+            }
+        })
+        .then(() => {
+            const qrCode = QRCode.create(content, { errorCorrectionLevel: level });
+            const moduleCount = qrCode.modules.size;
+            const moduleSize = qrWithMarginSize / moduleCount;
+
+            ctx.save();
+            ctx.translate(qrX + margin, qrY + margin);
+
+            if (gradientType !== 'none') {
+                let gradient: CanvasGradient;
+                if (gradientType === 'linear') {
+                    gradient = ctx.createLinearGradient(0, 0, qrWithMarginSize, qrWithMarginSize);
+                } else {
+                    gradient = ctx.createRadialGradient(qrWithMarginSize / 2, qrWithMarginSize / 2, 0, qrWithMarginSize / 2, qrWithMarginSize / 2, qrWithMarginSize / 2);
+                }
+                gradient.addColorStop(0, gradientStartColor);
+                gradient.addColorStop(1, gradientEndColor);
+                ctx.fillStyle = gradient;
+            } else {
+                ctx.fillStyle = fgColor;
+            }
+
+            for (let row = 0; row < moduleCount; row++) {
+                for (let col = 0; col < moduleCount; col++) {
+                    if (qrCode.modules.get(row, col)) {
+                        const moduleX = col * moduleSize;
+                        const moduleY = row * moduleSize;
+                        const isFinderPattern = (row < 7 && col < 7) || (row < 7 && col >= moduleCount - 7) || (row >= moduleCount - 7 && col < 7);
+                        
+                        if (useShieldCorners && isFinderPattern) {
+                            const radius = 0.5 * moduleSize;
+                            ctx.beginPath();
+                            ctx.moveTo(moduleX, moduleY + radius);
+                            ctx.lineTo(moduleX, moduleY + moduleSize - radius);
+                            ctx.quadraticCurveTo(moduleX, moduleY + moduleSize, moduleX + radius, moduleY + moduleSize);
+                            ctx.lineTo(moduleX + moduleSize - radius, moduleY + moduleSize);
+                            ctx.quadraticCurveTo(moduleX + moduleSize, moduleY + moduleSize, moduleX + moduleSize, moduleY + moduleSize - radius);
+                            ctx.lineTo(moduleX + moduleSize, moduleY + radius);
+                            ctx.quadraticCurveTo(moduleX + moduleSize, moduleY, moduleX + moduleSize - radius, moduleY);
+                            ctx.lineTo(moduleX + radius, moduleY);
+                            ctx.quadraticCurveTo(moduleX, moduleY, moduleX, moduleY + radius);
+                            ctx.closePath();
+                            ctx.fill();
+                            continue;
+                        }
+
+                        if (qrStyle === 'dots') {
+                            ctx.beginPath();
+                            ctx.arc(moduleX + moduleSize / 2, moduleY + moduleSize / 2, (moduleSize / 2.2), 0, 2 * Math.PI);
+                            ctx.fill();
+                        } else if (qrStyle === 'wavy') {
+                            ctx.beginPath();
+                            ctx.moveTo(moduleX, moduleY + moduleSize / 2);
+                            ctx.quadraticCurveTo(moduleX + moduleSize / 2, moduleY - moduleSize / 2, moduleX + moduleSize, moduleY + moduleSize / 2);
+                            ctx.quadraticCurveTo(moduleX + moduleSize / 2, moduleY + moduleSize * 1.5, moduleX, moduleY + moduleSize / 2);
+                            ctx.closePath();
+                            ctx.fill();
+                        } else if (qrStyle === 'diamond') {
+                            ctx.beginPath();
+                            ctx.moveTo(moduleX + moduleSize / 2, moduleY);
+                            ctx.lineTo(moduleX + moduleSize, moduleY + moduleSize / 2);
+                            ctx.lineTo(moduleX + moduleSize / 2, moduleY + moduleSize);
+                            ctx.lineTo(moduleX, moduleY + moduleSize / 2);
+                            ctx.closePath();
+                            ctx.fill();
+                        } else if (qrStyle === 'star') {
+                            ctx.beginPath();
+                            const centerX = moduleX + moduleSize / 2;
+                            const centerY = moduleY + moduleSize / 2;
+                            const outerRadius = moduleSize / 2;
+                            const innerRadius = moduleSize / 4;
+                            for (let i = 0; i < 10; i++) {
+                                const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                                const angle = (i * Math.PI) / 5 - Math.PI / 2;
+                                const x = centerX + radius * Math.cos(angle);
+                                const y = centerY + radius * Math.sin(angle);
+                                if (i === 0) {
+                                    ctx.moveTo(x, y);
+                                } else {
+                                    ctx.lineTo(x, y);
+                                }
+                            }
+                            ctx.closePath();
+                            ctx.fill();
+                        } else if (qrStyle === 'cross') {
+                            const armSize = moduleSize / 3;
+                            ctx.fillRect(moduleX + armSize, moduleY, armSize, moduleSize);
+                            ctx.fillRect(moduleX, moduleY + armSize, moduleSize, armSize);
+                        } else if (qrStyle === 'rounded' || qrStyle === 'fluid') {
+                            const radius = (qrStyle === 'fluid' ? 0.5 : 0.25) * moduleSize;
+                            
+                            const top = row > 0 && qrCode.modules.get(row - 1, col);
+                            const bottom = row < moduleCount - 1 && qrCode.modules.get(row + 1, col);
+                            const left = col > 0 && qrCode.modules.get(row, col - 1);
+                            const right = col < moduleCount - 1 && qrCode.modules.get(row, col + 1);
+
+                            ctx.beginPath();
+                            ctx.moveTo(moduleX + radius, moduleY);
+                            ctx.lineTo(moduleX + moduleSize - radius, moduleY);
+                            if (!top && !right) ctx.quadraticCurveTo(moduleX + moduleSize, moduleY, moduleX + moduleSize, moduleY + radius);
+                            else ctx.lineTo(moduleX + moduleSize, moduleY + radius);
+
+                            ctx.lineTo(moduleX + moduleSize, moduleY + moduleSize - radius);
+                            if (!bottom && !right) ctx.quadraticCurveTo(moduleX + moduleSize, moduleY + moduleSize, moduleX + moduleSize - radius, moduleY + moduleSize);
+                            else ctx.lineTo(moduleX + moduleSize - radius, moduleY + moduleSize);
+
+                            ctx.lineTo(moduleX + radius, moduleY + moduleSize);
+                            if (!bottom && !left) ctx.quadraticCurveTo(moduleX, moduleY + moduleSize, moduleX, moduleY + moduleSize - radius);
+                            else ctx.lineTo(moduleX, moduleY + moduleSize - radius);
+
+                            ctx.lineTo(moduleX, moduleY + radius);
+                            if (!top && !left) ctx.quadraticCurveTo(moduleX, moduleY, moduleX + radius, moduleY);
+                            else ctx.lineTo(moduleX + radius, moduleY);
+
+                            ctx.closePath();
+                            ctx.fill();
+                        } else {
+                            ctx.fillRect(moduleX, moduleY, moduleSize, moduleSize);
+                        }
+                    }
+                }
+            }
+            
+            ctx.restore();
+
+            if (imageUrl) {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.src = imageUrl;
+                img.onload = () => {
+                    const imgX = qrX + (qrSize - imageSize) / 2;
+                    const imgY = qrY + (qrSize - imageSize) / 2;
+                    
+                    if (excavate) {
+                        ctx.save();
+                        ctx.clearRect(imgX, imgY, imageSize, imageSize);
+                        ctx.fillStyle = bgColor;
+                        ctx.fillRect(imgX, imgY, imageSize, imageSize);
+                        ctx.restore();
+                    }
+                    ctx.drawImage(img, imgX, imgY, imageSize, imageSize);
+                };
+            }
+        })
+        .catch(err => {
+            setBarcodeError("Error generating QR code. The content may be too long for the selected error correction level.");
+            console.error(err);
+        });
+    }
 
     // Draw all text elements
     qrTextElements.forEach(textEl => {
@@ -262,201 +486,38 @@ export function QrickApp() {
         }
         ctx.restore();
     });
-    
-    const qrX = totalSpace.left;
-    const qrY = totalSpace.top;
-    const qrSize = size;
-    const margin = 8;
-    const qrWithMarginSize = qrSize - margin * 2;
 
-    QRCode.toDataURL(content, {
-        errorCorrectionLevel: level,
-        width: qrWithMarginSize,
-        margin: 1, 
-        color: {
-            dark: '#000000',
-            light: '#FFFFFF'
-        }
-    })
-    .then(() => {
-        const qrCode = QRCode.create(content, { errorCorrectionLevel: level });
-        const moduleCount = qrCode.modules.size;
-        const moduleSize = qrWithMarginSize / moduleCount;
-
-        ctx.save();
-        ctx.translate(qrX + margin, qrY + margin);
-
-        if (gradientType !== 'none') {
-            let gradient: CanvasGradient;
-            if (gradientType === 'linear') {
-                gradient = ctx.createLinearGradient(0, 0, qrWithMarginSize, qrWithMarginSize);
-            } else {
-                gradient = ctx.createRadialGradient(qrWithMarginSize / 2, qrWithMarginSize / 2, 0, qrWithMarginSize / 2, qrWithMarginSize / 2, qrWithMarginSize / 2);
-            }
-            gradient.addColorStop(0, gradientStartColor);
-            gradient.addColorStop(1, gradientEndColor);
-            ctx.fillStyle = gradient;
-        } else {
-            ctx.fillStyle = fgColor;
-        }
-
-        for (let row = 0; row < moduleCount; row++) {
-            for (let col = 0; col < moduleCount; col++) {
-                if (qrCode.modules.get(row, col)) {
-                    const moduleX = col * moduleSize;
-                    const moduleY = row * moduleSize;
-                    const isFinderPattern = (row < 7 && col < 7) || (row < 7 && col >= moduleCount - 7) || (row >= moduleCount - 7 && col < 7);
-                    
-                    if (useShieldCorners && isFinderPattern) {
-                        const radius = 0.5 * moduleSize;
-                        ctx.beginPath();
-                        ctx.moveTo(moduleX, moduleY + radius);
-                        ctx.lineTo(moduleX, moduleY + moduleSize - radius);
-                        ctx.quadraticCurveTo(moduleX, moduleY + moduleSize, moduleX + radius, moduleY + moduleSize);
-                        ctx.lineTo(moduleX + moduleSize - radius, moduleY + moduleSize);
-                        ctx.quadraticCurveTo(moduleX + moduleSize, moduleY + moduleSize, moduleX + moduleSize, moduleY + moduleSize - radius);
-                        ctx.lineTo(moduleX + moduleSize, moduleY + radius);
-                        ctx.quadraticCurveTo(moduleX + moduleSize, moduleY, moduleX + moduleSize - radius, moduleY);
-                        ctx.lineTo(moduleX + radius, moduleY);
-                        ctx.quadraticCurveTo(moduleX, moduleY, moduleX, moduleY + radius);
-                        ctx.closePath();
-                        ctx.fill();
-                        continue;
-                    }
-
-                    if (qrStyle === 'dots') {
-                        ctx.beginPath();
-                        ctx.arc(moduleX + moduleSize / 2, moduleY + moduleSize / 2, (moduleSize / 2.2), 0, 2 * Math.PI);
-                        ctx.fill();
-                    } else if (qrStyle === 'wavy') {
-                        ctx.beginPath();
-                        ctx.moveTo(moduleX, moduleY + moduleSize / 2);
-                        ctx.quadraticCurveTo(moduleX + moduleSize / 2, moduleY - moduleSize / 2, moduleX + moduleSize, moduleY + moduleSize / 2);
-                        ctx.quadraticCurveTo(moduleX + moduleSize / 2, moduleY + moduleSize * 1.5, moduleX, moduleY + moduleSize / 2);
-                        ctx.closePath();
-                        ctx.fill();
-                    } else if (qrStyle === 'diamond') {
-                        ctx.beginPath();
-                        ctx.moveTo(moduleX + moduleSize / 2, moduleY);
-                        ctx.lineTo(moduleX + moduleSize, moduleY + moduleSize / 2);
-                        ctx.lineTo(moduleX + moduleSize / 2, moduleY + moduleSize);
-                        ctx.lineTo(moduleX, moduleY + moduleSize / 2);
-                        ctx.closePath();
-                        ctx.fill();
-                    } else if (qrStyle === 'star') {
-                        ctx.beginPath();
-                        const centerX = moduleX + moduleSize / 2;
-                        const centerY = moduleY + moduleSize / 2;
-                        const outerRadius = moduleSize / 2;
-                        const innerRadius = moduleSize / 4;
-                        for (let i = 0; i < 10; i++) {
-                            const radius = i % 2 === 0 ? outerRadius : innerRadius;
-                            const angle = (i * Math.PI) / 5 - Math.PI / 2;
-                            const x = centerX + radius * Math.cos(angle);
-                            const y = centerY + radius * Math.sin(angle);
-                            if (i === 0) {
-                                ctx.moveTo(x, y);
-                            } else {
-                                ctx.lineTo(x, y);
-                            }
-                        }
-                        ctx.closePath();
-                        ctx.fill();
-                    } else if (qrStyle === 'cross') {
-                        const armSize = moduleSize / 3;
-                        ctx.fillRect(moduleX + armSize, moduleY, armSize, moduleSize);
-                        ctx.fillRect(moduleX, moduleY + armSize, moduleSize, armSize);
-                    } else if (qrStyle === 'rounded' || qrStyle === 'fluid') {
-                        const radius = (qrStyle === 'fluid' ? 0.5 : 0.25) * moduleSize;
-                        
-                        const top = row > 0 && qrCode.modules.get(row - 1, col);
-                        const bottom = row < moduleCount - 1 && qrCode.modules.get(row + 1, col);
-                        const left = col > 0 && qrCode.modules.get(row, col - 1);
-                        const right = col < moduleCount - 1 && qrCode.modules.get(row, col + 1);
-
-                        ctx.beginPath();
-                        ctx.moveTo(moduleX + radius, moduleY);
-                        ctx.lineTo(moduleX + moduleSize - radius, moduleY);
-                        if (!top && !right) ctx.quadraticCurveTo(moduleX + moduleSize, moduleY, moduleX + moduleSize, moduleY + radius);
-                        else ctx.lineTo(moduleX + moduleSize, moduleY + radius);
-
-                        ctx.lineTo(moduleX + moduleSize, moduleY + moduleSize - radius);
-                        if (!bottom && !right) ctx.quadraticCurveTo(moduleX + moduleSize, moduleY + moduleSize, moduleX + moduleSize - radius, moduleY + moduleSize);
-                        else ctx.lineTo(moduleX + moduleSize - radius, moduleY + moduleSize);
-
-                        ctx.lineTo(moduleX + radius, moduleY + moduleSize);
-                        if (!bottom && !left) ctx.quadraticCurveTo(moduleX, moduleY + moduleSize, moduleX, moduleY + moduleSize - radius);
-                        else ctx.lineTo(moduleX, moduleY + moduleSize - radius);
-
-                        ctx.lineTo(moduleX, moduleY + radius);
-                        if (!top && !left) ctx.quadraticCurveTo(moduleX, moduleY, moduleX + radius, moduleY);
-                        else ctx.lineTo(moduleX + radius, moduleY);
-
-                        ctx.closePath();
-                        ctx.fill();
-                    } else {
-                        ctx.fillRect(moduleX, moduleY, moduleSize, moduleSize);
-                    }
-                }
-            }
-        }
-        
-        ctx.restore();
-
-        if (imageUrl) {
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.src = imageUrl;
-            img.onload = () => {
-                const imgX = qrX + (qrSize - imageSize) / 2;
-                const imgY = qrY + (qrSize - imageSize) / 2;
-                
-                if (excavate) {
-                    ctx.save();
-                    ctx.clearRect(imgX, imgY, imageSize, imageSize);
-                    ctx.fillStyle = bgColor;
-                    ctx.fillRect(imgX, imgY, imageSize, imageSize);
-                    ctx.restore();
-                }
-                ctx.drawImage(img, imgX, imgY, imageSize, imageSize);
-            };
-        }
-
-        // Draw multiple images
-        qrImageElements.forEach(element => {
-            const elImg = new Image();
-            elImg.crossOrigin = "anonymous";
-            elImg.src = element.url;
-            elImg.onload = () => {
-                ctx.drawImage(elImg, element.x, element.y, element.width, element.height);
-            };
+    // Draw multiple images
+    qrImageElements.forEach(element => {
+        const elImg = new Image();
+        elImg.crossOrigin = "anonymous";
+        elImg.src = element.url;
+        elImg.onload = () => {
             ctx.drawImage(elImg, element.x, element.y, element.width, element.height);
-        });
-
-        // Draw selection box and handles for images
-        const selectedImage = qrImageElements.find(el => el.id === selectedElement);
-        if (selectedImage) {
-            ctx.strokeStyle = 'rgba(0, 123, 255, 0.7)';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(selectedImage.x, selectedImage.y, selectedImage.width, selectedImage.height);
-            const handleSize = 8;
-            const handles = {
-                tl: { x: selectedImage.x - handleSize / 2, y: selectedImage.y - handleSize / 2 },
-                tr: { x: selectedImage.x + selectedImage.width - handleSize / 2, y: selectedImage.y - handleSize / 2 },
-                bl: { x: selectedImage.x - handleSize / 2, y: selectedImage.y + selectedImage.height - handleSize / 2 },
-                br: { x: selectedImage.x + selectedImage.width - handleSize / 2, y: selectedImage.y + selectedImage.height - handleSize / 2 },
-            };
-            ctx.fillStyle = 'rgba(0, 123, 255, 0.9)';
-            Object.values(handles).forEach(handle => {
-                ctx.fillRect(handle.x, handle.y, handleSize, handleSize);
-            });
-        }
-    })
-    .catch(err => {
-        setBarcodeError("Error generating QR code. The content may be too long for the selected error correction level.");
-        console.error(err);
+        };
+        ctx.drawImage(elImg, element.x, element.y, element.width, element.height);
     });
-  }, [content, size, level, fgColor, bgColor, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, qrTextElements, qrImageElements, selectedElement]);
+
+    // Draw selection box and handles for images
+    const selectedImage = qrImageElements.find(el => el.id === selectedElement);
+    if (selectedImage) {
+        ctx.strokeStyle = 'rgba(0, 123, 255, 0.7)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(selectedImage.x, selectedImage.y, selectedImage.width, selectedImage.height);
+        const handleSize = 8;
+        const handles = {
+            tl: { x: selectedImage.x - handleSize / 2, y: selectedImage.y - handleSize / 2 },
+            tr: { x: selectedImage.x + selectedImage.width - handleSize / 2, y: selectedImage.y - handleSize / 2 },
+            bl: { x: selectedImage.x - handleSize / 2, y: selectedImage.y + selectedImage.height - handleSize / 2 },
+            br: { x: selectedImage.x + selectedImage.width - handleSize / 2, y: selectedImage.y + selectedImage.height - handleSize / 2 },
+        };
+        ctx.fillStyle = 'rgba(0, 123, 255, 0.9)';
+        Object.values(handles).forEach(handle => {
+            ctx.fillRect(handle.x, handle.y, handleSize, handleSize);
+        });
+    }
+
+  }, [content, size, level, fgColor, bgColor, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, qrTextElements, qrImageElements, selectedElement, qrStylingEngine, dotStyle, cornerSquareStyle, cornerDotStyle]);
 
     const drawBarcodeOrCard = useCallback(() => {
         setBarcodeError(null);
@@ -839,7 +900,7 @@ export function QrickApp() {
         }
         setBarcodeError(null);
       }
-  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, barcodeHeight, barcodeTextSize, level, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, generateCard, cardElements, selectedElement, showBarcodeText, barcodeTextPosition, qrTextElements, qrImageElements]);
+  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, barcodeHeight, barcodeTextSize, level, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, generateCard, cardElements, selectedElement, showBarcodeText, barcodeTextPosition, qrTextElements, qrImageElements, qrStylingEngine, dotStyle, cornerSquareStyle, cornerDotStyle]);
 
     const getPointerPosition = (e: React.MouseEvent | React.TouchEvent) => {
         const canvas = canvasRef.current;
@@ -1415,6 +1476,7 @@ export function QrickApp() {
                     <Tabs defaultValue="style">
                         <TabsList>
                             <TabsTrigger value="style"><Palette className="mr-2"/>Style</TabsTrigger>
+                            <TabsTrigger value="shape"><Shapes className="mr-2"/>Shape</TabsTrigger>
                             <TabsTrigger value="text"><Text className="mr-2"/>Text</TabsTrigger>
                             <TabsTrigger value="images"><ImageIcon className="mr-2"/>Images</TabsTrigger>
                         </TabsList>
@@ -1446,10 +1508,10 @@ export function QrickApp() {
                                     </div>
                                     <Separator />
                                     <div className="grid gap-2">
-                                        <Label htmlFor="qr-style">Module Style</Label>
+                                        <Label htmlFor="qr-style">Module Style (Legacy)</Label>
                                         <Select
                                             value={qrStyle}
-                                            onValueChange={(value: QRStyle) => setQrStyle(value)}
+                                            onValueChange={(value: QRStyle) => { setQrStyle(value); setQrStylingEngine("legacy"); }}
                                         >
                                             <SelectTrigger id="qr-style">
                                                 <SelectValue placeholder="Select style" />
@@ -1570,6 +1632,47 @@ export function QrickApp() {
                                                 </div>
                                             </>
                                         )}
+                                    </div>
+                                </div>
+                            </ScrollArea>
+                        </TabsContent>
+                        <TabsContent value="shape" className="pt-4">
+                           <ScrollArea className="h-96">
+                                <div className="grid gap-4 pr-4">
+                                    <div className="grid gap-2">
+                                        <Label>Body Shape</Label>
+                                        <Select value={dotStyle} onValueChange={(v) => { setDotStyle(v as DotType); setQrStylingEngine("styling"); }}>
+                                            <SelectTrigger><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="square">Square</SelectItem>
+                                                <SelectItem value="dots">Dots</SelectItem>
+                                                <SelectItem value="rounded">Rounded</SelectItem>
+                                                <SelectItem value="extra-rounded">Extra Rounded</SelectItem>
+                                                <SelectItem value="classy">Classy</SelectItem>
+                                                <SelectItem value="classy-rounded">Classy Rounded</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Corner Shape</Label>
+                                        <Select value={cornerSquareStyle} onValueChange={(v) => { setCornerSquareStyle(v as CornerSquareType); setQrStylingEngine("styling"); }}>
+                                            <SelectTrigger><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="square">Square</SelectItem>
+                                                <SelectItem value="dot">Dot</SelectItem>
+                                                <SelectItem value="extra-rounded">Extra Rounded</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Corner Dot Shape</Label>
+                                        <Select value={cornerDotStyle} onValueChange={(v) => { setCornerDotStyle(v as CornerDotType); setQrStylingEngine("styling"); }}>
+                                            <SelectTrigger><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="square">Square</SelectItem>
+                                                <SelectItem value="dot">Dot</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 </div>
                             </ScrollArea>
