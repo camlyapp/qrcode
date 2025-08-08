@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -397,241 +398,235 @@ export function QrickApp() {
             </TabsList>
 
             <TabsContent value="qr" className="pt-4">
-              <Tabs defaultValue="content">
-                    <TabsList>
-                        <TabsTrigger value="content"><Text className="mr-2"/>Content</TabsTrigger>
-                        <TabsTrigger value="style"><Palette className="mr-2"/>Style</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="content" className="pt-4">
-                      <div className="grid gap-4">
-                          <div className="grid gap-2">
-                              <Label htmlFor="qr-content">Content</Label>
-                              <Input
-                              id="qr-content"
-                              placeholder="Enter URL or text"
-                              value={content}
-                              onChange={(e) => setContent(e.target.value)}
-                              className="text-sm"
-                              />
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                              <div className="grid gap-2">
-                              <Label htmlFor="size">Size (px)</Label>
-                              <Input
-                                  id="size"
-                                  type="number"
-                                  min="64"
-                                  max="1024"
-                                  step="32"
-                                  value={size}
-                                  onChange={(e) => setSize(parseInt(e.target.value, 10) || 64)}
-                              />
-                              </div>
-                              <div className="grid gap-2">
-                              <Label htmlFor="level">Error Correction</Label>
-                              <Select
-                                  value={level}
-                                  onValueChange={(value: ErrorCorrectionLevel) => setLevel(value)}
-                              >
-                                  <SelectTrigger id="level">
-                                  <SelectValue placeholder="Select level" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                  <SelectItem value="L">Low (L)</SelectItem>
-                                  <SelectItem value="M">Medium (M)</SelectItem>
-                                  <SelectItem value="Q">Quartile (Q)</SelectItem>
-                                  <SelectItem value="H">High (H)</SelectItem>
-                                  </SelectContent>
-                              </Select>
-                              </div>
-                          </div>
-                      </div>
-                    </TabsContent>
-                    <TabsContent value="style" className="pt-4">
-                        <ScrollArea className="h-96">
-                            <div className="grid gap-4 pr-4">
-                                <div className="grid gap-2">
-                                  <Label>Module Style</Label>
-                                  <RadioGroup defaultValue="squares" value={qrStyle} onValueChange={(v) => setQrStyle(v as QRStyle)} className="flex flex-wrap gap-4">
-                                      <Label htmlFor="style-squares" className="flex items-center gap-2 cursor-pointer text-sm">
-                                          <RadioGroupItem value="squares" id="style-squares" />
-                                          Squares
-                                      </Label>
-                                      <Label htmlFor="style-dots" className="flex items-center gap-2 cursor-pointer text-sm">
-                                          <RadioGroupItem value="dots" id="style-dots" />
-                                          Dots
-                                      </Label>
-                                      <Label htmlFor="style-rounded" className="flex items-center gap-2 cursor-pointer text-sm">
-                                          <RadioGroupItem value="rounded" id="style-rounded" />
-                                          Rounded
-                                      </Label>
-                                      <Label htmlFor="style-fluid" className="flex items-center gap-2 cursor-pointer text-sm">
-                                          <RadioGroupItem value="fluid" id="style-fluid" />
-                                          Fluid
-                                      </Label>
-                                      <Label htmlFor="style-wavy" className="flex items-center gap-2 cursor-pointer text-sm">
-                                          <RadioGroupItem value="wavy" id="style-wavy" />
-                                          Wavy
-                                      </Label>
-                                      <Label htmlFor="style-diamond" className="flex items-center gap-2 cursor-pointer text-sm">
-                                          <RadioGroupItem value="diamond" id="style-diamond" />
-                                          Diamond
-                                      </Label>
-                                  </RadioGroup>
-                                </div>
-                                 <div className="flex items-center space-x-2">
-                                    <Switch id="shield-corners" checked={useShieldCorners} onCheckedChange={setUseShieldCorners} />
-                                    <Label htmlFor="shield-corners" className="flex items-center gap-2 cursor-pointer">
-                                        <Shield className="h-4 w-4" />
-                                        Use Shielded Corners
-                                    </Label>
-                                </div>
-                                <Separator />
-                                <div className="grid gap-2">
-                                    <Label>Color Presets</Label>
-                                    <TooltipProvider>
-                                        <div className="flex flex-wrap gap-2">
-                                            {colorPresets.map(preset => (
-                                                <Tooltip key={preset.name}>
-                                                    <TooltipTrigger asChild>
-                                                        <Button variant="outline" size="icon" onClick={() => applyPreset(preset)} className="h-8 w-8">
-                                                            <span className="w-4 h-4 rounded-full" style={{backgroundColor: preset.fg, border: `2px solid ${preset.bg === '#ffffff' ? '#f0f0f0' : preset.bg}`}}></span>
-                                                        </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>{preset.name}</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            ))}
+                <div className="grid gap-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="qr-content">Content</Label>
+                        <Input
+                        id="qr-content"
+                        placeholder="Enter URL or text"
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        className="text-sm"
+                        />
+                    </div>
+                    <Tabs defaultValue="style">
+                        <TabsList>
+                            <TabsTrigger value="style"><Palette className="mr-2"/>Style</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="style" className="pt-4">
+                            <ScrollArea className="h-96">
+                                <div className="grid gap-4 pr-4">
+                                     <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid gap-2">
+                                        <Label htmlFor="size">Size (px)</Label>
+                                        <Input
+                                            id="size"
+                                            type="number"
+                                            min="64"
+                                            max="1024"
+                                            step="32"
+                                            value={size}
+                                            onChange={(e) => setSize(parseInt(e.target.value, 10) || 64)}
+                                        />
                                         </div>
-                                    </TooltipProvider>
-                                </div>
-                                <Separator />
-                                <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid gap-2">
+                                        <Label htmlFor="level">Error Correction</Label>
+                                        <Select
+                                            value={level}
+                                            onValueChange={(value: ErrorCorrectionLevel) => setLevel(value)}
+                                        >
+                                            <SelectTrigger id="level">
+                                            <SelectValue placeholder="Select level" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                            <SelectItem value="L">Low (L)</SelectItem>
+                                            <SelectItem value="M">Medium (M)</SelectItem>
+                                            <SelectItem value="Q">Quartile (Q)</SelectItem>
+                                            <SelectItem value="H">High (H)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        </div>
+                                    </div>
+                                    <Separator />
                                     <div className="grid gap-2">
-                                        <Label htmlFor="fg-color">Foreground</Label>
-                                        <div className="relative">
-                                            <Input id="fg-color" type="color" value={fgColor} onChange={(e) => { setFgColor(e.target.value); setGradientType("none"); }} className="p-1 h-9" />
-                                        </div>
+                                      <Label>Module Style</Label>
+                                      <RadioGroup defaultValue="squares" value={qrStyle} onValueChange={(v) => setQrStyle(v as QRStyle)} className="flex flex-wrap gap-4">
+                                          <Label htmlFor="style-squares" className="flex items-center gap-2 cursor-pointer text-sm">
+                                              <RadioGroupItem value="squares" id="style-squares" />
+                                              Squares
+                                          </Label>
+                                          <Label htmlFor="style-dots" className="flex items-center gap-2 cursor-pointer text-sm">
+                                              <RadioGroupItem value="dots" id="style-dots" />
+                                              Dots
+                                          </Label>
+                                          <Label htmlFor="style-rounded" className="flex items-center gap-2 cursor-pointer text-sm">
+                                              <RadioGroupItem value="rounded" id="style-rounded" />
+                                              Rounded
+                                          </Label>
+                                          <Label htmlFor="style-fluid" className="flex items-center gap-2 cursor-pointer text-sm">
+                                              <RadioGroupItem value="fluid" id="style-fluid" />
+                                              Fluid
+                                          </Label>
+                                          <Label htmlFor="style-wavy" className="flex items-center gap-2 cursor-pointer text-sm">
+                                              <RadioGroupItem value="wavy" id="style-wavy" />
+                                              Wavy
+                                          </Label>
+                                          <Label htmlFor="style-diamond" className="flex items-center gap-2 cursor-pointer text-sm">
+                                              <RadioGroupItem value="diamond" id="style-diamond" />
+                                              Diamond
+                                          </Label>
+                                      </RadioGroup>
                                     </div>
+                                     <div className="flex items-center space-x-2">
+                                        <Switch id="shield-corners" checked={useShieldCorners} onCheckedChange={setUseShieldCorners} />
+                                        <Label htmlFor="shield-corners" className="flex items-center gap-2 cursor-pointer">
+                                            <Shield className="h-4 w-4" />
+                                            Use Shielded Corners
+                                        </Label>
+                                    </div>
+                                    <Separator />
                                     <div className="grid gap-2">
-                                        <Label htmlFor="bg-color">Background</Label>
-                                        <div className="relative">
-                                            <Input id="bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-1 h-9" />
-                                        </div>
-                                    </div>
-                                </div>
-                                 <Separator />
-                                 <div className="grid gap-3">
-                                    <div className="flex items-center space-x-2">
-                                        <Switch id="gradient-switch" checked={gradientType !== 'none'} onCheckedChange={(checked) => setGradientType(checked ? 'linear' : 'none')} />
-                                        <Label htmlFor="gradient-switch" className="cursor-pointer">Use Gradient</Label>
-                                    </div>
-                                    {gradientType !== 'none' && (
-                                        <>
-                                            <div className="grid gap-2">
-                                                <Label>Gradient Type</Label>
-                                                <RadioGroup value={gradientType} onValueChange={(v) => setGradientType(v as GradientType)} className="flex gap-4">
-                                                    <Label htmlFor="gradient-linear" className="flex items-center gap-2 cursor-pointer text-sm">
-                                                        <RadioGroupItem value="linear" id="gradient-linear" />
-                                                        <GitCommitHorizontal className="h-4 w-4" /> Linear
-                                                    </Label>
-                                                    <Label htmlFor="gradient-radial" className="flex items-center gap-2 cursor-pointer text-sm">
-                                                        <RadioGroupItem value="radial" id="gradient-radial" />
-                                                        <CircleDot className="h-4 w-4" /> Radial
-                                                    </Label>
-                                                </RadioGroup>
+                                        <Label>Color Presets</Label>
+                                        <TooltipProvider>
+                                            <div className="flex flex-wrap gap-2">
+                                                {colorPresets.map(preset => (
+                                                    <Tooltip key={preset.name}>
+                                                        <TooltipTrigger asChild>
+                                                            <Button variant="outline" size="icon" onClick={() => applyPreset(preset)} className="h-8 w-8">
+                                                                <span className="w-4 h-4 rounded-full" style={{backgroundColor: preset.fg, border: `2px solid ${preset.bg === '#ffffff' ? '#f0f0f0' : preset.bg}`}}></span>
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>{preset.name}</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                ))}
                                             </div>
-                                            <div className="grid grid-cols-2 gap-4">
+                                        </TooltipProvider>
+                                    </div>
+                                    <Separator />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="fg-color">Foreground</Label>
+                                            <div className="relative">
+                                                <Input id="fg-color" type="color" value={fgColor} onChange={(e) => { setFgColor(e.target.value); setGradientType("none"); }} className="p-1 h-9" />
+                                            </div>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="bg-color">Background</Label>
+                                            <div className="relative">
+                                                <Input id="bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-1 h-9" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                     <Separator />
+                                     <div className="grid gap-3">
+                                        <div className="flex items-center space-x-2">
+                                            <Switch id="gradient-switch" checked={gradientType !== 'none'} onCheckedChange={(checked) => setGradientType(checked ? 'linear' : 'none')} />
+                                            <Label htmlFor="gradient-switch" className="cursor-pointer">Use Gradient</Label>
+                                        </div>
+                                        {gradientType !== 'none' && (
+                                            <>
                                                 <div className="grid gap-2">
-                                                    <Label htmlFor="gradient-start">Start Color</Label>
-                                                    <Input id="gradient-start" type="color" value={gradientStartColor} onChange={(e) => setGradientStartColor(e.target.value)} className="p-1 h-9" />
+                                                    <Label>Gradient Type</Label>
+                                                    <RadioGroup value={gradientType} onValueChange={(v) => setGradientType(v as GradientType)} className="flex gap-4">
+                                                        <Label htmlFor="gradient-linear" className="flex items-center gap-2 cursor-pointer text-sm">
+                                                            <RadioGroupItem value="linear" id="gradient-linear" />
+                                                            <GitCommitHorizontal className="h-4 w-4" /> Linear
+                                                        </Label>
+                                                        <Label htmlFor="gradient-radial" className="flex items-center gap-2 cursor-pointer text-sm">
+                                                            <RadioGroupItem value="radial" id="gradient-radial" />
+                                                            <CircleDot className="h-4 w-4" /> Radial
+                                                        </Label>
+                                                    </RadioGroup>
                                                 </div>
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="gradient-end">End Color</Label>
-                                                    <Input id="gradient-end" type="color" value={gradientEndColor} onChange={(e) => setGradientEndColor(e.target.value)} className="p-1 h-9" />
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="gradient-start">Start Color</Label>
+                                                        <Input id="gradient-start" type="color" value={gradientStartColor} onChange={(e) => setGradientStartColor(e.target.value)} className="p-1 h-9" />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="gradient-end">End Color</Label>
+                                                        <Input id="gradient-end" type="color" value={gradientEndColor} onChange={(e) => setGradientEndColor(e.target.value)} className="p-1 h-9" />
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                                <Separator />
-                                <div className="grid gap-3">
-                                    <div className="grid gap-2">
-                                      <Label>Center Image</Label>
-                                       <Input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden"/>
-                                       <Button variant="outline" size="sm" onClick={triggerFileSelect}>
-                                           <ImageIcon className="mr-2" />
-                                           {imageUrl ? "Change Image" : "Upload Image"}
-                                       </Button>
-                                       {imageUrl && (
-                                            <Button variant="destructive" size="xs" onClick={removeImage}>
-                                                <X className="mr-2" />
-                                                Remove
-                                            </Button>
-                                       )}
+                                            </>
+                                        )}
                                     </div>
-                                    {imageUrl && (
-                                        <>
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="image-size">Image Size ({imageSize}px)</Label>
-                                                <Slider id="image-size" min={20} max={size / 3} value={[imageSize]} onValueChange={(v) => setImageSize(v[0])} />
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <Switch id="excavate" checked={excavate} onCheckedChange={setExcavate} />
-                                                <Label htmlFor="excavate">Clear space for image</Label>
-                                            </div>
-                                        </>
-                                    )}
+                                    <Separator />
+                                    <div className="grid gap-3">
+                                        <div className="grid gap-2">
+                                          <Label>Center Image</Label>
+                                           <Input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden"/>
+                                           <Button variant="outline" size="sm" onClick={triggerFileSelect}>
+                                               <ImageIcon className="mr-2" />
+                                               {imageUrl ? "Change Image" : "Upload Image"}
+                                           </Button>
+                                           {imageUrl && (
+                                                <Button variant="destructive" size="xs" onClick={removeImage}>
+                                                    <X className="mr-2" />
+                                                    Remove
+                                                </Button>
+                                           )}
+                                        </div>
+                                        {imageUrl && (
+                                            <>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="image-size">Image Size ({imageSize}px)</Label>
+                                                    <Slider id="image-size" min={20} max={size / 3} value={[imageSize]} onValueChange={(v) => setImageSize(v[0])} />
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <Switch id="excavate" checked={excavate} onCheckedChange={setExcavate} />
+                                                    <Label htmlFor="excavate">Clear space for image</Label>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        </ScrollArea>
-                    </TabsContent>
-                </Tabs>
+                            </ScrollArea>
+                        </TabsContent>
+                    </Tabs>
+                </div>
             </TabsContent>
             
             <TabsContent value="barcode" className="pt-4">
-              <Tabs defaultValue="content">
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="format">Format</Label>
+                    <Select
+                        value={barcodeFormat}
+                        onValueChange={(v) => handleBarcodeFormatChange(v as BarcodeFormat, true)}
+                    >
+                        <SelectTrigger id="format">
+                        <SelectValue placeholder="Select format" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60">
+                            <SelectItem value="CODE128">Code 128</SelectItem>
+                            <SelectItem value="EAN13">EAN-13</SelectItem>
+                            <SelectItem value="EAN8">EAN-8</SelectItem>
+                            <SelectItem value="UPC">UPC</SelectItem>
+                            <SelectItem value="CODE39">Code 39</SelectItem>
+                            <SelectItem value="ITF14">ITF-14</SelectItem>
+                            <SelectItem value="MSI">MSI</SelectItem>
+                            <SelectItem value="pharmacode">Pharmacode</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="barcode-content">Content</Label>
+                    <Input
+                    id="barcode-content"
+                    placeholder="Enter barcode content"
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    className="text-sm"
+                    />
+                </div>
+                 <Tabs defaultValue="style">
                     <TabsList>
-                        <TabsTrigger value="content"><Text className="mr-2"/>Content</TabsTrigger>
                         <TabsTrigger value="style"><Palette className="mr-2"/>Style</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="content" className="pt-4">
-                      <div className="grid gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="format">Format</Label>
-                            <Select
-                                value={barcodeFormat}
-                                onValueChange={(v) => handleBarcodeFormatChange(v as BarcodeFormat, true)}
-                            >
-                                <SelectTrigger id="format">
-                                <SelectValue placeholder="Select format" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="CODE128">Code 128</SelectItem>
-                                    <SelectItem value="EAN13">EAN-13</SelectItem>
-                                    <SelectItem value="EAN8">EAN-8</SelectItem>
-                                    <SelectItem value="UPC">UPC</SelectItem>
-                                    <SelectItem value="CODE39">Code 39</SelectItem>
-                                    <SelectItem value="ITF14">ITF-14</SelectItem>
-                                    <SelectItem value="MSI">MSI</SelectItem>
-                                    <SelectItem value="pharmacode">Pharmacode</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="barcode-content">Content</Label>
-                            <Input
-                            id="barcode-content"
-                            placeholder="Enter barcode content"
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                            className="text-sm"
-                            />
-                        </div>
-                      </div>
-                    </TabsContent>
-                     <TabsContent value="style" className="pt-4">
+                    <TabsContent value="style" className="pt-4">
                         <ScrollArea className="h-96">
                           <div className="grid gap-4 pr-4">
                               <div className="grid grid-cols-2 gap-4">
@@ -652,6 +647,7 @@ export function QrickApp() {
                         </ScrollArea>
                     </TabsContent>
                </Tabs>
+              </div>
             </TabsContent>
           </Tabs>
         </div>
