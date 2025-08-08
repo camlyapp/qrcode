@@ -4,7 +4,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -69,6 +69,7 @@ export function QrickApp() {
   const [gradientEndColor, setGradientEndColor] = useState<string>("#4682B4");
   const [barcodeError, setBarcodeError] = useState<string | null>(null);
   const [barcodeHeight, setBarcodeHeight] = useState<number>(100);
+  const [barcodeTextSize, setBarcodeTextSize] = useState<number>(20);
 
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -235,8 +236,9 @@ export function QrickApp() {
             format: barcodeFormat,
             lineColor: fgColor,
             background: bgColor,
-            width: 8,
+            width: 4,
             height: 160 * (barcodeHeight / 100),
+            fontSize: barcodeTextSize,
             displayValue: true,
             valid: (valid: boolean) => {
                 if (!valid) {
@@ -254,7 +256,7 @@ export function QrickApp() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
     }
-  }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight]);
+  }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize]);
 
 
   useEffect(() => {
@@ -612,71 +614,80 @@ export function QrickApp() {
             </TabsContent>
             
             <TabsContent value="barcode" className="pt-4">
-              <div className="grid gap-4">
-                <div className="grid gap-2">
-                    <Label htmlFor="format">Format</Label>
-                    <Select
-                        value={barcodeFormat}
-                        onValueChange={(v) => handleBarcodeFormatChange(v as BarcodeFormat, true)}
-                    >
-                        <SelectTrigger id="format">
-                        <SelectValue placeholder="Select format" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-60">
-                            <SelectItem value="CODE128">Code 128</SelectItem>
-                            <SelectItem value="CODE128A">Code 128A</SelectItem>
-                            <SelectItem value="CODE128B">Code 128B</SelectItem>
-                            <SelectItem value="CODE128C">Code 128C</SelectItem>
-                            <SelectItem value="CODE39">Code 39</SelectItem>
-                            <SelectItem value="EAN13">EAN-13</SelectItem>
-                            <SelectItem value="EAN8">EAN-8</SelectItem>
-                            <SelectItem value="EAN5">EAN-5</SelectItem>
-                            <SelectItem value="EAN2">EAN-2</SelectItem>
-                            <SelectItem value="UPC">UPC</SelectItem>
-                            <SelectItem value="UPCE">UPC-E</SelectItem>
-                            <SelectItem value="ITF14">ITF-14</SelectItem>
-                            <SelectItem value="ITF">ITF</SelectItem>
-                            <SelectItem value="MSI">MSI</SelectItem>
-                            <SelectItem value="MSI10">MSI10</SelectItem>
-                            <SelectItem value="MSI11">MSI11</SelectItem>
-                            <SelectItem value="MSI1010">MSI1010</SelectItem>
-                            <SelectItem value="MSI1110">MSI1110</SelectItem>
-                            <SelectItem value="pharmacode">Pharmacode</SelectItem>
-                            <SelectItem value="codabar">Codabar</SelectItem>
-                        </SelectContent>
-                    </Select>
+              <ScrollArea className="h-[28rem]">
+                <div className="grid gap-4 pr-4">
+                  <div className="grid gap-2">
+                      <Label htmlFor="format">Format</Label>
+                      <Select
+                          value={barcodeFormat}
+                          onValueChange={(v) => handleBarcodeFormatChange(v as BarcodeFormat, true)}
+                      >
+                          <SelectTrigger id="format">
+                          <SelectValue placeholder="Select format" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-60">
+                              <SelectItem value="CODE128">Code 128</SelectItem>
+                              <SelectItem value="CODE128A">Code 128A</SelectItem>
+                              <SelectItem value="CODE128B">Code 128B</SelectItem>
+                              <SelectItem value="CODE128C">Code 128C</SelectItem>
+                              <SelectItem value="CODE39">Code 39</SelectItem>
+                              <SelectItem value="EAN13">EAN-13</SelectItem>
+                              <SelectItem value="EAN8">EAN-8</SelectItem>
+                              <SelectItem value="EAN5">EAN-5</SelectItem>
+                              <SelectItem value="EAN2">EAN-2</SelectItem>
+                              <SelectItem value="UPC">UPC</SelectItem>
+                              <SelectItem value="UPCE">UPC-E</SelectItem>
+                              <SelectItem value="ITF14">ITF-14</SelectItem>
+                              <SelectItem value="ITF">ITF</SelectItem>
+                              <SelectItem value="MSI">MSI</SelectItem>
+                              <SelectItem value="MSI10">MSI10</SelectItem>
+                              <SelectItem value="MSI11">MSI11</SelectItem>
+                              <SelectItem value="MSI1010">MSI1010</SelectItem>
+                              <SelectItem value="MSI1110">MSI1110</SelectItem>
+                              <SelectItem value="pharmacode">Pharmacode</SelectItem>
+                              <SelectItem value="codabar">Codabar</SelectItem>
+                          </SelectContent>
+                      </Select>
+                  </div>
+                  <div className="grid gap-2">
+                      <Label htmlFor="barcode-content">Content</Label>
+                      <Input
+                      id="barcode-content"
+                      placeholder="Enter barcode content"
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      className="text-sm"
+                      />
+                  </div>
+                  <Separator />
+                   <div className="grid grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                          <Label htmlFor="barcode-fg-color">Foreground</Label>
+                          <div className="relative">
+                              <Input id="barcode-fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-1 h-9" />
+                          </div>
+                      </div>
+                      <div className="grid gap-2">
+                          <Label htmlFor="barcode-bg-color">Background</Label>
+                          <div className="relative">
+                              <Input id="barcode-bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-1 h-9" />
+                          </div>
+                      </div>
+                  </div>
+                  <Separator />
+                  <div className="grid gap-2">
+                      <Label htmlFor="barcode-height">Height ({barcodeHeight}%)</Label>
+                      <Slider id="barcode-height" min={50} max={150} value={[barcodeHeight]} onValueChange={(v) => setBarcodeHeight(v[0])} />
+                  </div>
+                  <div className="grid gap-2">
+                      <Label htmlFor="barcode-text-size" className="flex items-center">
+                        <CaseSensitive className="mr-2 h-4 w-4"/>
+                        Text Size ({barcodeTextSize}px)
+                      </Label>
+                      <Slider id="barcode-text-size" min={10} max={30} value={[barcodeTextSize]} onValueChange={(v) => setBarcodeTextSize(v[0])} />
+                  </div>
                 </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="barcode-content">Content</Label>
-                    <Input
-                    id="barcode-content"
-                    placeholder="Enter barcode content"
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    className="text-sm"
-                    />
-                </div>
-                <Separator />
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="barcode-fg-color">Foreground</Label>
-                        <div className="relative">
-                            <Input id="barcode-fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-1 h-9" />
-                        </div>
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="barcode-bg-color">Background</Label>
-                        <div className="relative">
-                            <Input id="barcode-bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-1 h-9" />
-                        </div>
-                    </div>
-                </div>
-                <Separator />
-                <div className="grid gap-2">
-                    <Label htmlFor="barcode-height">Height ({barcodeHeight}%)</Label>
-                    <Slider id="barcode-height" min={50} max={150} value={[barcodeHeight]} onValueChange={(v) => setBarcodeHeight(v[0])} />
-                </div>
-              </div>
+              </ScrollArea>
             </TabsContent>
           </Tabs>
         </div>
@@ -708,5 +719,7 @@ export function QrickApp() {
     </Card>
   );
 }
+
+    
 
     
