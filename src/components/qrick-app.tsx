@@ -127,37 +127,38 @@ export function QrickApp() {
       if (canvas) {
         const ctx = canvas.getContext('2d');
         if (ctx) {
+          // This is a hack to customize the rendering of the QR code modules
+          // We are monkey-patching the drawImage function of the canvas context
           const originalDrawImage = ctx.drawImage;
-          ctx.drawImage = function (...args) {
+          (ctx as any).drawImage = (...args: any[]) => {
             if (args.length === 9) {
-              const [image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight] = args;
-              const tempCanvas = document.createElement('canvas');
-              tempCanvas.width = sWidth;
-              tempCanvas.height = sHeight;
-              const tempCtx = tempCanvas.getContext('2d');
-              if (tempCtx) {
-                tempCtx.drawImage(image, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
-                const imageData = tempCtx.getImageData(0, 0, sWidth, sHeight);
-                const data = imageData.data;
-                for (let i = 0; i < data.length; i += 4) {
-                  // If pixel is not transparent
-                  if (data[i + 3] !== 0) {
-                     data[i] = 255;
-                     data[i+1] = 255;
-                     data[i+2] = 255;
-                  }
-                }
-                tempCtx.putImageData(imageData, 0, 0);
+                // This is a module draw operation
+                const [image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight] = args;
+                
+                // Create a temporary canvas to analyze the module
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = sWidth;
+                tempCanvas.height = sHeight;
+                const tempCtx = tempCanvas.getContext('2d');
 
-                ctx.save();
-                ctx.beginPath();
-                ctx.arc(dx + dWidth / 2, dy + dHeight / 2, dWidth / 2.2, 0, 2 * Math.PI);
-                ctx.clip();
-                originalDrawImage.apply(ctx, [tempCanvas, 0, 0, sWidth, sHeight, dx, dy, dWidth, dHeight]);
-                ctx.restore();
-              }
+                if (tempCtx) {
+                    tempCtx.drawImage(image, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
+                    const imageData = tempCtx.getImageData(0, 0, sWidth, sHeight);
+                    const isTransparent = imageData.data[3] === 0;
+
+                    if (!isTransparent) {
+                        ctx.save();
+                        // Use a circular clipping path to draw dots
+                        ctx.beginPath();
+                        ctx.arc(dx + dWidth / 2, dy + dHeight / 2, dWidth / 2.2, 0, 2 * Math.PI);
+                        ctx.clip();
+                        originalDrawImage.apply(ctx, args);
+                        ctx.restore();
+                    }
+                }
             } else {
-              originalDrawImage.apply(ctx, args as any);
+                // This is likely the embedded image draw operation, pass it through
+                originalDrawImage.apply(ctx, args);
             }
           };
         }
@@ -308,7 +309,7 @@ export function QrickApp() {
             <div ref={qrRef} className="p-4 bg-white rounded-lg shadow-inner transition-all duration-300 ease-in-out" aria-label="QR Code Preview">
               {content ? (
                 <QRCodeCanvas
-                    key={qrStyle}
+                    key={`${qrStyle}-${content}-${size}-${level}-${bgColor}-${fgColor}-${JSON.stringify(imageSettings)}`}
                     value={content}
                     size={size}
                     level={level}
