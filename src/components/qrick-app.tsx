@@ -394,7 +394,7 @@ export function QrickApp() {
                 setContent('123456789012');
                 break;
             case 'UPCE':
-                setContent('123456');
+                setContent('0123456');
                 break;
             case 'CODE39':
                 setContent('CODE39 EXAMPLE');
@@ -638,7 +638,7 @@ export function QrickApp() {
             
             <TabsContent value="barcode" className="pt-4">
               <ScrollArea className="h-[28rem]">
-                <div className="grid gap-3 pr-4">
+                <div className="grid gap-4 pr-4">
                   <div className="grid gap-2">
                       <Label htmlFor="format">Format</Label>
                       <Select
@@ -683,27 +683,21 @@ export function QrickApp() {
                       />
                   </div>
                   <Separator />
-                   <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                          <Label htmlFor="barcode-fg-color">Foreground</Label>
-                          <div className="relative">
-                              <Input id="barcode-fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-1 h-9" />
-                          </div>
-                      </div>
-                      <div className="grid gap-2">
-                          <Label htmlFor="barcode-bg-color">Background</Label>
-                          <div className="relative">
-                              <Input id="barcode-bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-1 h-9" />
-                          </div>
-                      </div>
-                  </div>
-                   <div className="grid gap-2">
-                        <Label htmlFor="text-color" className="flex items-center">
-                            <PaintBucket className="mr-2 h-4 w-4"/>
-                            Text Color
-                        </Label>
-                        <div className="relative">
-                            <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="p-1 h-9" />
+                  <div className="grid gap-2">
+                        <Label>Colors</Label>
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <Label htmlFor="barcode-fg-color" className="text-xs">Bar</Label>
+                                <Input id="barcode-fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-0 h-6 w-6" />
+                            </div>
+                             <div className="flex items-center gap-2">
+                                <Label htmlFor="barcode-bg-color" className="text-xs">BG</Label>
+                                <Input id="barcode-bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-0 h-6 w-6" />
+                            </div>
+                             <div className="flex items-center gap-2">
+                                <Label htmlFor="text-color" className="text-xs">Text</Label>
+                                <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="p-0 h-6 w-6" />
+                            </div>
                         </div>
                     </div>
                   <Separator />
