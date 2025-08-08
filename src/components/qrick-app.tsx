@@ -397,54 +397,56 @@ export function QrickApp() {
             </TabsList>
 
             <TabsContent value="qr" className="pt-4">
-                <div className="grid gap-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="qr-content">Content</Label>
-                        <Input
-                        id="qr-content"
-                        placeholder="Enter URL or text"
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        className="text-sm"
-                        />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                        <Label htmlFor="size">Size (px)</Label>
-                        <Input
-                            id="size"
-                            type="number"
-                            min="64"
-                            max="1024"
-                            step="32"
-                            value={size}
-                            onChange={(e) => setSize(parseInt(e.target.value, 10) || 64)}
-                        />
-                        </div>
-                        <div className="grid gap-2">
-                        <Label htmlFor="level">Error Correction</Label>
-                        <Select
-                            value={level}
-                            onValueChange={(value: ErrorCorrectionLevel) => setLevel(value)}
-                        >
-                            <SelectTrigger id="level">
-                            <SelectValue placeholder="Select level" />
-                            </SelectTrigger>
-                            <SelectContent>
-                            <SelectItem value="L">Low (L)</SelectItem>
-                            <SelectItem value="M">Medium (M)</SelectItem>
-                            <SelectItem value="Q">Quartile (Q)</SelectItem>
-                            <SelectItem value="H">High (H)</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        </div>
-                    </div>
-                </div>
-                <Separator className="my-4" />
-                <Tabs defaultValue="style">
+              <Tabs defaultValue="content">
                     <TabsList>
+                        <TabsTrigger value="content"><Text className="mr-2"/>Content</TabsTrigger>
                         <TabsTrigger value="style"><Palette className="mr-2"/>Style</TabsTrigger>
                     </TabsList>
+                    <TabsContent value="content" className="pt-4">
+                      <div className="grid gap-4">
+                          <div className="grid gap-2">
+                              <Label htmlFor="qr-content">Content</Label>
+                              <Input
+                              id="qr-content"
+                              placeholder="Enter URL or text"
+                              value={content}
+                              onChange={(e) => setContent(e.target.value)}
+                              className="text-sm"
+                              />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                              <div className="grid gap-2">
+                              <Label htmlFor="size">Size (px)</Label>
+                              <Input
+                                  id="size"
+                                  type="number"
+                                  min="64"
+                                  max="1024"
+                                  step="32"
+                                  value={size}
+                                  onChange={(e) => setSize(parseInt(e.target.value, 10) || 64)}
+                              />
+                              </div>
+                              <div className="grid gap-2">
+                              <Label htmlFor="level">Error Correction</Label>
+                              <Select
+                                  value={level}
+                                  onValueChange={(value: ErrorCorrectionLevel) => setLevel(value)}
+                              >
+                                  <SelectTrigger id="level">
+                                  <SelectValue placeholder="Select level" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                  <SelectItem value="L">Low (L)</SelectItem>
+                                  <SelectItem value="M">Medium (M)</SelectItem>
+                                  <SelectItem value="Q">Quartile (Q)</SelectItem>
+                                  <SelectItem value="H">High (H)</SelectItem>
+                                  </SelectContent>
+                              </Select>
+                              </div>
+                          </div>
+                      </div>
+                    </TabsContent>
                     <TabsContent value="style" className="pt-4">
                         <ScrollArea className="h-96">
                             <div className="grid gap-4 pr-4">
@@ -589,61 +591,67 @@ export function QrickApp() {
             </TabsContent>
             
             <TabsContent value="barcode" className="pt-4">
-                 <div className="grid gap-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="format">Format</Label>
-                        <Select
-                            value={barcodeFormat}
-                            onValueChange={(v) => handleBarcodeFormatChange(v as BarcodeFormat, true)}
-                        >
-                            <SelectTrigger id="format">
-                            <SelectValue placeholder="Select format" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="CODE128">Code 128</SelectItem>
-                                <SelectItem value="EAN13">EAN-13</SelectItem>
-                                <SelectItem value="EAN8">EAN-8</SelectItem>
-                                <SelectItem value="UPC">UPC</SelectItem>
-                                <SelectItem value="CODE39">Code 39</SelectItem>
-                                <SelectItem value="ITF14">ITF-14</SelectItem>
-                                <SelectItem value="MSI">MSI</SelectItem>
-                                <SelectItem value="pharmacode">Pharmacode</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="barcode-content">Content</Label>
-                        <Input
-                        id="barcode-content"
-                        placeholder="Enter barcode content"
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        className="text-sm"
-                        />
-                    </div>
-                    <Separator className="my-4"/>
-                     <Tabs defaultValue="style">
-                        <TabsList>
-                           <TabsTrigger value="style"><Palette className="mr-2"/>Style</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="style" className="pt-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="barcode-fg-color">Foreground</Label>
-                                    <div className="relative">
-                                        <Input id="barcode-fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-1 h-9" />
-                                    </div>
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="barcode-bg-color">Background</Label>
-                                    <div className="relative">
-                                        <Input id="barcode-bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-1 h-9" />
-                                    </div>
-                                </div>
-                            </div>
-                        </TabsContent>
-                     </Tabs>
-                </div>
+              <Tabs defaultValue="content">
+                    <TabsList>
+                        <TabsTrigger value="content"><Text className="mr-2"/>Content</TabsTrigger>
+                        <TabsTrigger value="style"><Palette className="mr-2"/>Style</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="content" className="pt-4">
+                      <div className="grid gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="format">Format</Label>
+                            <Select
+                                value={barcodeFormat}
+                                onValueChange={(v) => handleBarcodeFormatChange(v as BarcodeFormat, true)}
+                            >
+                                <SelectTrigger id="format">
+                                <SelectValue placeholder="Select format" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="CODE128">Code 128</SelectItem>
+                                    <SelectItem value="EAN13">EAN-13</SelectItem>
+                                    <SelectItem value="EAN8">EAN-8</SelectItem>
+                                    <SelectItem value="UPC">UPC</SelectItem>
+                                    <SelectItem value="CODE39">Code 39</SelectItem>
+                                    <SelectItem value="ITF14">ITF-14</SelectItem>
+                                    <SelectItem value="MSI">MSI</SelectItem>
+                                    <SelectItem value="pharmacode">Pharmacode</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="barcode-content">Content</Label>
+                            <Input
+                            id="barcode-content"
+                            placeholder="Enter barcode content"
+                            value={content}
+                            onChange={(e) => setContent(e.target.value)}
+                            className="text-sm"
+                            />
+                        </div>
+                      </div>
+                    </TabsContent>
+                     <TabsContent value="style" className="pt-4">
+                        <ScrollArea className="h-96">
+                          <div className="grid gap-4 pr-4">
+                              <div className="grid grid-cols-2 gap-4">
+                                  <div className="grid gap-2">
+                                      <Label htmlFor="barcode-fg-color">Foreground</Label>
+                                      <div className="relative">
+                                          <Input id="barcode-fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-1 h-9" />
+                                      </div>
+                                  </div>
+                                  <div className="grid gap-2">
+                                      <Label htmlFor="barcode-bg-color">Background</Label>
+                                      <div className="relative">
+                                          <Input id="barcode-bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-1 h-9" />
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                        </ScrollArea>
+                    </TabsContent>
+               </Tabs>
             </TabsContent>
           </Tabs>
         </div>
@@ -670,3 +678,5 @@ export function QrickApp() {
     </Card>
   );
 }
+
+    
