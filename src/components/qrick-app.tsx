@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -1192,41 +1193,25 @@ export function QrickApp() {
                                     </div>
                                     <Separator />
                                     <div className="grid gap-2">
-                                      <Label>Module Style</Label>
-                                      <RadioGroup defaultValue="squares" value={qrStyle} onValueChange={(v) => setQrStyle(v as QRStyle)} className="flex flex-wrap gap-4">
-                                          <Label htmlFor="style-squares" className="flex items-center gap-2 cursor-pointer text-sm">
-                                              <RadioGroupItem value="squares" id="style-squares" />
-                                              Squares
-                                          </Label>
-                                          <Label htmlFor="style-dots" className="flex items-center gap-2 cursor-pointer text-sm">
-                                              <RadioGroupItem value="dots" id="style-dots" />
-                                              Dots
-                                          </Label>
-                                          <Label htmlFor="style-rounded" className="flex items-center gap-2 cursor-pointer text-sm">
-                                              <RadioGroupItem value="rounded" id="style-rounded" />
-                                              Rounded
-                                          </Label>
-                                          <Label htmlFor="style-fluid" className="flex items-center gap-2 cursor-pointer text-sm">
-                                              <RadioGroupItem value="fluid" id="style-fluid" />
-                                              Fluid
-                                          </Label>
-                                          <Label htmlFor="style-wavy" className="flex items-center gap-2 cursor-pointer text-sm">
-                                              <RadioGroupItem value="wavy" id="style-wavy" />
-                                              Wavy
-                                          </Label>
-                                          <Label htmlFor="style-diamond" className="flex items-center gap-2 cursor-pointer text-sm">
-                                              <RadioGroupItem value="diamond" id="style-diamond" />
-                                              Diamond
-                                          </Label>
-                                          <Label htmlFor="style-star" className="flex items-center gap-2 cursor-pointer text-sm">
-                                              <RadioGroupItem value="star" id="style-star" />
-                                              Star
-                                          </Label>
-                                          <Label htmlFor="style-cross" className="flex items-center gap-2 cursor-pointer text-sm">
-                                              <RadioGroupItem value="cross" id="style-cross" />
-                                              Cross
-                                          </Label>
-                                      </RadioGroup>
+                                        <Label htmlFor="qr-style">Module Style</Label>
+                                        <Select
+                                            value={qrStyle}
+                                            onValueChange={(value: QRStyle) => setQrStyle(value)}
+                                        >
+                                            <SelectTrigger id="qr-style">
+                                                <SelectValue placeholder="Select style" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="squares">Squares</SelectItem>
+                                                <SelectItem value="dots">Dots</SelectItem>
+                                                <SelectItem value="rounded">Rounded</SelectItem>
+                                                <SelectItem value="fluid">Fluid</SelectItem>
+                                                <SelectItem value="wavy">Wavy</SelectItem>
+                                                <SelectItem value="diamond">Diamond</SelectItem>
+                                                <SelectItem value="star">Star</SelectItem>
+                                                <SelectItem value="cross">Cross</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                      <div className="flex items-center space-x-2">
                                         <Switch id="shield-corners" checked={useShieldCorners} onCheckedChange={setUseShieldCorners} />
@@ -1659,4 +1644,6 @@ export function QrickApp() {
 }
 
     
+    
+
     
