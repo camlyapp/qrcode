@@ -5,7 +5,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
 import QRCodeStyling, { type DotType, type CornerSquareType, type CornerDotType } from "qr-code-styling";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2, Sun, Moon, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Star, Plus, AlignLeft, AlignCenter, AlignRight, Pilcrow, Edit, ImagePlus, Shapes } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2, Sun, Moon, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Star, Plus, AlignLeft, AlignCenter, AlignRight, Pilcrow, Edit, ImagePlus, Shapes, Wifi, MessageSquare } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +53,8 @@ type ResizeHandle = 'tl' | 'tr' | 'bl' | 'br';
 type BarcodeTextPosition = 'top' | 'bottom';
 type QrTextPosition = "top" | "bottom" | "left" | "right";
 type QRStylingEngine = "legacy" | "styling";
+type QrDataType = 'text' | 'wifi' | 'sms' | 'phone' | 'email';
+
 
 interface CardElement {
     id: string;
@@ -147,6 +149,64 @@ export function QrickApp() {
   const [selectedElement, setSelectedElement] = useState<string | null>(null);
   const [cursorStyle, setCursorStyle] = useState('default');
   const [cardBgImageUrl, setCardBgImageUrl] = useState<string>('');
+  
+  // QR Data type states
+  const [qrDataType, setQrDataType] = useState<QrDataType>('text');
+  const [wifiSsid, setWifiSsid] = useState<string>('MyNetwork');
+  const [wifiPassword, setWifiPassword] = useState<string>('password123');
+  const [wifiEncryption, setWifiEncryption] = useState<'WPA' | 'WEP' | 'nopass'>('WPA');
+  const [smsPhone, setSmsPhone] = useState<string>('');
+  const [smsMessage, setSmsMessage] = useState<string>('');
+  const [phone, setPhone] = useState<string>('');
+  const [emailTo, setEmailTo] = useState<string>('');
+  const [emailSubject, setEmailSubject] = useState<string>('');
+  const [emailBody, setEmailBody] = useState<string>('');
+
+  useEffect(() => {
+    let newContent = '';
+    switch (qrDataType) {
+      case 'wifi':
+        newContent = `WIFI:T:${wifiEncryption};S:${wifiSsid};P:${wifiPassword};;`;
+        break;
+      case 'sms':
+        newContent = `SMSTO:${smsPhone}:${smsMessage}`;
+        break;
+      case 'phone':
+        newContent = `tel:${phone}`;
+        break;
+      case 'email':
+        const subject = encodeURIComponent(emailSubject);
+        const body = encodeURIComponent(emailBody);
+        newContent = `mailto:${emailTo}?subject=${subject}&body=${body}`;
+        break;
+      case 'text':
+      default:
+        newContent = content.startsWith('https://') || content.startsWith('http://') ? content : content;
+        return;
+    }
+    setContent(newContent);
+  }, [qrDataType, wifiSsid, wifiPassword, wifiEncryption, smsPhone, smsMessage, phone, emailTo, emailSubject, emailBody]);
+
+  const handleQrDataTypeChange = (value: QrDataType) => {
+    setQrDataType(value);
+    switch (value) {
+        case 'text':
+            setContent('https://firebase.google.com');
+            break;
+        case 'wifi':
+            setContent(`WIFI:T:${wifiEncryption};S:${wifiSsid};P:${wifiPassword};;`);
+            break;
+        case 'sms':
+            setContent(`SMSTO:${smsPhone}:${smsMessage}`);
+            break;
+        case 'phone':
+            setContent(`tel:${phone}`);
+            break;
+        case 'email':
+            setContent(`mailto:${emailTo}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`);
+            break;
+    }
+  };
 
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -1461,16 +1521,91 @@ export function QrickApp() {
 
             <TabsContent value="qr" className="pt-4">
                 <div className="grid gap-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="qr-content">Content</Label>
-                        <Input
-                        id="qr-content"
-                        placeholder="Enter URL or text"
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        className="text-sm"
-                        />
+                     <div className="grid gap-2">
+                        <Label htmlFor="qr-data-type">Data Type</Label>
+                        <Select value={qrDataType} onValueChange={(v) => handleQrDataTypeChange(v as QrDataType)}>
+                            <SelectTrigger id="qr-data-type">
+                                <SelectValue placeholder="Select data type"/>
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="text"><Text className="mr-2"/>Text/URL</SelectItem>
+                                <SelectItem value="wifi"><Wifi className="mr-2"/>Wi-Fi</SelectItem>
+                                <SelectItem value="sms"><MessageSquare className="mr-2"/>SMS</SelectItem>
+                                <SelectItem value="phone"><Phone className="mr-2"/>Phone</SelectItem>
+                                <SelectItem value="email"><Mail className="mr-2"/>Email</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
+                    {qrDataType === 'text' && (
+                        <div className="grid gap-2">
+                            <Label htmlFor="qr-content">Content</Label>
+                            <Textarea
+                                id="qr-content"
+                                placeholder="Enter URL or text"
+                                value={content}
+                                onChange={(e) => setContent(e.target.value)}
+                                className="text-sm"
+                                rows={3}
+                            />
+                        </div>
+                    )}
+                     {qrDataType === 'wifi' && (
+                        <div className="grid gap-4 p-4 border rounded-lg">
+                            <div className="grid gap-2">
+                                <Label htmlFor="wifi-ssid">SSID (Network Name)</Label>
+                                <Input id="wifi-ssid" value={wifiSsid} onChange={(e) => setWifiSsid(e.target.value)} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="wifi-password">Password</Label>
+                                <Input id="wifi-password" type="password" value={wifiPassword} onChange={(e) => setWifiPassword(e.target.value)} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Encryption</Label>
+                                <RadioGroup value={wifiEncryption} onValueChange={(v) => setWifiEncryption(v as any)} className="flex gap-4">
+                                    <Label htmlFor="wifi-wpa" className="flex items-center gap-2 cursor-pointer text-sm"><RadioGroupItem value="WPA" id="wifi-wpa" />WPA/WPA2</Label>
+                                    <Label htmlFor="wifi-wep" className="flex items-center gap-2 cursor-pointer text-sm"><RadioGroupItem value="WEP" id="wifi-wep" />WEP</Label>
+                                    <Label htmlFor="wifi-nopass" className="flex items-center gap-2 cursor-pointer text-sm"><RadioGroupItem value="nopass" id="wifi-nopass" />None</Label>
+                                </RadioGroup>
+                            </div>
+                        </div>
+                    )}
+                     {qrDataType === 'sms' && (
+                        <div className="grid gap-4 p-4 border rounded-lg">
+                            <div className="grid gap-2">
+                                <Label htmlFor="sms-phone">Phone Number</Label>
+                                <Input id="sms-phone" type="tel" value={smsPhone} onChange={(e) => setSmsPhone(e.target.value)} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="sms-message">Message</Label>
+                                <Textarea id="sms-message" value={smsMessage} onChange={(e) => setSmsMessage(e.target.value)} />
+                            </div>
+                        </div>
+                    )}
+                    {qrDataType === 'phone' && (
+                        <div className="grid gap-4 p-4 border rounded-lg">
+                            <div className="grid gap-2">
+                                <Label htmlFor="phone-number">Phone Number</Label>
+                                <Input id="phone-number" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                            </div>
+                        </div>
+                    )}
+                    {qrDataType === 'email' && (
+                        <div className="grid gap-4 p-4 border rounded-lg">
+                            <div className="grid gap-2">
+                                <Label htmlFor="email-to">To</Label>
+                                <Input id="email-to" type="email" value={emailTo} onChange={(e) => setEmailTo(e.target.value)} />
+                            </div>
+                             <div className="grid gap-2">
+                                <Label htmlFor="email-subject">Subject</Label>
+                                <Input id="email-subject" value={emailSubject} onChange={(e) => setEmailSubject(e.target.value)} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="email-body">Body</Label>
+                                <Textarea id="email-body" value={emailBody} onChange={(e) => setEmailBody(e.target.value)} />
+                            </div>
+                        </div>
+                    )}
+
                     <Tabs defaultValue="style">
                         <TabsList className="grid w-full grid-cols-4">
                            <TabsTrigger value="style"><Palette className="mr-0 md:mr-2"/><span className="hidden md:inline">Style</span></TabsTrigger>
