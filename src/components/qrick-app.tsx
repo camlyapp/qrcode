@@ -1225,13 +1225,13 @@ export function QrickApp() {
                                         <div className="grid gap-2">
                                             <Label htmlFor="fg-color">Foreground</Label>
                                             <div className="relative">
-                                                <Input id="fg-color" type="color" value={fgColor} onChange={(e) => { setFgColor(e.target.value); setGradientType("none"); }} className="p-1 h-9" />
+                                                <Input id="fg-color" type="color" value={fgColor} onChange={(e) => { setFgColor(e.target.value); setGradientType("none"); }} className="p-0 h-8 w-8 rounded-full" />
                                             </div>
                                         </div>
                                         <div className="grid gap-2">
                                             <Label htmlFor="bg-color">Background</Label>
                                             <div className="relative">
-                                                <Input id="bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-1 h-9" />
+                                                <Input id="bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-0 h-8 w-8 rounded-full" />
                                             </div>
                                         </div>
                                     </div>
