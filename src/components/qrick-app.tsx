@@ -68,6 +68,7 @@ export function QrickApp() {
   const [gradientStartColor, setGradientStartColor] = useState<string>("#8A2BE2");
   const [gradientEndColor, setGradientEndColor] = useState<string>("#4682B4");
   const [barcodeError, setBarcodeError] = useState<string | null>(null);
+  const [barcodeHeight, setBarcodeHeight] = useState<number>(100);
 
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -235,7 +236,7 @@ export function QrickApp() {
             lineColor: fgColor,
             background: bgColor,
             width: 8,
-            height: 400,
+            height: 160 * (barcodeHeight / 25),
             displayValue: true,
             valid: (valid: boolean) => {
                 if (!valid) {
@@ -253,7 +254,7 @@ export function QrickApp() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
     }
-  }, [content, barcodeFormat, fgColor, bgColor]);
+  }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight]);
 
 
   useEffect(() => {
@@ -347,16 +348,10 @@ export function QrickApp() {
     if (forceContent || generatorType === 'barcode') {
         switch (value) {
             case 'CODE128':
-                setContent('Example 1234');
-                break;
             case 'CODE128A':
-                setContent('EXAMPLE');
-                break;
             case 'CODE128B':
-                setContent('Example 1234');
-                break;
             case 'CODE128C':
-                setContent('12345678');
+                setContent('Example 1234');
                 break;
             case 'EAN13':
                 setContent('1234567890128');
@@ -676,6 +671,11 @@ export function QrickApp() {
                         </div>
                     </div>
                 </div>
+                <Separator />
+                <div className="grid gap-2">
+                    <Label htmlFor="barcode-height">Height ({barcodeHeight}%)</Label>
+                    <Slider id="barcode-height" min={25} max={150} value={[barcodeHeight]} onValueChange={(v) => setBarcodeHeight(v[0])} />
+                </div>
               </div>
             </TabsContent>
           </Tabs>
@@ -708,3 +708,5 @@ export function QrickApp() {
     </Card>
   );
 }
+
+    
