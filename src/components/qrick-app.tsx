@@ -32,7 +32,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
-type QRStyle = "squares" | "dots" | "rounded" | "fluid" | "wavy" | "diamond" | "corner-shield";
+type QRStyle = "squares" | "dots" | "rounded" | "fluid" | "wavy" | "diamond";
 
 const colorPresets = [
     { name: "Classic", fg: "#000000", bg: "#ffffff" },
@@ -55,6 +55,7 @@ export function QrickApp() {
   const [imageSize, setImageSize] = useState<number>(60);
   const [excavate, setExcavate] = useState<boolean>(true);
   const [qrStyle, setQrStyle] = useState<QRStyle>("squares");
+  const [useShieldCorners, setUseShieldCorners] = useState<boolean>(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -92,12 +93,8 @@ export function QrickApp() {
                     const moduleY = row * moduleSize;
 
                     const isFinderPattern = (row < 7 && col < 7) || (row < 7 && col >= moduleCount - 7) || (row >= moduleCount - 7 && col < 7);
-
-                    if (qrStyle === 'dots') {
-                        ctx.beginPath();
-                        ctx.arc(moduleX + moduleSize / 2, moduleY + moduleSize / 2, (moduleSize / 2.2), 0, 2 * Math.PI);
-                        ctx.fill();
-                    } else if (qrStyle === 'corner-shield' && isFinderPattern) {
+                    
+                    if (useShieldCorners && isFinderPattern) {
                         const radius = 0.5 * moduleSize;
                         ctx.beginPath();
                         ctx.moveTo(moduleX, moduleY + radius);
@@ -110,6 +107,13 @@ export function QrickApp() {
                         ctx.lineTo(moduleX + radius, moduleY);
                         ctx.quadraticCurveTo(moduleX, moduleY, moduleX, moduleY + radius);
                         ctx.closePath();
+                        ctx.fill();
+                        continue;
+                    }
+
+                    if (qrStyle === 'dots') {
+                        ctx.beginPath();
+                        ctx.arc(moduleX + moduleSize / 2, moduleY + moduleSize / 2, (moduleSize / 2.2), 0, 2 * Math.PI);
                         ctx.fill();
                     } else if (qrStyle === 'wavy') {
                         ctx.beginPath();
@@ -181,7 +185,7 @@ export function QrickApp() {
     .catch(err => {
         console.error(err);
     });
-  }, [content, size, level, fgColor, bgColor, qrStyle, imageUrl, imageSize, excavate]);
+  }, [content, size, level, fgColor, bgColor, qrStyle, imageUrl, imageSize, excavate, useShieldCorners]);
 
   useEffect(() => {
       if (content) {
@@ -340,11 +344,14 @@ export function QrickApp() {
                                   <RadioGroupItem value="diamond" id="style-diamond" />
                                   Diamond
                               </Label>
-                              <Label htmlFor="style-corner-shield" className="flex items-center gap-2 cursor-pointer text-sm">
-                                  <RadioGroupItem value="corner-shield" id="style-corner-shield" />
-                                  Shield
-                              </Label>
                           </RadioGroup>
+                        </div>
+                         <div className="flex items-center space-x-2">
+                            <Switch id="shield-corners" checked={useShieldCorners} onCheckedChange={setUseShieldCorners} />
+                            <Label htmlFor="shield-corners" className="flex items-center gap-2 cursor-pointer">
+                                <Shield className="h-4 w-4" />
+                                Use Shielded Corners
+                            </Label>
                         </div>
                         <Separator />
                         <div className="grid gap-2">
@@ -429,5 +436,3 @@ export function QrickApp() {
     </Card>
   );
 }
-
-    
