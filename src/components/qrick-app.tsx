@@ -5,7 +5,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -47,7 +47,7 @@ type QRStyle = "squares" | "dots" | "rounded" | "fluid" | "wavy" | "diamond";
 type GradientType = "none" | "linear" | "radial";
 type GeneratorType = "qr" | "barcode";
 type BarcodeFormat = "CODE128" | "CODE128A" | "CODE128B" | "CODE128C" | "EAN13" | "EAN8" | "EAN5" | "EAN2" | "UPC" | "UPCE" | "CODE39" | "ITF14" | "ITF" | "MSI" | "MSI10" | "MSI11" | "MSI1010" | "MSI1110" | "pharmacode" | "codabar";
-type CardDesign = "classic" | "modern" | "sleek" | "professional" | "vcard";
+type CardDesign = "classic" | "modern" | "sleek" | "professional" | "vcard" | "marriage";
 type ResizeHandle = 'tl' | 'tr' | 'bl' | 'br';
 
 interface CardElement {
@@ -97,15 +97,15 @@ export function QrickApp() {
 
   // Card states
   const [generateCard, setGenerateCard] = useState<boolean>(false);
-  const [cardTitle, setCardTitle] = useState<string>("John Doe");
-  const [cardSubtitle, setCardSubtitle] = useState<string>("Software Engineer");
+  const [cardTitle, setCardTitle] = useState<string>("John & Jane");
+  const [cardSubtitle, setCardSubtitle] = useState<string>("December 31, 2024");
   const [cardEmail, setCardEmail] = useState<string>("john.doe@example.com");
   const [cardPhone, setCardPhone] = useState<string>("+1 (123) 456-7890");
   const [cardWebsite, setCardWebsite] = useState<string>("example.com");
-  const [cardBgColor, setCardBgColor] = useState<string>("#ffffff");
-  const [cardTextColor, setCardTextColor] = useState<string>("#000000");
+  const [cardBgColor, setCardBgColor] = useState<string>("#FDFBF7");
+  const [cardTextColor, setCardTextColor] = useState<string>("#5C3A21");
   const [cardDesign, setCardDesign] = useState<CardDesign>("classic");
-  const [cardAccentColor, setCardAccentColor] = useState<string>("#3B82F6");
+  const [cardAccentColor, setCardAccentColor] = useState<string>("#E0A97E");
   const [cardElements, setCardElements] = useState<CardElement[]>([]);
   const [draggingElement, setDraggingElement] = useState<string | null>(null);
   const [resizingState, setResizingState] = useState<{ elementId: string, handle: ResizeHandle } | null>(null);
@@ -308,6 +308,22 @@ export function QrickApp() {
                 ctx.fillStyle = cardAccentColor;
                 ctx.fillRect(0, 0, canvas.width, 60 * scale);
                 break;
+            case 'marriage': {
+                // Example decorative background
+                ctx.strokeStyle = cardAccentColor;
+                ctx.lineWidth = 1 * scale;
+                for (let i = 0; i < 20; i++) {
+                    ctx.beginPath();
+                    ctx.arc(
+                        Math.random() * canvas.width,
+                        Math.random() * canvas.height,
+                        Math.random() * 20 * scale,
+                        0, 2 * Math.PI
+                    );
+                    ctx.stroke();
+                }
+                break;
+            }
         }
 
        // Draw elements
@@ -464,10 +480,20 @@ export function QrickApp() {
             height: metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
         };
     };
+    
+    let defaultTitle = 'John Doe';
+    let defaultSubtitle = 'Software Engineer';
+    if(cardDesign === 'marriage') {
+        defaultTitle = 'John & Jane';
+        defaultSubtitle = 'December 31, 2024';
+    } else {
+        setCardTitle(defaultTitle);
+        setCardSubtitle(defaultSubtitle);
+    }
 
     const textElements: { [key: string]: Omit<CardElement, 'id' | 'type' | 'width' | 'height'> } = {
-        title: { content: cardTitle, font: `bold ${24 * scale}px sans-serif`, align: 'center', color: cardTextColor },
-        subtitle: { content: cardSubtitle, font: `${16 * scale}px sans-serif`, align: 'center', color: cardTextColor },
+        title: { content: cardTitle || defaultTitle, font: `bold ${24 * scale}px sans-serif`, align: 'center', color: cardTextColor },
+        subtitle: { content: cardSubtitle || defaultSubtitle, font: `${16 * scale}px sans-serif`, align: 'center', color: cardTextColor },
         email: { content: cardEmail, font: `${14 * scale}px sans-serif`, align: 'left', color: cardTextColor },
         phone: { content: cardPhone, font: `${14 * scale}px sans-serif`, align: 'left', color: cardTextColor },
         website: { content: cardWebsite, font: `${14 * scale}px sans-serif`, align: 'left', color: cardTextColor },
@@ -476,8 +502,8 @@ export function QrickApp() {
     // Position elements based on design
     switch (cardDesign) {
         case 'classic': {
-            const titleMetrics = getTextMetrics(cardTitle, `bold ${24 * scale}px sans-serif`);
-            const subtitleMetrics = getTextMetrics(cardSubtitle, `${16 * scale}px sans-serif`);
+            const titleMetrics = getTextMetrics(textElements.title.content || '', textElements.title.font || '');
+            const subtitleMetrics = getTextMetrics(textElements.subtitle.content || '', textElements.subtitle.font || '');
             newElements.push({ id: 'title', type: 'text', ...textElements.title, x: (canvasWidth - titleMetrics.width) / 2, y: 50 * scale, ...titleMetrics });
             newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, x: (canvasWidth - subtitleMetrics.width) / 2, y: 80 * scale, ...subtitleMetrics });
             newElements.push({ id: 'barcode', type: 'barcode', x: (canvasWidth - barcodeWidth) / 2, y: 120 * scale, width: barcodeWidth, height: barcodeHeightVal });
@@ -485,32 +511,32 @@ export function QrickApp() {
         }
         case 'modern': {
             const accentWidth = 100 * scale;
-            const titleMetrics = getTextMetrics(cardTitle, `bold ${22 * scale}px sans-serif`);
-            const subtitleMetrics = getTextMetrics(cardSubtitle, `${14 * scale}px sans-serif`);
+            const titleMetrics = getTextMetrics(textElements.title.content || '', `bold ${22 * scale}px sans-serif`);
+            const subtitleMetrics = getTextMetrics(textElements.subtitle.content || '', `${14 * scale}px sans-serif`);
             newElements.push({ id: 'title', type: 'text', ...textElements.title, font: `bold ${22 * scale}px sans-serif`, align: 'left', x: accentWidth + 20 * scale, y: 60 * scale, ...titleMetrics });
             newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: `${14 * scale}px sans-serif`, align: 'left', x: accentWidth + 20 * scale, y: 90 * scale, ...subtitleMetrics });
             newElements.push({ id: 'barcode', type: 'barcode', x: (canvasWidth - barcodeWidth + accentWidth) / 2, y: 120 * scale, width: barcodeWidth, height: barcodeHeightVal });
             break;
         }
         case 'sleek': {
-            const titleMetrics = getTextMetrics(cardTitle, `bold ${20 * scale}px sans-serif`);
-            const subtitleMetrics = getTextMetrics(cardSubtitle, `${14 * scale}px sans-serif`);
+            const titleMetrics = getTextMetrics(textElements.title.content || '', `bold ${20 * scale}px sans-serif`);
+            const subtitleMetrics = getTextMetrics(textElements.subtitle.content || '', `${14 * scale}px sans-serif`);
             newElements.push({ id: 'title', type: 'text', ...textElements.title, font: `bold ${20 * scale}px sans-serif`, color: cardBgColor, align: 'left', x: 20 * scale, y: 40 * scale, ...titleMetrics });
             newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: `${14 * scale}px sans-serif`, align: 'left', x: 20 * scale, y: (60 * scale) + 30 * scale, ...subtitleMetrics });
             newElements.push({ id: 'barcode', type: 'barcode', x: (canvasWidth - barcodeWidth) / 2, y: 110 * scale, width: barcodeWidth, height: barcodeHeightVal });
             break;
         }
         case 'professional': {
-            const titleMetrics = getTextMetrics(cardTitle, `bold ${22 * scale}px sans-serif`);
-            const subtitleMetrics = getTextMetrics(cardSubtitle, `${14 * scale}px sans-serif`);
+            const titleMetrics = getTextMetrics(textElements.title.content || '', `bold ${22 * scale}px sans-serif`);
+            const subtitleMetrics = getTextMetrics(textElements.subtitle.content || '', `${14 * scale}px sans-serif`);
             newElements.push({ id: 'title', type: 'text', ...textElements.title, font: `bold ${22 * scale}px sans-serif`, x: (canvasWidth - titleMetrics.width) / 2, y: 50 * scale, ...titleMetrics });
             newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: `${14 * scale}px sans-serif`, x: (canvasWidth - subtitleMetrics.width) / 2, y: 75 * scale, ...subtitleMetrics });
             newElements.push({ id: 'barcode', type: 'barcode', x: (canvasWidth - barcodeWidth) / 2, y: 115 * scale, width: barcodeWidth, height: barcodeHeightVal });
             break;
         }
         case 'vcard': {
-            const titleMetrics = getTextMetrics(cardTitle, `bold ${20 * scale}px sans-serif`);
-            const subtitleMetrics = getTextMetrics(cardSubtitle, `italic ${12 * scale}px sans-serif`);
+            const titleMetrics = getTextMetrics(textElements.title.content || '', `bold ${20 * scale}px sans-serif`);
+            const subtitleMetrics = getTextMetrics(textElements.subtitle.content || '', `italic ${12 * scale}px sans-serif`);
             const emailMetrics = getTextMetrics(cardEmail, `${14 * scale}px sans-serif`);
             const phoneMetrics = getTextMetrics(cardPhone, `${14 * scale}px sans-serif`);
             const websiteMetrics = getTextMetrics(cardWebsite, `${14 * scale}px sans-serif`);
@@ -523,6 +549,18 @@ export function QrickApp() {
             if(cardPhone) newElements.push({ id: 'phone', type: 'text', ...textElements.phone, x: 40 * scale, y: infoStartY + infoSpacing, ...phoneMetrics });
             if(cardWebsite) newElements.push({ id: 'website', type: 'text', ...textElements.website, x: 40 * scale, y: infoStartY + infoSpacing * 2, ...websiteMetrics });
             newElements.push({ id: 'barcode', type: 'barcode', x: canvasWidth - barcodeWidth - 20 * scale, y: 155 * scale, width: barcodeWidth, height: barcodeHeightVal });
+            break;
+        }
+         case 'marriage': {
+            const titleFont = `'Great Vibes', cursive ${36 * scale}px`;
+            const subtitleFont = `italic ${16 * scale}px sans-serif`;
+
+            const titleMetrics = getTextMetrics(textElements.title.content || '', titleFont);
+            const subtitleMetrics = getTextMetrics(textElements.subtitle.content || '', subtitleFont);
+            
+            newElements.push({ id: 'title', type: 'text', ...textElements.title, font: titleFont, x: (canvasWidth - titleMetrics.width) / 2, y: 80 * scale, ...titleMetrics });
+            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: subtitleFont, x: (canvasWidth - subtitleMetrics.width) / 2, y: 120 * scale, ...subtitleMetrics });
+            newElements.push({ id: 'barcode', type: 'barcode', x: (canvasWidth - barcodeWidth) / 2, y: 155 * scale, width: barcodeWidth, height: barcodeHeightVal });
             break;
         }
     }
@@ -1143,6 +1181,11 @@ export function QrickApp() {
                                 <Label htmlFor="card-vcard" className="flex items-center gap-2 cursor-pointer text-sm">
                                     <RadioGroupItem value="vcard" id="card-vcard" />
                                     V-Card
+                                </Label>
+                                 <Label htmlFor="card-marriage" className="flex items-center gap-2 cursor-pointer text-sm">
+                                    <RadioGroupItem value="marriage" id="card-marriage" />
+                                    <Heart className="h-4 w-4"/>
+                                    Marriage
                                 </Label>
                             </RadioGroup>
                         </div>
