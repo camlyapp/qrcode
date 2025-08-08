@@ -46,6 +46,8 @@ type QRStyle = "squares" | "dots" | "rounded" | "fluid" | "wavy" | "diamond";
 type GradientType = "none" | "linear" | "radial";
 type GeneratorType = "qr" | "barcode";
 type BarcodeFormat = "CODE128" | "CODE128A" | "CODE128B" | "CODE128C" | "EAN13" | "EAN8" | "EAN5" | "EAN2" | "UPC" | "UPCE" | "CODE39" | "ITF14" | "ITF" | "MSI" | "MSI10" | "MSI11" | "MSI1010" | "MSI1110" | "pharmacode" | "codabar";
+type CardDesign = "classic" | "modern";
+
 
 const colorPresets = [
     { name: "Classic", fg: "#000000", bg: "#ffffff" },
@@ -83,8 +85,10 @@ export function QrickApp() {
   const [generateCard, setGenerateCard] = useState<boolean>(false);
   const [cardTitle, setCardTitle] = useState<string>("John Doe");
   const [cardSubtitle, setCardSubtitle] = useState<string>("Software Engineer");
-  const [cardBgColor, setCardBgColor] = useState<string>("#f0f0f0");
+  const [cardBgColor, setCardBgColor] = useState<string>("#ffffff");
   const [cardTextColor, setCardTextColor] = useState<string>("#000000");
+  const [cardDesign, setCardDesign] = useState<CardDesign>("classic");
+  const [cardAccentColor, setCardAccentColor] = useState<string>("#3B82F6");
 
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -257,14 +261,30 @@ export function QrickApp() {
         ctx.fillStyle = cardBgColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        ctx.fillStyle = cardTextColor;
-        ctx.font = `${24 * scale}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.fillText(cardTitle, canvas.width / 2, 50 * scale);
-        
-        ctx.font = `${16 * scale}px sans-serif`;
-        ctx.fillText(cardSubtitle, canvas.width / 2, 80 * scale);
-        
+        // Draw card based on design
+        if (cardDesign === 'modern') {
+            const accentWidth = 100 * scale;
+            ctx.fillStyle = cardAccentColor;
+            ctx.fillRect(0, 0, accentWidth, canvas.height);
+
+            ctx.fillStyle = cardTextColor;
+            ctx.font = `bold ${22 * scale}px sans-serif`;
+            ctx.textAlign = 'left';
+            ctx.fillText(cardTitle, (accentWidth + 20 * scale), 60 * scale);
+            
+            ctx.font = `${14 * scale}px sans-serif`;
+            ctx.fillText(cardSubtitle, (accentWidth + 20 * scale), 90 * scale);
+
+        } else { // classic design
+            ctx.fillStyle = cardTextColor;
+            ctx.font = `bold ${24 * scale}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.fillText(cardTitle, canvas.width / 2, 50 * scale);
+            
+            ctx.font = `${16 * scale}px sans-serif`;
+            ctx.fillText(cardSubtitle, canvas.width / 2, 80 * scale);
+        }
+
         try {
             const tempCanvas = document.createElement('canvas');
             let isValid = true;
@@ -290,7 +310,12 @@ export function QrickApp() {
 
             const barcodeWidth = tempCanvas.width;
             const barcodeHeightCalculated = tempCanvas.height;
-            ctx.drawImage(tempCanvas, (canvas.width - barcodeWidth) / 2, 120 * scale, barcodeWidth, barcodeHeightCalculated);
+            
+            if (cardDesign === 'modern') {
+                ctx.drawImage(tempCanvas, (canvas.width - barcodeWidth + 100 * scale) / 2, 120 * scale, barcodeWidth, barcodeHeightCalculated);
+            } else {
+                ctx.drawImage(tempCanvas, (canvas.width - barcodeWidth) / 2, 120 * scale, barcodeWidth, barcodeHeightCalculated);
+            }
 
         } catch (err: any) {
             setBarcodeError(err.message || "Error generating barcode for card.");
@@ -349,7 +374,7 @@ export function QrickApp() {
             }
         }
     }
-  }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize, textColor, generateCard, cardTitle, cardSubtitle, cardBgColor, cardTextColor]);
+  }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize, textColor, generateCard, cardTitle, cardSubtitle, cardBgColor, cardTextColor, cardDesign, cardAccentColor]);
 
 
   useEffect(() => {
@@ -371,7 +396,7 @@ export function QrickApp() {
         }
         setBarcodeError(null);
       }
-  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, cardTitle, cardSubtitle, cardBgColor, cardTextColor]);
+  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, cardTitle, cardSubtitle, cardBgColor, cardTextColor, cardDesign, cardAccentColor]);
 
   const handleDownload = useCallback(async (format: 'png' | 'jpeg' | 'svg') => {
     if (!content || barcodeError) {
@@ -813,6 +838,19 @@ export function QrickApp() {
                    {generateCard ? (
                     <div className="grid gap-4">
                         <div className="grid gap-2">
+                            <Label>Card Style</Label>
+                            <RadioGroup value={cardDesign} onValueChange={(v) => setCardDesign(v as CardDesign)} className="flex gap-4">
+                                <Label htmlFor="card-classic" className="flex items-center gap-2 cursor-pointer text-sm">
+                                    <RadioGroupItem value="classic" id="card-classic" />
+                                    Classic
+                                </Label>
+                                <Label htmlFor="card-modern" className="flex items-center gap-2 cursor-pointer text-sm">
+                                    <RadioGroupItem value="modern" id="card-modern" />
+                                    Modern
+                                </Label>
+                            </RadioGroup>
+                        </div>
+                        <div className="grid gap-2">
                           <Label htmlFor="card-title">Title</Label>
                           <Input id="card-title" value={cardTitle} onChange={(e) => setCardTitle(e.target.value)} />
                       </div>
@@ -830,6 +868,12 @@ export function QrickApp() {
                             <Input id="card-text-color" type="color" value={cardTextColor} onChange={(e) => setCardTextColor(e.target.value)} className="p-1 h-9" />
                         </div>
                      </div>
+                     {cardDesign === 'modern' && (
+                        <div className="grid gap-2">
+                            <Label htmlFor="card-accent-color">Accent Color</Label>
+                            <Input id="card-accent-color" type="color" value={cardAccentColor} onChange={(e) => setCardAccentColor(e.target.value)} className="p-1 h-9 w-full" />
+                        </div>
+                     )}
                       <div className="grid gap-2">
                         <Label>Barcode Colors</Label>
                          <div className="flex items-center gap-4">
@@ -923,5 +967,3 @@ export function QrickApp() {
     </Card>
   );
 }
-
-    
