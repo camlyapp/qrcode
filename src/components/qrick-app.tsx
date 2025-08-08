@@ -374,7 +374,7 @@ export function QrickApp() {
                 setContent('123456789012');
                 break;
             case 'UPCE':
-                setContent('01234567');
+                setContent('123456');
                 break;
             case 'CODE39':
                 setContent('CODE39 EXAMPLE');
