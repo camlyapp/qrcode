@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2, Sun, Moon, AlignVerticalJustifyStart, AlignVerticalJustifyEnd } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2, Sun, Moon, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Star, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -41,7 +41,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
-type QRStyle = "squares" | "dots" | "rounded" | "fluid" | "wavy" | "diamond";
+type QRStyle = "squares" | "dots" | "rounded" | "fluid" | "wavy" | "diamond" | "star" | "cross";
 type GradientType = "none" | "linear" | "radial";
 type GeneratorType = "qr" | "barcode";
 type BarcodeFormat = "CODE128" | "CODE128A" | "CODE128B" | "CODE128C" | "EAN13" | "EAN8" | "EAN5" | "EAN2" | "UPC" | "UPCE" | "CODE39" | "ITF14" | "ITF" | "MSI" | "MSI10" | "MSI11" | "MSI1010" | "MSI1110" | "pharmacode" | "codabar";
@@ -215,6 +215,29 @@ export function QrickApp() {
                         ctx.lineTo(moduleX, moduleY + moduleSize / 2);
                         ctx.closePath();
                         ctx.fill();
+                    } else if (qrStyle === 'star') {
+                        ctx.beginPath();
+                        const centerX = moduleX + moduleSize / 2;
+                        const centerY = moduleY + moduleSize / 2;
+                        const outerRadius = moduleSize / 2;
+                        const innerRadius = moduleSize / 4;
+                        for (let i = 0; i < 10; i++) {
+                            const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                            const angle = (i * Math.PI) / 5 - Math.PI / 2;
+                            const x = centerX + radius * Math.cos(angle);
+                            const y = centerY + radius * Math.sin(angle);
+                            if (i === 0) {
+                                ctx.moveTo(x, y);
+                            } else {
+                                ctx.lineTo(x, y);
+                            }
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                    } else if (qrStyle === 'cross') {
+                        const armSize = moduleSize / 3;
+                        ctx.fillRect(moduleX + armSize, moduleY, armSize, moduleSize);
+                        ctx.fillRect(moduleX, moduleY + armSize, moduleSize, armSize);
                     } else if (qrStyle === 'rounded' || qrStyle === 'fluid') {
                         const radius = (qrStyle === 'fluid' ? 0.5 : 0.25) * moduleSize;
                         
@@ -1194,6 +1217,14 @@ export function QrickApp() {
                                           <Label htmlFor="style-diamond" className="flex items-center gap-2 cursor-pointer text-sm">
                                               <RadioGroupItem value="diamond" id="style-diamond" />
                                               Diamond
+                                          </Label>
+                                          <Label htmlFor="style-star" className="flex items-center gap-2 cursor-pointer text-sm">
+                                              <RadioGroupItem value="star" id="style-star" />
+                                              Star
+                                          </Label>
+                                          <Label htmlFor="style-cross" className="flex items-center gap-2 cursor-pointer text-sm">
+                                              <RadioGroupItem value="cross" id="style-cross" />
+                                              Cross
                                           </Label>
                                       </RadioGroup>
                                     </div>
