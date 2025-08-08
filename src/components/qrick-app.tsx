@@ -3,7 +3,8 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot } from "lucide-react";
+import JsBarcode from "jsbarcode";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +36,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
 type QRStyle = "squares" | "dots" | "rounded" | "fluid" | "wavy" | "diamond";
 type GradientType = "none" | "linear" | "radial";
+type BarcodeFormat = "QR" | "CODE128" | "EAN13" | "EAN8" | "UPC" | "CODE39" | "ITF14" | "MSI" | "pharmacode";
 
 const colorPresets = [
     { name: "Classic", fg: "#000000", bg: "#ffffff" },
@@ -48,6 +50,7 @@ const colorPresets = [
 
 
 export function QrickApp() {
+  const [format, setFormat] = useState<BarcodeFormat>("QR");
   const [content, setContent] = useState<string>("https://firebase.google.com");
   const [size, setSize] = useState<number>(256);
   const [level, setLevel] = useState<ErrorCorrectionLevel>("M");
@@ -61,6 +64,7 @@ export function QrickApp() {
   const [gradientType, setGradientType] = useState<GradientType>("none");
   const [gradientStartColor, setGradientStartColor] = useState<string>("#8A2BE2");
   const [gradientEndColor, setGradientEndColor] = useState<string>("#4682B4");
+  const [barcodeError, setBarcodeError] = useState<string | null>(null);
 
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -68,6 +72,7 @@ export function QrickApp() {
   const { toast } = useToast();
 
   const drawQR = useCallback(() => {
+    setBarcodeError(null);
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -203,29 +208,65 @@ export function QrickApp() {
         }
     })
     .catch(err => {
+        setBarcodeError("Error generating QR code. The content may be too long for the selected error correction level.");
         console.error(err);
     });
   }, [content, size, level, fgColor, bgColor, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor]);
 
+  const drawBarcode = useCallback(() => {
+    setBarcodeError(null);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    try {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        JsBarcode(canvas, content, {
+            format: format,
+            lineColor: fgColor,
+            background: bgColor,
+            width: 2,
+            height: 100,
+            displayValue: true,
+            valid: (valid: boolean) => {
+                if (!valid) {
+                     setBarcodeError("Invalid content for the selected barcode format.");
+                }
+            }
+        });
+    } catch (err: any) {
+        setBarcodeError(err.message || "Error generating barcode.");
+        console.error(err);
+    }
+  }, [content, format, fgColor, bgColor]);
+
+
   useEffect(() => {
       if (content) {
-        drawQR();
+        if (format === 'QR') {
+            drawQR();
+        } else {
+            drawBarcode();
+        }
       } else {
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext("2d");
         if (ctx) {
             ctx.clearRect(0,0,size,size);
         }
+        setBarcodeError(null);
       }
-  }, [drawQR, content, size]);
+  }, [drawQR, drawBarcode, content, size, format]);
 
   const handleDownload = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas) {
+    if (!canvas || barcodeError) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Could not find QR code to download.",
+        description: barcodeError || "Could not find code to download.",
       });
       return;
     }
@@ -236,16 +277,16 @@ export function QrickApp() {
       
     const downloadLink = document.createElement("a");
     downloadLink.href = pngUrl;
-    downloadLink.download = "qrick-code.png";
+    downloadLink.download = `${format.toLowerCase()}-code.png`;
     document.body.appendChild(downloadLink);
     downloadLink.click();
     document.body.removeChild(downloadLink);
 
     toast({
       title: "Success",
-      description: "QR code download started.",
+      description: "Download started.",
     });
-  }, [toast]);
+  }, [toast, format, barcodeError]);
 
   const applyPreset = (preset: {fg: string, bg: string}) => {
     setFgColor(preset.fg);
@@ -277,20 +318,54 @@ export function QrickApp() {
     <Card className="w-full max-w-4xl shadow-2xl">
       <CardHeader className="text-center p-4">
         <div className="mx-auto bg-primary text-primary-foreground rounded-full p-2 w-fit mb-2">
-            <QrCode className="h-5 w-5" />
+            <Barcode className="h-5 w-5" />
         </div>
         <CardTitle className="text-lg font-headline">QRick</CardTitle>
         <CardDescription className="text-xs">
-          Generate and customize your QR code in real-time.
+          Generate and customize your barcodes and QR codes in real-time.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-[340px_1fr] p-4">
         <div className="grid gap-4">
-            <Tabs defaultValue="content" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+            <Tabs defaultValue="type" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="type"><Barcode className="mr-2"/>Type</TabsTrigger>
                     <TabsTrigger value="content"><Text className="mr-2"/>Content</TabsTrigger>
-                    <TabsTrigger value="style"><Palette className="mr-2"/>Style</TabsTrigger>
+                    <TabsTrigger value="style" disabled={format !== 'QR'}><Palette className="mr-2"/>Style</TabsTrigger>
                 </TabsList>
+                <TabsContent value="type" className="pt-4">
+                     <div className="grid gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="format">Format</Label>
+                            <Select
+                                value={format}
+                                onValueChange={(value: BarcodeFormat) => {
+                                    setFormat(value);
+                                    if(value !== 'QR' && content === 'https://firebase.google.com') {
+                                        setContent('123456789012');
+                                    } else if (value === 'QR' && content === '123456789012') {
+                                        setContent('https://firebase.google.com');
+                                    }
+                                }}
+                            >
+                                <SelectTrigger id="format">
+                                <SelectValue placeholder="Select format" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="QR">QR Code</SelectItem>
+                                    <SelectItem value="CODE128">Code 128</SelectItem>
+                                    <SelectItem value="EAN13">EAN-13</SelectItem>
+                                    <SelectItem value="EAN8">EAN-8</SelectItem>
+                                    <SelectItem value="UPC">UPC</SelectItem>
+                                    <SelectItem value="CODE39">Code 39</SelectItem>
+                                    <SelectItem value="ITF14">ITF-14</SelectItem>
+                                    <SelectItem value="MSI">MSI</SelectItem>
+                                    <SelectItem value="pharmacode">Pharmacode</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                </TabsContent>
                 <TabsContent value="content" className="pt-4">
                      <div className="grid gap-4">
                         <div className="grid gap-2">
@@ -303,37 +378,39 @@ export function QrickApp() {
                             className="text-sm"
                             />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                            <Label htmlFor="size">Size (px)</Label>
-                            <Input
-                                id="size"
-                                type="number"
-                                min="64"
-                                max="1024"
-                                step="32"
-                                value={size}
-                                onChange={(e) => setSize(parseInt(e.target.value, 10) || 64)}
-                            />
+                        {format === 'QR' && (
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                <Label htmlFor="size">Size (px)</Label>
+                                <Input
+                                    id="size"
+                                    type="number"
+                                    min="64"
+                                    max="1024"
+                                    step="32"
+                                    value={size}
+                                    onChange={(e) => setSize(parseInt(e.target.value, 10) || 64)}
+                                />
+                                </div>
+                                <div className="grid gap-2">
+                                <Label htmlFor="level">Error Correction</Label>
+                                <Select
+                                    value={level}
+                                    onValueChange={(value: ErrorCorrectionLevel) => setLevel(value)}
+                                >
+                                    <SelectTrigger id="level">
+                                    <SelectValue placeholder="Select level" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                    <SelectItem value="L">Low (L)</SelectItem>
+                                    <SelectItem value="M">Medium (M)</SelectItem>
+                                    <SelectItem value="Q">Quartile (Q)</SelectItem>
+                                    <SelectItem value="H">High (H)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                </div>
                             </div>
-                            <div className="grid gap-2">
-                            <Label htmlFor="level">Error Correction</Label>
-                            <Select
-                                value={level}
-                                onValueChange={(value: ErrorCorrectionLevel) => setLevel(value)}
-                            >
-                                <SelectTrigger id="level">
-                                <SelectValue placeholder="Select level" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                <SelectItem value="L">Low (L)</SelectItem>
-                                <SelectItem value="M">Medium (M)</SelectItem>
-                                <SelectItem value="Q">Quartile (Q)</SelectItem>
-                                <SelectItem value="H">High (H)</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            </div>
-                        </div>
+                        )}
                     </div>
                 </TabsContent>
                 <TabsContent value="style" className="pt-4">
@@ -478,12 +555,12 @@ export function QrickApp() {
         </div>
         
         <div className="flex justify-center items-center rounded-lg bg-muted p-2">
-            <div className="p-2 bg-white rounded-md shadow-inner transition-all duration-300 ease-in-out" aria-label="QR Code Preview">
-              {content ? (
-                <canvas ref={canvasRef} width={size} height={size} />
+            <div className="p-2 bg-white rounded-md shadow-inner transition-all duration-300 ease-in-out" aria-label="Barcode Preview">
+              {content && !barcodeError ? (
+                <canvas ref={canvasRef} width={format === 'QR' ? size : '320'} height={format === 'QR' ? size : '160'} />
               ) : (
-                <div style={{width: size, height: size}} className="bg-gray-100 flex items-center justify-center text-center text-gray-500 rounded-lg p-4">
-                    Enter content to generate QR code.
+                <div style={{width: size, height: size}} className="bg-gray-100 flex items-center justify-center text-center text-red-500 rounded-lg p-4">
+                    {barcodeError || 'Enter content to generate a code.'}
                 </div>
               )}
             </div>
@@ -491,7 +568,7 @@ export function QrickApp() {
 
       </CardContent>
       <CardFooter className="p-4">
-        <Button onClick={handleDownload} className="w-full text-base py-5" disabled={!content}>
+        <Button onClick={handleDownload} className="w-full text-base py-5" disabled={!content || !!barcodeError}>
           <Download className="mr-2 h-5 w-5" />
           Download PNG
         </Button>
