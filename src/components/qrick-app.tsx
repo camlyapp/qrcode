@@ -32,7 +32,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
-type QRStyle = "squares" | "dots" | "rounded" | "fluid";
+type QRStyle = "squares" | "dots" | "rounded" | "fluid" | "wavy";
 
 const colorPresets = [
     { name: "Classic", fg: "#000000", bg: "#ffffff" },
@@ -94,6 +94,13 @@ export function QrickApp() {
                     if (qrStyle === 'dots') {
                         ctx.beginPath();
                         ctx.arc(moduleX + moduleSize / 2, moduleY + moduleSize / 2, (moduleSize / 2.2), 0, 2 * Math.PI);
+                        ctx.fill();
+                    } else if (qrStyle === 'wavy') {
+                        ctx.beginPath();
+                        ctx.moveTo(moduleX, moduleY + moduleSize / 2);
+                        ctx.quadraticCurveTo(moduleX + moduleSize / 2, moduleY - moduleSize / 2, moduleX + moduleSize, moduleY + moduleSize / 2);
+                        ctx.quadraticCurveTo(moduleX + moduleSize / 2, moduleY + moduleSize * 1.5, moduleX, moduleY + moduleSize / 2);
+                        ctx.closePath();
                         ctx.fill();
                     } else if (qrStyle === 'rounded' || qrStyle === 'fluid') {
                         const radius = (qrStyle === 'fluid' ? 0.5 : 0.25) * moduleSize;
@@ -300,6 +307,10 @@ export function QrickApp() {
                               <Label htmlFor="style-fluid" className="flex items-center gap-2 cursor-pointer text-sm">
                                   <RadioGroupItem value="fluid" id="style-fluid" />
                                   Fluid
+                              </Label>
+                              <Label htmlFor="style-wavy" className="flex items-center gap-2 cursor-pointer text-sm">
+                                  <RadioGroupItem value="wavy" id="style-wavy" />
+                                  Wavy
                               </Label>
                           </RadioGroup>
                         </div>
