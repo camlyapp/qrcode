@@ -1637,8 +1637,8 @@ export function QrickApp() {
 
 
   return (
-    <Card className="w-full max-w-6xl shadow-2xl">
-      <CardContent className="grid gap-8 md:grid-cols-[400px_1fr] p-4 pt-6">
+    <Card className="w-full max-w-7xl shadow-2xl">
+      <CardContent className="grid gap-8 md:grid-cols-[450px_1fr] p-4 pt-6">
         <div className="grid gap-4">
           <Tabs defaultValue="qr" value={generatorType} onValueChange={handleGeneratorTypeChange} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
@@ -2431,16 +2431,5 @@ export function QrickApp() {
   );
 
 }
-
-    
-
-    
-
-
-
-
-    
-
-    
 
     
