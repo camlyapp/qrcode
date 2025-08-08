@@ -29,6 +29,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
@@ -273,7 +274,7 @@ export function QrickApp() {
   }
 
   return (
-    <Card className="w-full max-w-2xl shadow-2xl">
+    <Card className="w-full max-w-4xl shadow-2xl">
       <CardHeader className="text-center p-4">
         <div className="mx-auto bg-primary text-primary-foreground rounded-full p-2 w-fit mb-2">
             <QrCode className="h-5 w-5" />
@@ -283,7 +284,7 @@ export function QrickApp() {
           Generate and customize your QR code in real-time.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-2 md:grid-cols-2 p-4">
+      <CardContent className="grid gap-4 md:grid-cols-[340px_1fr] p-4">
         <div className="grid gap-4">
             <Tabs defaultValue="content" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
@@ -376,14 +377,22 @@ export function QrickApp() {
                         <Separator />
                         <div className="grid gap-2">
                             <Label>Color Presets</Label>
-                            <div className="flex flex-wrap gap-2">
-                                {colorPresets.map(preset => (
-                                    <Button key={preset.name} variant="outline" size="sm" onClick={() => applyPreset(preset)}>
-                                        <span className="w-3 h-3 rounded-full mr-2" style={{backgroundColor: preset.fg}}></span>
-                                        {preset.name}
-                                    </Button>
-                                ))}
-                            </div>
+                            <TooltipProvider>
+                                <div className="flex flex-wrap gap-2">
+                                    {colorPresets.map(preset => (
+                                        <Tooltip key={preset.name}>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon" onClick={() => applyPreset(preset)} className="h-8 w-8">
+                                                    <span className="w-4 h-4 rounded-full" style={{backgroundColor: preset.fg, border: `2px solid ${preset.bg === '#ffffff' ? '#f0f0f0' : preset.bg}`}}></span>
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{preset.name}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    ))}
+                                </div>
+                            </TooltipProvider>
                         </div>
                         <Separator />
                         <div className="grid grid-cols-2 gap-4">
@@ -490,5 +499,3 @@ export function QrickApp() {
     </Card>
   );
 }
-
-    
