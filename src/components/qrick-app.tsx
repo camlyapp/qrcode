@@ -32,7 +32,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
-type QRStyle = "squares" | "dots";
+type QRStyle = "squares" | "dots" | "rounded";
 
 const colorPresets = [
     { name: "Classic", fg: "#000000", bg: "#ffffff" },
@@ -94,6 +94,19 @@ export function QrickApp() {
                     if (qrStyle === 'dots') {
                         ctx.beginPath();
                         ctx.arc(moduleX + moduleSize / 2, moduleY + moduleSize / 2, (moduleSize / 2.2), 0, 2 * Math.PI);
+                        ctx.fill();
+                    } else if (qrStyle === 'rounded') {
+                        ctx.beginPath();
+                        ctx.moveTo(moduleX + moduleSize * 0.25, moduleY);
+                        ctx.lineTo(moduleX + moduleSize * 0.75, moduleY);
+                        ctx.quadraticCurveTo(moduleX + moduleSize, moduleY, moduleX + moduleSize, moduleY + moduleSize * 0.25);
+                        ctx.lineTo(moduleX + moduleSize, moduleY + moduleSize * 0.75);
+                        ctx.quadraticCurveTo(moduleX + moduleSize, moduleY + moduleSize, moduleX + moduleSize * 0.75, moduleY + moduleSize);
+                        ctx.lineTo(moduleX + moduleSize * 0.25, moduleY + moduleSize);
+                        ctx.quadraticCurveTo(moduleX, moduleY + moduleSize, moduleX, moduleY + moduleSize * 0.75);
+                        ctx.lineTo(moduleX, moduleY + moduleSize * 0.25);
+                        ctx.quadraticCurveTo(moduleX, moduleY, moduleX + moduleSize * 0.25, moduleY);
+                        ctx.closePath();
                         ctx.fill();
                     } else {
                         ctx.fillRect(moduleX, moduleY, moduleSize, moduleSize);
@@ -256,7 +269,7 @@ export function QrickApp() {
                     <div className="grid gap-4">
                         <div className="grid gap-2">
                           <Label>Module Style</Label>
-                          <RadioGroup defaultValue="squares" value={qrStyle} onValueChange={(v) => setQrStyle(v as QRStyle)} className="flex gap-4">
+                          <RadioGroup defaultValue="squares" value={qrStyle} onValueChange={(v) => setQrStyle(v as QRStyle)} className="flex flex-wrap gap-4">
                               <Label htmlFor="style-squares" className="flex items-center gap-2 cursor-pointer text-sm">
                                   <RadioGroupItem value="squares" id="style-squares" />
                                   Squares
@@ -264,6 +277,10 @@ export function QrickApp() {
                               <Label htmlFor="style-dots" className="flex items-center gap-2 cursor-pointer text-sm">
                                   <RadioGroupItem value="dots" id="style-dots" />
                                   Dots
+                              </Label>
+                              <Label htmlFor="style-rounded" className="flex items-center gap-2 cursor-pointer text-sm">
+                                  <RadioGroupItem value="rounded" id="style-rounded" />
+                                  Rounded
                               </Label>
                           </RadioGroup>
                         </div>
@@ -350,3 +367,5 @@ export function QrickApp() {
     </Card>
   );
 }
+
+    
