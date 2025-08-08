@@ -179,17 +179,20 @@ export function QrickApp() {
         }
     });
 
+    const qrXBase = textSpace.left;
+    const qrYBase = textSpace.top;
+
     // Calculate total space needed for images
     const imageSpace = { top: 0, bottom: 0, left: 0, right: 0 };
     qrImageElements.forEach(imageEl => {
-        const qrRight = textSpace.left + size;
-        const qrBottom = textSpace.top + size;
+        const qrRight = qrXBase + size;
+        const qrBottom = qrYBase + size;
         
-        if (imageEl.x < textSpace.left) {
-            imageSpace.left = Math.max(imageSpace.left, textSpace.left - imageEl.x);
+        if (imageEl.x < qrXBase) {
+            imageSpace.left = Math.max(imageSpace.left, qrXBase - imageEl.x);
         }
-        if (imageEl.y < textSpace.top) {
-            imageSpace.top = Math.max(imageSpace.top, textSpace.top - imageEl.y);
+        if (imageEl.y < qrYBase) {
+            imageSpace.top = Math.max(imageSpace.top, qrYBase - imageEl.y);
         }
         if (imageEl.x + imageEl.width > qrRight) {
             imageSpace.right = Math.max(imageSpace.right, (imageEl.x + imageEl.width) - qrRight);
@@ -443,12 +446,9 @@ export function QrickApp() {
             ctx.textBaseline = "middle";
             let textX = 0;
             if (textEl.position === 'left') {
-                textX = totalSpace.left - textSpace.left + (textEl.size / 2) + textEl.margin;
-                if(imageSpace.left > 0) textX = imageSpace.left + (textEl.size / 2) + textEl.margin;
-
+                textX = totalSpace.left - (textEl.size/2) - textEl.margin
             } else { // right
-                textX = canvasWidth - totalSpace.right + textSpace.right - (textEl.size / 2) - textEl.margin;
-                 if(imageSpace.right > 0) textX = canvasWidth - imageSpace.right - (textEl.size / 2) - textEl.margin;
+                textX = canvasWidth - totalSpace.right + (textEl.size/2) + textEl.margin
             }
             const textY = canvasHeight / 2;
             
@@ -464,13 +464,11 @@ export function QrickApp() {
 
             switch (textEl.position) {
                 case 'top':
-                    textY = totalSpace.top - textSpace.top + (textEl.size / 2) + textEl.margin;
-                    if(imageSpace.top > 0) textY = imageSpace.top + (textEl.size / 2) + textEl.margin;
+                    textY = totalSpace.top - (textEl.size/2) - textEl.margin
                     textX = textEl.align === 'center' ? canvasWidth / 2 : (textEl.align === 'left' ? totalSpace.left : canvasWidth - totalSpace.right);
                     break;
                 case 'bottom':
-                    textY = canvasHeight - totalSpace.bottom + textSpace.bottom - (textEl.size / 2) - textEl.margin;
-                     if(imageSpace.bottom > 0) textY = canvasHeight - imageSpace.bottom - (textEl.size / 2) - textEl.margin;
+                    textY = canvasHeight - totalSpace.bottom + (textEl.size/2) + textEl.margin
                     textX = textEl.align === 'center' ? canvasWidth / 2 : (textEl.align === 'left' ? totalSpace.left : canvasWidth - totalSpace.right);
                     break;
                 case 'left':
@@ -1474,11 +1472,11 @@ export function QrickApp() {
                         />
                     </div>
                     <Tabs defaultValue="style">
-                        <TabsList>
-                            <TabsTrigger value="style"><Palette className="mr-2"/>Style</TabsTrigger>
-                            <TabsTrigger value="shape"><Shapes className="mr-2"/>Shape</TabsTrigger>
-                            <TabsTrigger value="text"><Text className="mr-2"/>Text</TabsTrigger>
-                            <TabsTrigger value="images"><ImageIcon className="mr-2"/>Images</TabsTrigger>
+                        <TabsList className="grid w-full grid-cols-4">
+                           <TabsTrigger value="style"><Palette className="mr-0 md:mr-2"/><span className="hidden md:inline">Style</span></TabsTrigger>
+                           <TabsTrigger value="shape"><Shapes className="mr-0 md:mr-2"/><span className="hidden md:inline">Shape</span></TabsTrigger>
+                           <TabsTrigger value="text"><Text className="mr-0 md:mr-2"/><span className="hidden md:inline">Text</span></TabsTrigger>
+                           <TabsTrigger value="images"><ImageIcon className="mr-0 md:mr-2"/><span className="hidden md:inline">Images</span></TabsTrigger>
                         </TabsList>
                         <TabsContent value="style" className="pt-4">
                             <ScrollArea className="h-96">
@@ -1638,8 +1636,9 @@ export function QrickApp() {
                         </TabsContent>
                         <TabsContent value="shape" className="pt-4">
                            <ScrollArea className="h-96">
-                                <div className="grid gap-4 pr-4">
-                                    <div className="grid gap-2">
+                               <div className="space-y-4 p-1">
+                                    <p className="text-sm text-muted-foreground">Customize the shapes of the QR code modules. These settings use a different rendering engine.</p>
+                                    <div className="grid gap-3">
                                         <Label>Body Shape</Label>
                                         <Select value={dotStyle} onValueChange={(v) => { setDotStyle(v as DotType); setQrStylingEngine("styling"); }}>
                                             <SelectTrigger><SelectValue /></SelectTrigger>
@@ -1653,7 +1652,7 @@ export function QrickApp() {
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    <div className="grid gap-2">
+                                    <div className="grid gap-3">
                                         <Label>Corner Shape</Label>
                                         <Select value={cornerSquareStyle} onValueChange={(v) => { setCornerSquareStyle(v as CornerSquareType); setQrStylingEngine("styling"); }}>
                                             <SelectTrigger><SelectValue /></SelectTrigger>
@@ -1664,7 +1663,7 @@ export function QrickApp() {
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    <div className="grid gap-2">
+                                    <div className="grid gap-3">
                                         <Label>Corner Dot Shape</Label>
                                         <Select value={cornerDotStyle} onValueChange={(v) => { setCornerDotStyle(v as CornerDotType); setQrStylingEngine("styling"); }}>
                                             <SelectTrigger><SelectValue /></SelectTrigger>
