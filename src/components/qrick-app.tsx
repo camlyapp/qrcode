@@ -315,7 +315,6 @@ export function QrickApp() {
                     bgColor={bgColor}
                     fgColor={fgColor}
                     imageSettings={imageSettings}
-                    renderAs="canvas"
                     includeMargin={true}
                 />
               ) : (
