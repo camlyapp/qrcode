@@ -160,12 +160,12 @@ export function QrickApp() {
   }, [content, size, level, bgColor, fgColor, imageSettings, qrStyle]);
 
   return (
-    <Card className="w-full max-w-3xl shadow-2xl">
+    <Card className="w-full max-w-2xl shadow-2xl">
       <CardHeader className="text-center p-4">
         <div className="mx-auto bg-primary text-primary-foreground rounded-full p-2 w-fit mb-2">
-            <QrCode className="h-6 w-6" />
+            <QrCode className="h-5 w-5" />
         </div>
-        <CardTitle className="text-xl font-headline">QRick</CardTitle>
+        <CardTitle className="text-lg font-headline">QRick</CardTitle>
         <CardDescription className="text-xs">
           Generate and customize your QR code in real-time.
         </CardDescription>
