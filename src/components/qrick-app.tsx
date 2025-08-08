@@ -56,14 +56,120 @@ export function QrickApp() {
   const [excavate, setExcavate] = useState<boolean>(true);
   const [qrStyle, setQrStyle] = useState<QRStyle>("squares");
 
-  const qrRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const handleDownload = useCallback(() => {
-    if (!qrRef.current) return;
+  const drawQR = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+  
+    const tempCanvas = document.createElement('canvas');
+    const qrCanvas = new (QRCodeCanvas as any)({
+      value: content,
+      size: size,
+      level: level,
+      bgColor: '#ffffff',
+      fgColor: '#000000',
+    }, tempCanvas);
 
-    const canvas = qrRef.current.querySelector<HTMLCanvasElement>("canvas");
+    const tempCtx = tempCanvas.getContext('2d');
+    if (!tempCtx) return;
+
+    qrCanvas.render();
+    
+    const qrMatrixData = tempCtx.getImageData(0, 0, size, size);
+
+    const moduleCount = Math.sqrt(qrMatrixData.data.length / 4);
+
+    const getModuleCount = (matrix: ImageData) => {
+        // A simple way to estimate module count is to find the first black pixel run
+        let firstBlack = -1;
+        for (let i = 0; i < matrix.data.length; i += 4) {
+            if (matrix.data[i] === 0) { // Black pixel
+                firstBlack = i / 4;
+                break;
+            }
+        }
+        if (firstBlack === -1) return 21; // Default for empty
+
+        let runLength = 0;
+        for (let i = firstBlack * 4; i < matrix.data.length; i += 4) {
+            if (matrix.data[i] === 0) {
+                runLength++;
+            } else {
+                break;
+            }
+        }
+        
+        let moduleSize = Math.sqrt(runLength);
+        if (size / moduleSize > 200) { // Heuristic for v1 QR Code
+          for(let i = firstBlack * 4; i < matrix.data.length; i+=(4*size)) {
+            if (matrix.data[i] === 0) runLength++; else break;
+          }
+          moduleSize = runLength;
+        }
+
+        return Math.round(size / moduleSize);
+    }
+    
+    const estimatedModuleCount = getModuleCount(qrMatrixData);
+    const moduleSize = size / estimatedModuleCount;
+  
+    const ctx = canvas.getContext("2d");
+    if(!ctx) return;
+
+    ctx.clearRect(0, 0, size, size);
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, size, size);
+  
+    ctx.fillStyle = fgColor;
+    for (let row = 0; row < estimatedModuleCount; row++) {
+      for (let col = 0; col < estimatedModuleCount; col++) {
+        const x = Math.round(col * moduleSize);
+        const y = Math.round(row * moduleSize);
+        const pixelIndex = (y * size + x) * 4;
+        
+        if (qrMatrixData.data[pixelIndex] === 0) {
+            const moduleX = col * moduleSize;
+            const moduleY = row * moduleSize;
+
+            if (qrStyle === 'dots') {
+                ctx.beginPath();
+                ctx.arc(moduleX + moduleSize / 2, moduleY + moduleSize / 2, moduleSize / 2.2, 0, 2 * Math.PI);
+                ctx.fill();
+            } else {
+                ctx.fillRect(moduleX, moduleY, moduleSize, moduleSize);
+            }
+        }
+      }
+    }
+  
+    if (imageUrl) {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = imageUrl;
+      img.onload = () => {
+        const imgX = (size - imageSize) / 2;
+        const imgY = (size - imageSize) / 2;
+        
+        if (excavate) {
+            ctx.clearRect(imgX, imgY, imageSize, imageSize);
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(imgX, imgY, imageSize, imageSize);
+        }
+
+        ctx.drawImage(img, imgX, imgY, imageSize, imageSize);
+      };
+    }
+  }, [content, size, level, fgColor, bgColor, qrStyle, imageUrl, imageSize, excavate]);
+
+  useEffect(() => {
+      drawQR();
+  }, [drawQR]);
+
+  const handleDownload = useCallback(() => {
+    const canvas = canvasRef.current;
     if (!canvas) {
       toast({
         variant: "destructive",
@@ -114,50 +220,6 @@ export function QrickApp() {
         fileInputRef.current.value = "";
     }
   }
-
-  const imageSettings = imageUrl ? {
-    src: imageUrl,
-    height: imageSize,
-    width: imageSize,
-    excavate: excavate,
-  } : undefined;
-
-  useEffect(() => {
-    const canvas = qrRef.current?.querySelector('canvas');
-    if (canvas && qrStyle === 'dots') {
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        const originalDrawImage = ctx.drawImage;
-        (ctx as any).drawImage = (...args: any[]) => {
-          if (args.length === 9) {
-              const [image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight] = args;
-              
-              const tempCanvas = document.createElement('canvas');
-              tempCanvas.width = sWidth;
-              tempCanvas.height = sHeight;
-              const tempCtx = tempCanvas.getContext('2d');
-
-              if (tempCtx) {
-                  tempCtx.drawImage(image, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
-                  const imageData = tempCtx.getImageData(0, 0, sWidth, sHeight);
-                  const isTransparent = imageData.data[3] === 0;
-
-                  if (!isTransparent) {
-                      ctx.save();
-                      ctx.beginPath();
-                      ctx.arc(dx + dWidth / 2, dy + dHeight / 2, dWidth / 2.2, 0, 2 * Math.PI);
-                      ctx.clip();
-                      originalDrawImage.apply(ctx, args);
-                      ctx.restore();
-                  }
-              }
-          } else {
-              originalDrawImage.apply(ctx, args);
-          }
-        };
-      }
-    }
-  }, [content, size, level, bgColor, fgColor, imageSettings, qrStyle]);
 
   return (
     <Card className="w-full max-w-2xl shadow-2xl">
@@ -299,18 +361,9 @@ export function QrickApp() {
         </div>
         
         <div className="flex justify-center items-center rounded-lg bg-muted p-2">
-            <div ref={qrRef} className="p-2 bg-white rounded-md shadow-inner transition-all duration-300 ease-in-out" aria-label="QR Code Preview">
+            <div className="p-2 bg-white rounded-md shadow-inner transition-all duration-300 ease-in-out" aria-label="QR Code Preview">
               {content ? (
-                <QRCodeCanvas
-                    key={`${qrStyle}-${content}-${size}-${level}-${bgColor}-${fgColor}-${JSON.stringify(imageSettings)}`}
-                    value={content}
-                    size={size}
-                    level={level}
-                    bgColor={bgColor}
-                    fgColor={fgColor}
-                    imageSettings={imageSettings}
-                    includeMargin={true}
-                />
+                <canvas ref={canvasRef} width={size} height={size} />
               ) : (
                 <div style={{width: size, height: size}} className="bg-gray-100 flex items-center justify-center text-center text-gray-500 rounded-lg p-4">
                     Enter content to generate QR code.
