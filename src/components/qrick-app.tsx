@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2, Sun, Moon } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2, Sun, Moon, AlignVerticalJustifyStart, AlignVerticalJustifyEnd } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -47,6 +47,7 @@ type GeneratorType = "qr" | "barcode";
 type BarcodeFormat = "CODE128" | "CODE128A" | "CODE128B" | "CODE128C" | "EAN13" | "EAN8" | "EAN5" | "EAN2" | "UPC" | "UPCE" | "CODE39" | "ITF14" | "ITF" | "MSI" | "MSI10" | "MSI11" | "MSI1010" | "MSI1110" | "pharmacode" | "codabar";
 type CardDesign = "classic" | "modern" | "sleek" | "professional" | "vcard" | "marriage";
 type ResizeHandle = 'tl' | 'tr' | 'bl' | 'br';
+type BarcodeTextPosition = 'top' | 'bottom';
 
 interface CardElement {
     id: string;
@@ -94,6 +95,8 @@ export function QrickApp() {
   const [barcodeTextSize, setBarcodeTextSize] = useState<number>(20);
   const [textColor, setTextColor] = useState<string>("#000000");
   const [showBarcodeText, setShowBarcodeText] = useState<boolean>(true);
+  const [barcodeTextPosition, setBarcodeTextPosition] = useState<BarcodeTextPosition>('bottom');
+
 
   // Card states
   const [generateCard, setGenerateCard] = useState<boolean>(false);
@@ -369,14 +372,20 @@ export function QrickApp() {
                                 setBarcodeError("Invalid barcode content for card.");
                                 return;
                             }
-                            ctx.drawImage(tempCanvas, element.x, element.y, element.width, element.height);
+                             const barcodeTop = barcodeTextPosition === 'top' && showBarcodeText ? (barcodeTextSize * scale) + 5 : 0;
+                            ctx.drawImage(tempCanvas, element.x, element.y + barcodeTop, element.width, element.height);
                             
                             if (showBarcodeText) {
                                 // Draw barcode text separately if needed
                                 ctx.font = `${barcodeTextSize * scale}px monospace`;
                                 ctx.fillStyle = textColor;
                                 ctx.textAlign = 'center';
-                                ctx.fillText(element.content, element.x + element.width / 2, element.y + element.height + (barcodeTextSize * scale));
+
+                                const textY = barcodeTextPosition === 'top'
+                                    ? element.y + (barcodeTextSize * scale) - 5
+                                    : element.y + element.height + (barcodeTextSize * scale) + 5;
+                                
+                                ctx.fillText(element.content, element.x + element.width / 2, textY);
                             }
 
                         } catch (err: any) {
@@ -437,7 +446,8 @@ export function QrickApp() {
             const scale = 4;
             
             canvas.width = displayWidth * scale;
-            const canvasHeight = showBarcodeText ? (displayHeight + (barcodeTextSize * 2.5 / 2)) * scale : displayHeight * scale;
+            const textHeight = showBarcodeText ? (barcodeTextSize * 2.5) * scale / 2 : 0;
+            const canvasHeight = (displayHeight * scale) + textHeight;
             canvas.height = canvasHeight;
             
             const ctx = canvas.getContext('2d');
@@ -467,14 +477,16 @@ export function QrickApp() {
 
                 const barcodeWidth = tempCanvas.width;
                 const barcodeHeightCalculated = tempCanvas.height * (barcodeHeight / 100);
+                const barcodeTop = barcodeTextPosition === 'top' && showBarcodeText ? textHeight : 0;
 
                 if (ctx) {
-                    ctx.drawImage(tempCanvas, (canvas.width - barcodeWidth) / 2, 0, barcodeWidth, barcodeHeightCalculated);
+                    ctx.drawImage(tempCanvas, (canvas.width - barcodeWidth) / 2, barcodeTop, barcodeWidth, barcodeHeightCalculated);
                     if (showBarcodeText) {
                         ctx.font = `${barcodeTextSize * scale}px monospace`;
                         ctx.fillStyle = textColor;
                         ctx.textAlign = 'center';
-                        ctx.fillText(content, canvas.width / 2, barcodeHeightCalculated + (barcodeTextSize * scale));
+                        const textY = barcodeTextPosition === 'top' ? (barcodeTextSize * scale) : barcodeHeightCalculated + (barcodeTextSize * scale);
+                        ctx.fillText(content, canvas.width / 2, textY);
                     }
                 }
 
@@ -486,7 +498,7 @@ export function QrickApp() {
                 }
             }
         }
-    }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize, textColor, showBarcodeText, generateCard, cardBgColor, cardTextColor, cardDesign, cardAccentColor, cardElements, selectedElement, cardBgImageUrl]);
+    }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize, textColor, showBarcodeText, generateCard, cardBgColor, cardTextColor, cardDesign, cardAccentColor, cardElements, selectedElement, cardBgImageUrl, barcodeTextPosition]);
 
   const getTextMetrics = (text: string, font: string, fontSize: number, ctx: CanvasRenderingContext2D) => {
     ctx.font = `bold ${fontSize}px ${font}`;
@@ -634,7 +646,7 @@ export function QrickApp() {
         }
         setBarcodeError(null);
       }
-  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, barcodeHeight, barcodeTextSize, level, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, generateCard, cardElements, selectedElement, showBarcodeText]);
+  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, barcodeHeight, barcodeTextSize, level, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, generateCard, cardElements, selectedElement, showBarcodeText, barcodeTextPosition]);
 
     const getPointerPosition = (e: React.MouseEvent | React.TouchEvent) => {
         const canvas = canvasRef.current;
@@ -805,6 +817,7 @@ export function QrickApp() {
                 background: bgColor,
                 height: barcodeHeight * 0.8,
                 fontSize: showBarcodeText ? barcodeTextSize : 0,
+                textPosition: barcodeTextPosition,
                 fontOptions: "monospace",
                 textMargin: 5,
                 xmlns: "http://www.w3.org/2000/svg",
@@ -852,7 +865,7 @@ export function QrickApp() {
       title: "Success",
       description: `Download started for ${fileName}.`,
     });
-  }, [toast, generatorType, barcodeFormat, barcodeError, content, level, fgColor, bgColor, barcodeHeight, barcodeTextSize, generateCard, showBarcodeText]);
+  }, [toast, generatorType, barcodeFormat, barcodeError, content, level, fgColor, bgColor, barcodeHeight, barcodeTextSize, generateCard, showBarcodeText, barcodeTextPosition]);
 
   const handleShare = async () => {
     if (!content || barcodeError) {
@@ -1523,6 +1536,21 @@ export function QrickApp() {
                             <Switch id="show-barcode-text-standalone" checked={showBarcodeText} onCheckedChange={setShowBarcodeText} />
                             <Label htmlFor="show-barcode-text-standalone">Show Text</Label>
                         </div>
+                        {showBarcodeText && (
+                            <div className="grid gap-2">
+                                <Label>Text Position</Label>
+                                <RadioGroup value={barcodeTextPosition} onValueChange={(v) => setBarcodeTextPosition(v as BarcodeTextPosition)} className="flex gap-4">
+                                    <Label htmlFor="pos-bottom" className="flex items-center gap-2 cursor-pointer text-sm">
+                                        <RadioGroupItem value="bottom" id="pos-bottom" />
+                                        <AlignVerticalJustifyEnd className="h-4 w-4" /> Bottom
+                                    </Label>
+                                    <Label htmlFor="pos-top" className="flex items-center gap-2 cursor-pointer text-sm">
+                                        <RadioGroupItem value="top" id="pos-top" />
+                                        <AlignVerticalJustifyStart className="h-4 w-4" /> Top
+                                    </Label>
+                                </RadioGroup>
+                            </div>
+                        )}
                     </div>
                    )}
                   
@@ -1541,7 +1569,7 @@ export function QrickApp() {
                     width={generatorType === 'qr' ? size : (generateCard ? 1600 : 1280)} 
                     height={generatorType === 'qr' ? size : (generateCard ? 900 : (showBarcodeText ? 320 + (barcodeTextSize * 2.5) : 320))}
                     style={
-                        (generatorType === 'barcode' && !generateCard) ? { width: 320, height: (showBarcodeText ? 80 + (barcodeTextSize * 2.5 / 2) : 80), cursor: 'default' } : 
+                        (generatorType === 'barcode' && !generateCard) ? { width: 320, height: (showBarcodeText ? 80 + (barcodeTextSize * 2.5) : 80), cursor: 'default' } : 
                         (generateCard ? { width: 400, height: 225, cursor: cursorStyle } : {width: size, height: size, cursor: 'default'})
                     }
                     onMouseDown={handleMouseDown}
