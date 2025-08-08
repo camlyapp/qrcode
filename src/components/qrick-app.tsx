@@ -4,7 +4,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -46,7 +46,7 @@ type QRStyle = "squares" | "dots" | "rounded" | "fluid" | "wavy" | "diamond";
 type GradientType = "none" | "linear" | "radial";
 type GeneratorType = "qr" | "barcode";
 type BarcodeFormat = "CODE128" | "CODE128A" | "CODE128B" | "CODE128C" | "EAN13" | "EAN8" | "EAN5" | "EAN2" | "UPC" | "UPCE" | "CODE39" | "ITF14" | "ITF" | "MSI" | "MSI10" | "MSI11" | "MSI1010" | "MSI1110" | "pharmacode" | "codabar";
-type CardDesign = "classic" | "modern" | "sleek" | "professional";
+type CardDesign = "classic" | "modern" | "sleek" | "professional" | "vcard";
 
 
 const colorPresets = [
@@ -85,6 +85,9 @@ export function QrickApp() {
   const [generateCard, setGenerateCard] = useState<boolean>(false);
   const [cardTitle, setCardTitle] = useState<string>("John Doe");
   const [cardSubtitle, setCardSubtitle] = useState<string>("Software Engineer");
+  const [cardEmail, setCardEmail] = useState<string>("john.doe@example.com");
+  const [cardPhone, setCardPhone] = useState<string>("+1 (123) 456-7890");
+  const [cardWebsite, setCardWebsite] = useState<string>("example.com");
   const [cardBgColor, setCardBgColor] = useState<string>("#ffffff");
   const [cardTextColor, setCardTextColor] = useState<string>("#000000");
   const [cardDesign, setCardDesign] = useState<CardDesign>("classic");
@@ -303,6 +306,26 @@ export function QrickApp() {
             ctx.lineTo(canvas.width - 50 * scale, 95 * scale);
             ctx.stroke();
 
+        } else if (cardDesign === 'vcard') {
+            ctx.fillStyle = cardAccentColor;
+            ctx.fillRect(0, 0, canvas.width, 60 * scale);
+
+            ctx.fillStyle = cardBgColor;
+            ctx.font = `bold ${20 * scale}px sans-serif`;
+            ctx.textAlign = 'left';
+            ctx.fillText(cardTitle, 20 * scale, 30 * scale);
+            ctx.font = `italic ${12 * scale}px sans-serif`;
+            ctx.fillText(cardSubtitle, 20 * scale, 50 * scale);
+
+            ctx.fillStyle = cardTextColor;
+            ctx.font = `14px sans-serif`;
+            const infoStartY = 80 * scale;
+            const infoSpacing = 25 * scale;
+            
+            if(cardEmail) ctx.fillText(cardEmail, 40 * scale, infoStartY);
+            if(cardPhone) ctx.fillText(cardPhone, 40 * scale, infoStartY + infoSpacing);
+            if(cardWebsite) ctx.fillText(cardWebsite, 40 * scale, infoStartY + infoSpacing * 2);
+
         } else { // classic design
             ctx.fillStyle = cardTextColor;
             ctx.font = `bold ${24 * scale}px sans-serif`;
@@ -339,10 +362,12 @@ export function QrickApp() {
             const barcodeWidth = tempCanvas.width;
             const barcodeHeightCalculated = tempCanvas.height;
             
+            let barcodeX = (canvas.width - barcodeWidth) / 2;
             let barcodeY;
             switch(cardDesign) {
                 case 'modern':
                     barcodeY = 120 * scale;
+                    barcodeX = (canvas.width - barcodeWidth + 100 * scale) / 2
                     break;
                 case 'sleek':
                     barcodeY = 110 * scale;
@@ -350,15 +375,16 @@ export function QrickApp() {
                  case 'professional':
                     barcodeY = 115 * scale;
                     break;
+                case 'vcard':
+                    barcodeY = 155 * scale;
+                    barcodeX = canvas.width - barcodeWidth - 20 * scale;
+                    break;
                 default: // classic
                     barcodeY = 120 * scale;
             }
             
-            if (cardDesign === 'modern') {
-                ctx.drawImage(tempCanvas, (canvas.width - barcodeWidth + 100 * scale) / 2, barcodeY, barcodeWidth, barcodeHeightCalculated);
-            } else {
-                ctx.drawImage(tempCanvas, (canvas.width - barcodeWidth) / 2, barcodeY, barcodeWidth, barcodeHeightCalculated);
-            }
+            ctx.drawImage(tempCanvas, barcodeX, barcodeY, barcodeWidth, barcodeHeightCalculated);
+
 
         } catch (err: any) {
             setBarcodeError(err.message || "Error generating barcode for card.");
@@ -417,7 +443,7 @@ export function QrickApp() {
             }
         }
     }
-  }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize, textColor, generateCard, cardTitle, cardSubtitle, cardBgColor, cardTextColor, cardDesign, cardAccentColor]);
+  }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize, textColor, generateCard, cardTitle, cardSubtitle, cardEmail, cardPhone, cardWebsite, cardBgColor, cardTextColor, cardDesign, cardAccentColor]);
 
 
   useEffect(() => {
@@ -439,7 +465,7 @@ export function QrickApp() {
         }
         setBarcodeError(null);
       }
-  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, cardTitle, cardSubtitle, cardBgColor, cardTextColor, cardDesign, cardAccentColor]);
+  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, cardTitle, cardSubtitle, cardEmail, cardPhone, cardWebsite, cardBgColor, cardTextColor, cardDesign, cardAccentColor]);
 
   const handleDownload = useCallback(async (format: 'png' | 'jpeg' | 'svg') => {
     if (!content || barcodeError) {
@@ -899,16 +925,36 @@ export function QrickApp() {
                                     <RadioGroupItem value="professional" id="card-professional" />
                                     Professional
                                 </Label>
+                                <Label htmlFor="card-vcard" className="flex items-center gap-2 cursor-pointer text-sm">
+                                    <RadioGroupItem value="vcard" id="card-vcard" />
+                                    V-Card
+                                </Label>
                             </RadioGroup>
                         </div>
                         <div className="grid gap-2">
                           <Label htmlFor="card-title">Title</Label>
                           <Input id="card-title" value={cardTitle} onChange={(e) => setCardTitle(e.target.value)} />
-                      </div>
-                      <div className="grid gap-2">
-                          <Label htmlFor="card-subtitle">Subtitle</Label>
-                          <Input id="card-subtitle" value={cardSubtitle} onChange={(e) => setCardSubtitle(e.target.value)} />
-                      </div>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="card-subtitle">Subtitle</Label>
+                            <Input id="card-subtitle" value={cardSubtitle} onChange={(e) => setCardSubtitle(e.target.value)} />
+                        </div>
+                        {cardDesign === 'vcard' && (
+                             <div className="grid gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="card-email" className="flex items-center gap-2"><Mail className="h-4 w-4"/>Email</Label>
+                                    <Input id="card-email" type="email" value={cardEmail} onChange={(e) => setCardEmail(e.target.value)} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="card-phone" className="flex items-center gap-2"><Phone className="h-4 w-4"/>Phone</Label>
+                                    <Input id="card-phone" type="tel" value={cardPhone} onChange={(e) => setCardPhone(e.target.value)} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="card-website" className="flex items-center gap-2"><Globe className="h-4 w-4"/>Website</Label>
+                                    <Input id="card-website" type="url" value={cardWebsite} onChange={(e) => setCardWebsite(e.target.value)} />
+                                </div>
+                            </div>
+                        )}
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="card-bg-color">Card BG</Label>
@@ -919,7 +965,7 @@ export function QrickApp() {
                             <Input id="card-text-color" type="color" value={cardTextColor} onChange={(e) => setCardTextColor(e.target.value)} className="p-1 h-9" />
                         </div>
                      </div>
-                     {(cardDesign === 'modern' || cardDesign === 'sleek' || cardDesign === 'professional') && (
+                     {(cardDesign !== 'classic') && (
                         <div className="grid gap-2">
                             <Label htmlFor="card-accent-color">Accent Color</Label>
                             <Input id="card-accent-color" type="color" value={cardAccentColor} onChange={(e) => setCardAccentColor(e.target.value)} className="p-1 h-9 w-full" />
@@ -1018,3 +1064,5 @@ export function QrickApp() {
     </Card>
   );
 }
+
+    
