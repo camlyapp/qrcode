@@ -5,7 +5,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -39,7 +39,7 @@ import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SVG } from "react-svg";
+import { Textarea } from "@/components/ui/textarea";
 
 
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
@@ -59,6 +59,7 @@ interface CardElement {
     width: number;
     height: number;
     font?: string;
+    fontSize?: number;
     color?: string;
     align?: CanvasTextAlign;
 }
@@ -97,11 +98,6 @@ export function QrickApp() {
 
   // Card states
   const [generateCard, setGenerateCard] = useState<boolean>(false);
-  const [cardTitle, setCardTitle] = useState<string>("John & Jane");
-  const [cardSubtitle, setCardSubtitle] = useState<string>("December 31, 2024");
-  const [cardEmail, setCardEmail] = useState<string>("john.doe@example.com");
-  const [cardPhone, setCardPhone] = useState<string>("+1 (123) 456-7890");
-  const [cardWebsite, setCardWebsite] = useState<string>("example.com");
   const [cardBgColor, setCardBgColor] = useState<string>("#FDFBF7");
   const [cardTextColor, setCardTextColor] = useState<string>("#5C3A21");
   const [cardDesign, setCardDesign] = useState<CardDesign>("classic");
@@ -329,9 +325,10 @@ export function QrickApp() {
        // Draw elements
         cardElements.forEach(element => {
             if (element.type === 'text' && element.content) {
-                const fontSize = parseFloat(element.font?.match(/(\d+)px/)?.[1] || '16');
+                const font = element.font || 'sans-serif';
+                const fontSize = element.fontSize || 16;
                 ctx.fillStyle = element.color || cardTextColor;
-                ctx.font = element.font || `${fontSize}px sans-serif`;
+                ctx.font = `bold ${fontSize}px ${font}`;
                 ctx.textAlign = element.align || 'left';
 
                 const lines = element.content.split('\n');
@@ -450,6 +447,14 @@ export function QrickApp() {
     }
   }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize, textColor, generateCard, cardBgColor, cardTextColor, cardDesign, cardAccentColor, cardElements, selectedElement]);
 
+  const getTextMetrics = (text: string, font: string, fontSize: number, ctx: CanvasRenderingContext2D) => {
+    ctx.font = `bold ${fontSize}px ${font}`;
+    const metrics = ctx.measureText(text);
+    return {
+        width: metrics.width,
+        height: metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent || fontSize
+    };
+  };
 
   // Initialize card elements based on design
   useEffect(() => {
@@ -472,38 +477,31 @@ export function QrickApp() {
     const barcodeWidth = tempCanvas.width || 200 * scale;
     const barcodeHeightVal = tempCanvas.height || 40 * scale;
 
-    const getTextMetrics = (text: string, font: string) => {
-        ctx.font = font;
-        const metrics = ctx.measureText(text);
-        return {
-            width: metrics.width,
-            height: metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
-        };
-    };
     
     let defaultTitle = 'John Doe';
     let defaultSubtitle = 'Software Engineer';
+    let defaultEmail = 'john.doe@example.com';
+    let defaultPhone = '+1 (123) 456-7890';
+    let defaultWebsite = 'example.com';
+
     if(cardDesign === 'marriage') {
         defaultTitle = 'John & Jane';
         defaultSubtitle = 'December 31, 2024';
-    } else {
-        setCardTitle(defaultTitle);
-        setCardSubtitle(defaultSubtitle);
-    }
+    } 
 
     const textElements: { [key: string]: Omit<CardElement, 'id' | 'type' | 'width' | 'height'> } = {
-        title: { content: cardTitle || defaultTitle, font: `bold ${24 * scale}px sans-serif`, align: 'center', color: cardTextColor },
-        subtitle: { content: cardSubtitle || defaultSubtitle, font: `${16 * scale}px sans-serif`, align: 'center', color: cardTextColor },
-        email: { content: cardEmail, font: `${14 * scale}px sans-serif`, align: 'left', color: cardTextColor },
-        phone: { content: cardPhone, font: `${14 * scale}px sans-serif`, align: 'left', color: cardTextColor },
-        website: { content: cardWebsite, font: `${14 * scale}px sans-serif`, align: 'left', color: cardTextColor },
+        title: { content: defaultTitle, font: `sans-serif`, fontSize: 24 * scale, align: 'center', color: cardTextColor },
+        subtitle: { content: defaultSubtitle, font: `sans-serif`, fontSize: 16 * scale, align: 'center', color: cardTextColor },
+        email: { content: defaultEmail, font: `sans-serif`, fontSize: 14 * scale, align: 'left', color: cardTextColor },
+        phone: { content: defaultPhone, font: `sans-serif`, fontSize: 14 * scale, align: 'left', color: cardTextColor },
+        website: { content: defaultWebsite, font: `sans-serif`, fontSize: 14 * scale, align: 'left', color: cardTextColor },
     };
     
     // Position elements based on design
     switch (cardDesign) {
         case 'classic': {
-            const titleMetrics = getTextMetrics(textElements.title.content || '', textElements.title.font || '');
-            const subtitleMetrics = getTextMetrics(textElements.subtitle.content || '', textElements.subtitle.font || '');
+            const titleMetrics = getTextMetrics(textElements.title.content!, textElements.title.font!, textElements.title.fontSize!, ctx);
+            const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, textElements.subtitle.fontSize!, ctx);
             newElements.push({ id: 'title', type: 'text', ...textElements.title, x: (canvasWidth - titleMetrics.width) / 2, y: 50 * scale, ...titleMetrics });
             newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, x: (canvasWidth - subtitleMetrics.width) / 2, y: 80 * scale, ...subtitleMetrics });
             newElements.push({ id: 'barcode', type: 'barcode', x: (canvasWidth - barcodeWidth) / 2, y: 120 * scale, width: barcodeWidth, height: barcodeHeightVal });
@@ -511,61 +509,62 @@ export function QrickApp() {
         }
         case 'modern': {
             const accentWidth = 100 * scale;
-            const titleMetrics = getTextMetrics(textElements.title.content || '', `bold ${22 * scale}px sans-serif`);
-            const subtitleMetrics = getTextMetrics(textElements.subtitle.content || '', `${14 * scale}px sans-serif`);
-            newElements.push({ id: 'title', type: 'text', ...textElements.title, font: `bold ${22 * scale}px sans-serif`, align: 'left', x: accentWidth + 20 * scale, y: 60 * scale, ...titleMetrics });
-            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: `${14 * scale}px sans-serif`, align: 'left', x: accentWidth + 20 * scale, y: 90 * scale, ...subtitleMetrics });
+            const titleMetrics = getTextMetrics(textElements.title.content!, textElements.title.font!, 22 * scale, ctx);
+            const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, 14 * scale, ctx);
+            newElements.push({ id: 'title', type: 'text', ...textElements.title, fontSize: 22 * scale, align: 'left', x: accentWidth + 20 * scale, y: 60 * scale, ...titleMetrics });
+            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, fontSize: 14 * scale, align: 'left', x: accentWidth + 20 * scale, y: 90 * scale, ...subtitleMetrics });
             newElements.push({ id: 'barcode', type: 'barcode', x: (canvasWidth - barcodeWidth + accentWidth) / 2, y: 120 * scale, width: barcodeWidth, height: barcodeHeightVal });
             break;
         }
         case 'sleek': {
-            const titleMetrics = getTextMetrics(textElements.title.content || '', `bold ${20 * scale}px sans-serif`);
-            const subtitleMetrics = getTextMetrics(textElements.subtitle.content || '', `${14 * scale}px sans-serif`);
-            newElements.push({ id: 'title', type: 'text', ...textElements.title, font: `bold ${20 * scale}px sans-serif`, color: cardBgColor, align: 'left', x: 20 * scale, y: 40 * scale, ...titleMetrics });
-            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: `${14 * scale}px sans-serif`, align: 'left', x: 20 * scale, y: (60 * scale) + 30 * scale, ...subtitleMetrics });
+            const titleMetrics = getTextMetrics(textElements.title.content!, textElements.title.font!, 20 * scale, ctx);
+            const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, 14 * scale, ctx);
+            newElements.push({ id: 'title', type: 'text', ...textElements.title, fontSize: 20 * scale, color: cardBgColor, align: 'left', x: 20 * scale, y: 40 * scale, ...titleMetrics });
+            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, fontSize: 14 * scale, align: 'left', x: 20 * scale, y: (60 * scale) + 30 * scale, ...subtitleMetrics });
             newElements.push({ id: 'barcode', type: 'barcode', x: (canvasWidth - barcodeWidth) / 2, y: 110 * scale, width: barcodeWidth, height: barcodeHeightVal });
             break;
         }
         case 'professional': {
-            const titleMetrics = getTextMetrics(textElements.title.content || '', `bold ${22 * scale}px sans-serif`);
-            const subtitleMetrics = getTextMetrics(textElements.subtitle.content || '', `${14 * scale}px sans-serif`);
-            newElements.push({ id: 'title', type: 'text', ...textElements.title, font: `bold ${22 * scale}px sans-serif`, x: (canvasWidth - titleMetrics.width) / 2, y: 50 * scale, ...titleMetrics });
-            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: `${14 * scale}px sans-serif`, x: (canvasWidth - subtitleMetrics.width) / 2, y: 75 * scale, ...subtitleMetrics });
+            const titleMetrics = getTextMetrics(textElements.title.content!, textElements.title.font!, 22 * scale, ctx);
+            const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, 14 * scale, ctx);
+            newElements.push({ id: 'title', type: 'text', ...textElements.title, fontSize: 22 * scale, x: (canvasWidth - titleMetrics.width) / 2, y: 50 * scale, ...titleMetrics });
+            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, fontSize: 14 * scale, x: (canvasWidth - subtitleMetrics.width) / 2, y: 75 * scale, ...subtitleMetrics });
             newElements.push({ id: 'barcode', type: 'barcode', x: (canvasWidth - barcodeWidth) / 2, y: 115 * scale, width: barcodeWidth, height: barcodeHeightVal });
             break;
         }
         case 'vcard': {
-            const titleMetrics = getTextMetrics(textElements.title.content || '', `bold ${20 * scale}px sans-serif`);
-            const subtitleMetrics = getTextMetrics(textElements.subtitle.content || '', `italic ${12 * scale}px sans-serif`);
-            const emailMetrics = getTextMetrics(cardEmail, `${14 * scale}px sans-serif`);
-            const phoneMetrics = getTextMetrics(cardPhone, `${14 * scale}px sans-serif`);
-            const websiteMetrics = getTextMetrics(cardWebsite, `${14 * scale}px sans-serif`);
+            const titleMetrics = getTextMetrics(textElements.title.content!, textElements.title.font!, 20 * scale, ctx);
+            const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, 12 * scale, ctx);
+            const emailMetrics = getTextMetrics(defaultEmail, textElements.email.font!, textElements.email.fontSize!, ctx);
+            const phoneMetrics = getTextMetrics(defaultPhone, textElements.phone.font!, textElements.phone.fontSize!, ctx);
+            const websiteMetrics = getTextMetrics(defaultWebsite, textElements.website.font!, textElements.website.fontSize!, ctx);
 
-            newElements.push({ id: 'title', type: 'text', ...textElements.title, font: `bold ${20 * scale}px sans-serif`, color: cardBgColor, align: 'left', x: 20 * scale, y: 30 * scale, ...titleMetrics });
-            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: `italic ${12 * scale}px sans-serif`, color: cardBgColor, align: 'left', x: 20 * scale, y: 50 * scale, ...subtitleMetrics });
+            newElements.push({ id: 'title', type: 'text', ...textElements.title, fontSize: 20 * scale, color: cardBgColor, align: 'left', x: 20 * scale, y: 30 * scale, ...titleMetrics });
+            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, fontSize: 12 * scale, font: 'italic sans-serif', color: cardBgColor, align: 'left', x: 20 * scale, y: 50 * scale, ...subtitleMetrics });
             const infoStartY = 80 * scale;
             const infoSpacing = 25 * scale;
-            if(cardEmail) newElements.push({ id: 'email', type: 'text', ...textElements.email, x: 40 * scale, y: infoStartY, ...emailMetrics });
-            if(cardPhone) newElements.push({ id: 'phone', type: 'text', ...textElements.phone, x: 40 * scale, y: infoStartY + infoSpacing, ...phoneMetrics });
-            if(cardWebsite) newElements.push({ id: 'website', type: 'text', ...textElements.website, x: 40 * scale, y: infoStartY + infoSpacing * 2, ...websiteMetrics });
+            newElements.push({ id: 'email', type: 'text', ...textElements.email, x: 40 * scale, y: infoStartY, ...emailMetrics });
+            newElements.push({ id: 'phone', type: 'text', ...textElements.phone, x: 40 * scale, y: infoStartY + infoSpacing, ...phoneMetrics });
+            newElements.push({ id: 'website', type: 'text', ...textElements.website, x: 40 * scale, y: infoStartY + infoSpacing * 2, ...websiteMetrics });
             newElements.push({ id: 'barcode', type: 'barcode', x: canvasWidth - barcodeWidth - 20 * scale, y: 155 * scale, width: barcodeWidth, height: barcodeHeightVal });
             break;
         }
          case 'marriage': {
-            const titleFont = `'Great Vibes', cursive ${36 * scale}px`;
-            const subtitleFont = `italic ${16 * scale}px sans-serif`;
+            const titleFont = `'Great Vibes', cursive`;
+            const subtitleFont = `italic sans-serif`;
 
-            const titleMetrics = getTextMetrics(textElements.title.content || '', titleFont);
-            const subtitleMetrics = getTextMetrics(textElements.subtitle.content || '', subtitleFont);
+            const titleMetrics = getTextMetrics(textElements.title.content!, titleFont, 36 * scale, ctx);
+            const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, subtitleFont, 16 * scale, ctx);
             
-            newElements.push({ id: 'title', type: 'text', ...textElements.title, font: titleFont, x: (canvasWidth - titleMetrics.width) / 2, y: 80 * scale, ...titleMetrics });
-            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: subtitleFont, x: (canvasWidth - subtitleMetrics.width) / 2, y: 120 * scale, ...subtitleMetrics });
+            newElements.push({ id: 'title', type: 'text', ...textElements.title, font: titleFont, fontSize: 36 * scale, x: (canvasWidth - titleMetrics.width) / 2, y: 80 * scale, ...titleMetrics });
+            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: subtitleFont, fontSize: 16 * scale, x: (canvasWidth - subtitleMetrics.width) / 2, y: 120 * scale, ...subtitleMetrics });
             newElements.push({ id: 'barcode', type: 'barcode', x: (canvasWidth - barcodeWidth) / 2, y: 155 * scale, width: barcodeWidth, height: barcodeHeightVal });
             break;
         }
     }
     setCardElements(newElements);
-}, [generateCard, cardDesign, cardTitle, cardSubtitle, cardEmail, cardPhone, cardWebsite, cardTextColor, cardBgColor, content, barcodeFormat, fgColor]);
+    setSelectedElement(null);
+}, [generateCard, cardDesign, content, barcodeFormat, fgColor, cardTextColor, cardBgColor]);
 
 
   useEffect(() => {
@@ -685,7 +684,16 @@ export function QrickApp() {
                             height = pos.y - y;
                             break;
                     }
-                    return { ...el, x, y, width: Math.max(width, 20), height: Math.max(height, 20) };
+                    const newWidth = Math.max(width, 20);
+                    const newHeight = Math.max(height, 20);
+                    
+                    if (el.type === 'text') {
+                        const aspectRatio = el.width / (el.fontSize || 16);
+                        const newFontSize = newWidth / aspectRatio;
+                        return { ...el, x, y, width: newWidth, height: newHeight, fontSize: newFontSize };
+                    }
+
+                    return { ...el, x, y, width: newWidth, height: newHeight };
                 }
                 return el;
             }));
@@ -890,6 +898,57 @@ export function QrickApp() {
         }
     }
   }
+
+  const addTextElement = () => {
+    const scale = 4;
+    const newTextElement: CardElement = {
+      id: `text-${Date.now()}`,
+      type: 'text',
+      content: 'New Text',
+      x: 50 * scale,
+      y: 50 * scale,
+      width: 150 * scale,
+      height: 30 * scale,
+      fontSize: 16 * scale,
+      color: cardTextColor,
+      align: 'left',
+      font: 'sans-serif'
+    };
+    setCardElements(prev => [...prev, newTextElement]);
+    setSelectedElement(newTextElement.id);
+  };
+
+  const deleteSelectedElement = () => {
+    if (selectedElement) {
+      setCardElements(prev => prev.filter(el => el.id !== selectedElement));
+      setSelectedElement(null);
+    }
+  };
+
+  const updateSelectedElement = (prop: keyof CardElement, value: any) => {
+    if (!selectedElement) return;
+
+    setCardElements(prev => prev.map(el => 
+        el.id === selectedElement ? { ...el, [prop]: value } : el
+    ));
+
+    // Recalculate width/height if font size changes
+    if (prop === 'fontSize' || prop === 'content') {
+        const ctx = canvasRef.current?.getContext('2d');
+        if (ctx) {
+            setCardElements(prev => prev.map(el => {
+                if (el.id === selectedElement && el.type === 'text') {
+                    const updatedElement = { ...el, [prop]: value };
+                    const metrics = getTextMetrics(updatedElement.content!, updatedElement.font!, updatedElement.fontSize!, ctx);
+                    return { ...updatedElement, width: metrics.width, height: metrics.height };
+                }
+                return el;
+            }));
+        }
+    }
+  };
+
+  const currentSelectedElement = cardElements.find(el => el.id === selectedElement);
 
   return (
     <Card className="w-full max-w-4xl shadow-2xl">
@@ -1189,30 +1248,7 @@ export function QrickApp() {
                                 </Label>
                             </RadioGroup>
                         </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="card-title">Title</Label>
-                          <Input id="card-title" value={cardTitle} onChange={(e) => setCardTitle(e.target.value)} />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="card-subtitle">Subtitle</Label>
-                            <Input id="card-subtitle" value={cardSubtitle} onChange={(e) => setCardSubtitle(e.target.value)} />
-                        </div>
-                        {cardDesign === 'vcard' && (
-                             <div className="grid gap-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="card-email" className="flex items-center gap-2"><Mail className="h-4 w-4"/>Email</Label>
-                                    <Input id="card-email" type="email" value={cardEmail} onChange={(e) => setCardEmail(e.target.value)} />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="card-phone" className="flex items-center gap-2"><Phone className="h-4 w-4"/>Phone</Label>
-                                    <Input id="card-phone" type="tel" value={cardPhone} onChange={(e) => setCardPhone(e.target.value)} />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="card-website" className="flex items-center gap-2"><Globe className="h-4 w-4"/>Website</Label>
-                                    <Input id="card-website" type="url" value={cardWebsite} onChange={(e) => setCardWebsite(e.target.value)} />
-                                </div>
-                            </div>
-                        )}
+                       
                         <div className="grid gap-2">
                             <Label>Colors</Label>
                             <div className="flex items-center flex-wrap gap-4">
@@ -1236,6 +1272,55 @@ export function QrickApp() {
                                 </div>
                             </div>
                         </div>
+
+                        <Separator />
+                        <div className="grid gap-2">
+                            <Button onClick={addTextElement} variant="outline" size="sm">
+                                <PlusCircle className="mr-2" /> Add Text
+                            </Button>
+                        </div>
+                        
+                        {currentSelectedElement && currentSelectedElement.type === 'text' && (
+                            <div className="grid gap-4 p-4 border rounded-lg">
+                                <div className="flex justify-between items-center">
+                                    <Label className="font-bold">Selected Text</Label>
+                                    <Button variant="ghost" size="icon" onClick={deleteSelectedElement} className="h-7 w-7">
+                                        <Trash2 className="text-red-500" />
+                                    </Button>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="selected-text-content">Content</Label>
+                                    <Textarea
+                                        id="selected-text-content"
+                                        value={currentSelectedElement.content}
+                                        onChange={(e) => updateSelectedElement('content', e.target.value)}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="selected-text-size">Font Size</Label>
+                                        <Input
+                                            id="selected-text-size"
+                                            type="number"
+                                            value={currentSelectedElement.fontSize ? Math.round(currentSelectedElement.fontSize / 4) : 16}
+                                            onChange={(e) => updateSelectedElement('fontSize', parseInt(e.target.value, 10) * 4)}
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="selected-text-color">Color</Label>
+                                        <Input
+                                            id="selected-text-color"
+                                            type="color"
+                                            value={currentSelectedElement.color}
+                                            onChange={(e) => updateSelectedElement('color', e.target.value)}
+                                            className="p-1 h-9"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+
                     </div>
                    ) : (
                     <div className="grid gap-4">
@@ -1328,7 +1413,3 @@ export function QrickApp() {
   );
 
 }
-
-    
-
-    
