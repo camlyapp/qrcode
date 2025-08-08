@@ -346,10 +346,10 @@ export function QrickApp() {
                     ctx.drawImage(tempCanvas, element.x, element.y, element.width, element.height);
                     
                     // Draw barcode text separately if needed
-                    ctx.font = `${barcodeTextSize}px monospace`;
+                    ctx.font = `${barcodeTextSize * scale}px monospace`;
                     ctx.fillStyle = textColor;
                     ctx.textAlign = 'center';
-                    ctx.fillText(content, element.x + element.width / 2, element.y + element.height + barcodeTextSize + 4);
+                    ctx.fillText(content, element.x + element.width / 2, element.y + element.height + (barcodeTextSize * scale));
 
                 } catch (err: any) {
                     setBarcodeError(err.message || "Error generating barcode for card.");
