@@ -336,6 +336,7 @@ export function QrickApp() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    const pixelRatio = window.devicePixelRatio || 1;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     
@@ -387,8 +388,13 @@ export function QrickApp() {
     const canvasWidth = size + totalSpace.left + totalSpace.right + (qrPadding * 2);
     const canvasHeight = size + totalSpace.top + totalSpace.bottom + (qrPadding * 2);
     
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
+    canvas.width = canvasWidth * pixelRatio;
+    canvas.height = canvasHeight * pixelRatio;
+    canvas.style.width = `${canvasWidth}px`;
+    canvas.style.height = `${canvasHeight}px`;
+
+    ctx.scale(pixelRatio, pixelRatio);
+
 
     // Fill background for the entire canvas
     ctx.fillStyle = bgColor;
@@ -674,7 +680,7 @@ export function QrickApp() {
     const selectedImage = qrImageElements.find(el => el.id === selectedElement);
     if (selectedImage) {
         ctx.strokeStyle = 'rgba(0, 123, 255, 0.7)';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2 / pixelRatio; // Adjust line width for high DPI
         ctx.strokeRect(selectedImage.x, selectedImage.y, selectedImage.width, selectedImage.height);
         const handleSize = 8;
         const handles = {
@@ -703,11 +709,15 @@ export function QrickApp() {
             
             canvas.width = cardWidth * scale;
             canvas.height = cardHeight * scale;
-            
+            canvas.style.width = `${cardWidth}px`;
+            canvas.style.height = `${cardHeight}px`;
+
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
             
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.scale(scale, scale);
+
 
             const drawBackground = () => {
                 // Background
@@ -875,6 +885,8 @@ export function QrickApp() {
             const textHeight = showBarcodeText ? (barcodeTextSize * 2.5) * scale / 2 : 0;
             const canvasHeight = (displayHeight * scale) + textHeight + (barcodeMargin * 2 * scale);
             canvas.height = canvasHeight;
+            canvas.style.width = `${displayWidth + barcodeMargin * 2}px`;
+            canvas.style.height = `${displayHeight + (showBarcodeText ? barcodeTextSize * 1.25 : 0) + barcodeMargin * 2}px`;
             
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
@@ -1582,7 +1594,7 @@ export function QrickApp() {
     }
     const canvas = canvasRef.current;
     if (canvas) {
-        return { width: canvas.width, height: canvas.height };
+        return { width: parseInt(canvas.style.width) || size, height: parseInt(canvas.style.height) || size };
     }
     return { width: size, height: size };
   }
@@ -2369,12 +2381,6 @@ export function QrickApp() {
               {content && !barcodeError ? (
                 <canvas 
                     ref={canvasRef} 
-                    width={getCanvasDisplaySize().width}
-                    height={getCanvasDisplaySize().height}
-                    style={
-                        (generatorType === 'barcode' && !generateCard) ? { width: 320, height: (showBarcodeText ? 80 + (barcodeTextSize * 2.5) : 80), cursor: 'default' } : 
-                        (generateCard ? { width: 400, height: 225, cursor: cursorStyle } : { width: getCanvasDisplaySize().width, height: getCanvasDisplaySize().height, maxWidth: 320, cursor: cursorStyle})
-                    }
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
                     onMouseUp={handleMouseUp}
@@ -2382,6 +2388,7 @@ export function QrickApp() {
                     onTouchStart={handleMouseDown}
                     onTouchMove={handleMouseMove}
                     onTouchEnd={handleMouseUp}
+                    style={{ cursor: cursorStyle }}
                 />
               ) : (
                 <div style={{width: generatorType === 'qr' ? size : 320, height: generatorType === 'qr' ? size : 80 + (barcodeTextSize * 2.5 / 2)}} className="bg-gray-100 flex items-center justify-center text-center text-red-500 rounded-lg p-4">
@@ -2432,5 +2439,7 @@ export function QrickApp() {
 
 
 
+
+    
 
     
