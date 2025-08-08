@@ -374,11 +374,13 @@ export function QrickApp() {
         switch (value) {
             case 'CODE128':
             case 'CODE128B':
-            case 'CODE128C':
                 setContent('Example 1234');
                 break;
             case 'CODE128A':
                 setContent('EXAMPLE');
+                break;
+            case 'CODE128C':
+                setContent('12345678');
                 break;
             case 'EAN13':
                 setContent('1234567890128');
