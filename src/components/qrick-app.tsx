@@ -4,7 +4,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
@@ -32,6 +38,7 @@ import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { SVG } from "react-svg";
 
 
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
@@ -303,9 +310,8 @@ export function QrickApp() {
       }
   }, [drawQR, drawBarcode, content, size, generatorType, fgColor, bgColor, textColor]);
 
-  const handleDownload = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || barcodeError) {
+  const handleDownload = useCallback(async (format: 'png' | 'jpeg' | 'svg') => {
+    if (!content || barcodeError) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -313,23 +319,61 @@ export function QrickApp() {
       });
       return;
     }
-
-    const pngUrl = canvas
-      .toDataURL("image/png")
-      .replace("image/png", "image/octet-stream");
-      
+    
     const downloadLink = document.createElement("a");
-    downloadLink.href = pngUrl;
-    downloadLink.download = `${generatorType === 'qr' ? 'qr-code' : barcodeFormat.toLowerCase()}.png`;
+    const fileName = `${generatorType === 'qr' ? 'qr-code' : barcodeFormat.toLowerCase()}.${format}`;
+
+    if (format === 'svg') {
+        let svgString = '';
+        if (generatorType === 'qr') {
+            svgString = await QRCode.toString(content, {
+                type: 'svg',
+                errorCorrectionLevel: level,
+                color: { dark: fgColor, light: bgColor }
+            });
+
+        } else {
+            const svgNode = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            document.body.appendChild(svgNode);
+            try {
+                JsBarcode(svgNode, content, {
+                    format: barcodeFormat,
+                    lineColor: fgColor,
+                    background: bgColor,
+                    height: barcodeHeight * 0.8,
+                    fontSize: barcodeTextSize,
+                    fontOptions: "monospace",
+                    textMargin: 5,
+                    xmlns: "http://www.w3.org/2000/svg",
+                });
+                svgString = svgNode.outerHTML;
+            } catch (err: any) {
+                console.error(err);
+                setBarcodeError(err.message || "Error generating SVG barcode.");
+                document.body.removeChild(svgNode);
+                return;
+            }
+            document.body.removeChild(svgNode);
+        }
+        const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+        downloadLink.href = URL.createObjectURL(blob);
+    } else {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const dataUrl = canvas.toDataURL(`image/${format}`, 1.0);
+        downloadLink.href = dataUrl;
+    }
+
+    downloadLink.download = fileName;
     document.body.appendChild(downloadLink);
     downloadLink.click();
     document.body.removeChild(downloadLink);
 
     toast({
       title: "Success",
-      description: "Download started.",
+      description: `Download started for ${fileName}.`,
     });
-  }, [toast, generatorType, barcodeFormat, barcodeError]);
+  }, [toast, generatorType, barcodeFormat, barcodeError, content, level, fgColor, bgColor, barcodeHeight, barcodeTextSize, barcodeError]);
 
   const applyPreset = (preset: {fg: string, bg: string}) => {
     setFgColor(preset.fg);
@@ -743,10 +787,20 @@ export function QrickApp() {
 
       </CardContent>
       <CardFooter className="p-4">
-        <Button onClick={handleDownload} className="w-full text-base py-5" disabled={!content || !!barcodeError}>
-          <Download className="mr-2 h-5 w-5" />
-          Download PNG
-        </Button>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button className="w-full text-base py-5" disabled={!content || !!barcodeError}>
+                    <Download className="mr-2 h-5 w-5" />
+                    Download
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+                <DropdownMenuItem onClick={() => handleDownload('png')}>PNG</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDownload('jpeg')}>JPEG</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDownload('svg')}>SVG</DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
       </CardFooter>
     </Card>
   );
@@ -755,3 +809,4 @@ export function QrickApp() {
     
 
     
+
