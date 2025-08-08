@@ -4,7 +4,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2, Sun, Moon, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Star, Plus, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2, Sun, Moon, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Star, Plus, AlignLeft, AlignCenter, AlignRight, Pilcrow } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -104,6 +104,7 @@ export function QrickApp() {
   const [qrTextSize, setQrTextSize] = useState<number>(20);
   const [qrTextAlign, setQrTextAlign] = useState<CanvasTextAlign>("center");
   const [qrTextMargin, setQrTextMargin] = useState<number>(12);
+  const [qrTextVertical, setQrTextVertical] = useState<boolean>(false);
 
 
   // Card states
@@ -152,20 +153,24 @@ export function QrickApp() {
     let canvasHeight = size;
     let qrX = 0;
     let qrY = 0;
-    let qrSize = size;
     const margin = 8;
     const qrWithMarginSize = size - margin * 2;
 
     if (hasText) {
-        if (qrTextPosition === 'top' || qrTextPosition === 'bottom') {
-            canvasHeight += textHeight + qrTextMargin;
-            qrSize = size;
-            qrY = qrTextPosition === 'top' ? textHeight + qrTextMargin : 0;
-        } else { // left or right
-            canvasWidth += textWidth + qrTextMargin;
-            qrSize = size;
-            qrX = qrTextPosition === 'left' ? textWidth + qrTextMargin : 0;
+      if (qrTextVertical) {
+        if (qrTextPosition === 'left' || qrTextPosition === 'right') {
+          canvasWidth += textHeight + qrTextMargin;
+          qrX = qrTextPosition === 'left' ? textHeight + qrTextMargin : 0;
         }
+      } else {
+        if (qrTextPosition === 'top' || qrTextPosition === 'bottom') {
+          canvasHeight += textHeight + qrTextMargin;
+          qrY = qrTextPosition === 'top' ? textHeight + qrTextMargin : 0;
+        } else { // left or right
+          canvasWidth += textWidth + qrTextMargin;
+          qrX = qrTextPosition === 'left' ? textWidth + qrTextMargin : 0;
+        }
+      }
     }
 
     canvas.width = canvasWidth;
@@ -177,6 +182,7 @@ export function QrickApp() {
 
     // Draw text
     if (hasText) {
+        ctx.save();
         ctx.fillStyle = qrTextColor;
         ctx.font = `${qrTextSize}px sans-serif`;
         ctx.textBaseline = "middle";
@@ -185,25 +191,43 @@ export function QrickApp() {
         let textX = 0;
         let textY = 0;
 
-        switch (qrTextPosition) {
-            case 'top':
-                textY = textHeight / 2;
-                textX = qrTextAlign === 'center' ? canvasWidth / 2 : (qrTextAlign === 'left' ? 0 : canvasWidth);
-                break;
-            case 'bottom':
-                textY = size + textHeight / 2 + qrTextMargin;
-                textX = qrTextAlign === 'center' ? canvasWidth / 2 : (qrTextAlign === 'left' ? 0 : canvasWidth);
-                break;
-            case 'left':
-                textX = textWidth / 2;
-                textY = canvasHeight / 2;
-                break;
-            case 'right':
-                textX = size + textWidth / 2 + qrTextMargin;
-                textY = canvasHeight / 2;
-                break;
+        if (qrTextVertical) {
+          textY = canvasHeight / 2;
+          ctx.translate(0, textY);
+          ctx.rotate(-Math.PI / 2);
+          ctx.translate(0, -textY);
+          
+          textX = textY; // After rotation, y becomes x
+          if (qrTextPosition === 'left') {
+            textY = textHeight / 2;
+          } else { // right
+            textY = canvasWidth - textHeight / 2;
+          }
+          ctx.fillText(qrText, textX, textY);
+
+        } else {
+          switch (qrTextPosition) {
+              case 'top':
+                  textY = textHeight / 2;
+                  textX = qrTextAlign === 'center' ? canvasWidth / 2 : (qrTextAlign === 'left' ? 0 : canvasWidth);
+                  break;
+              case 'bottom':
+                  textY = size + qrTextMargin + textHeight / 2;
+                  textX = qrTextAlign === 'center' ? canvasWidth / 2 : (qrTextAlign === 'left' ? 0 : canvasWidth);
+                  break;
+              case 'left':
+                  textX = textWidth / 2;
+                  textY = canvasHeight / 2;
+                  break;
+              case 'right':
+                  textX = size + qrTextMargin + textWidth / 2;
+                  textY = canvasHeight / 2;
+                  break;
+          }
+          ctx.fillText(qrText, textX, textY);
         }
-        ctx.fillText(qrText, textX, textY);
+
+        ctx.restore();
     }
     
     QRCode.toDataURL(content, {
@@ -346,8 +370,8 @@ export function QrickApp() {
             img.crossOrigin = "anonymous";
             img.src = imageUrl;
             img.onload = () => {
-                const imgX = qrX + (qrSize - imageSize) / 2;
-                const imgY = qrY + (qrSize - imageSize) / 2;
+                const imgX = qrX + (size - imageSize) / 2;
+                const imgY = qrY + (size - imageSize) / 2;
                 
                 if (excavate) {
                     ctx.save();
@@ -364,7 +388,7 @@ export function QrickApp() {
         setBarcodeError("Error generating QR code. The content may be too long for the selected error correction level.");
         console.error(err);
     });
-  }, [content, size, level, fgColor, bgColor, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, qrText, qrTextColor, qrTextPosition, qrTextSize, qrTextAlign, qrTextMargin]);
+  }, [content, size, level, fgColor, bgColor, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, qrText, qrTextColor, qrTextPosition, qrTextSize, qrTextAlign, qrTextMargin, qrTextVertical]);
 
     const drawBarcodeOrCard = useCallback(() => {
         setBarcodeError(null);
@@ -747,7 +771,7 @@ export function QrickApp() {
         }
         setBarcodeError(null);
       }
-  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, barcodeHeight, barcodeTextSize, level, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, generateCard, cardElements, selectedElement, showBarcodeText, barcodeTextPosition, qrText, qrTextColor, qrTextPosition, qrTextSize, qrTextAlign, qrTextMargin]);
+  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, barcodeHeight, barcodeTextSize, level, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, generateCard, cardElements, selectedElement, showBarcodeText, barcodeTextPosition, qrText, qrTextColor, qrTextPosition, qrTextSize, qrTextAlign, qrTextMargin, qrTextVertical]);
 
     const getPointerPosition = (e: React.MouseEvent | React.TouchEvent) => {
         const canvas = canvasRef.current;
@@ -1219,14 +1243,36 @@ export function QrickApp() {
             const metrics = ctx.measureText(qrText);
             const textWidth = metrics.width;
             const textHeight = qrTextSize;
-             if (qrTextPosition === 'top' || qrTextPosition === 'bottom') {
-                displayHeight += textHeight + qrTextMargin;
+             if (qrTextVertical) {
+              if (qrTextPosition === 'left' || qrTextPosition === 'right') {
+                displayWidth += textHeight + qrTextMargin;
+              }
             } else {
-                displayWidth += textWidth + qrTextMargin;
+              if (qrTextPosition === 'top' || qrTextPosition === 'bottom') {
+                  displayHeight += textHeight + qrTextMargin;
+              } else {
+                  displayWidth += textWidth + qrTextMargin;
+              }
             }
         }
     }
     return { width: displayWidth, height: displayHeight };
+  }
+
+  const handleTextPositionChange = (value: QrTextPosition) => {
+    setQrTextPosition(value);
+    if (value === 'top' || value === 'bottom') {
+      setQrTextVertical(false);
+    }
+  }
+
+  const handleVerticalTextToggle = (checked: boolean) => {
+    setQrTextVertical(checked);
+    if (checked) {
+      if (qrTextPosition === 'top' || qrTextPosition === 'bottom') {
+        setQrTextPosition('left');
+      }
+    }
   }
 
   return (
@@ -1419,15 +1465,22 @@ export function QrickApp() {
                                         <Label htmlFor="qr-text">Text</Label>
                                         <Input id="qr-text" placeholder="Enter text" value={qrText} onChange={(e) => setQrText(e.target.value)} />
                                     </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Switch id="vertical-text" checked={qrTextVertical} onCheckedChange={handleVerticalTextToggle} />
+                                        <Label htmlFor="vertical-text" className="flex items-center gap-2 cursor-pointer">
+                                            <Pilcrow className="h-4 w-4 -rotate-90" />
+                                            Vertical Text
+                                        </Label>
+                                    </div>
                                     <div className="grid gap-2">
                                         <Label>Position</Label>
-                                        <Select value={qrTextPosition} onValueChange={(v) => setQrTextPosition(v as QrTextPosition)}>
+                                        <Select value={qrTextPosition} onValueChange={(v) => handleTextPositionChange(v as QrTextPosition)}>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select position" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="top">Top</SelectItem>
-                                                <SelectItem value="bottom">Bottom</SelectItem>
+                                                <SelectItem value="top" disabled={qrTextVertical}>Top</SelectItem>
+                                                <SelectItem value="bottom" disabled={qrTextVertical}>Bottom</SelectItem>
                                                 <SelectItem value="left">Left</SelectItem>
                                                 <SelectItem value="right">Right</SelectItem>
                                             </SelectContent>
@@ -1790,6 +1843,8 @@ export function QrickApp() {
 }
 
     
+    
+
     
 
     
