@@ -1295,48 +1295,50 @@ export function QrickApp() {
             <TabsContent value="barcode" className="pt-4">
               <ScrollArea className="h-[28rem]">
                 <div className="grid gap-4 pr-4">
-                  <div className="grid gap-2">
-                      <Label htmlFor="format">Format</Label>
-                      <Select
-                          value={barcodeFormat}
-                          onValueChange={(v) => handleBarcodeFormatChange(v as BarcodeFormat, true)}
-                      >
-                          <SelectTrigger id="format">
-                          <SelectValue placeholder="Select format" />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-60">
-                              <SelectItem value="CODE128">Code 128</SelectItem>
-                              <SelectItem value="CODE128A">Code 128A</SelectItem>
-                              <SelectItem value="CODE128B">Code 128B</SelectItem>
-                              <SelectItem value="CODE128C">Code 128C</SelectItem>
-                              <SelectItem value="CODE39">Code 39</SelectItem>
-                              <SelectItem value="EAN13">EAN-13</SelectItem>
-                              <SelectItem value="EAN8">EAN-8</SelectItem>
-                              <SelectItem value="EAN5">EAN-5</SelectItem>
-                              <SelectItem value="EAN2">EAN-2</SelectItem>
-                              <SelectItem value="UPC">UPC</SelectItem>
-                              <SelectItem value="UPCE">UPC-E</SelectItem>
-                              <SelectItem value="ITF14">ITF-14</SelectItem>
-                              <SelectItem value="ITF">ITF</SelectItem>
-                              <SelectItem value="MSI">MSI</SelectItem>
-                              <SelectItem value="MSI10">MSI10</SelectItem>
-                              <SelectItem value="MSI11">MSI11</SelectItem>
-                              <SelectItem value="MSI1010">MSI1010</SelectItem>
-                              <SelectItem value="MSI1110">MSI1110</SelectItem>
-                              <SelectItem value="pharmacode">Pharmacode</SelectItem>
-                              <SelectItem value="codabar">Codabar</SelectItem>
-                          </SelectContent>
-                      </Select>
-                  </div>
-                  <div className="grid gap-2">
-                      <Label htmlFor="barcode-content">Content</Label>
-                      <Input
-                      id="barcode-content"
-                      placeholder="Enter barcode content"
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      className="text-sm"
-                      />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="format">Format</Label>
+                        <Select
+                            value={barcodeFormat}
+                            onValueChange={(v) => handleBarcodeFormatChange(v as BarcodeFormat, true)}
+                        >
+                            <SelectTrigger id="format">
+                            <SelectValue placeholder="Select format" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-60">
+                                <SelectItem value="CODE128">Code 128</SelectItem>
+                                <SelectItem value="CODE128A">Code 128A</SelectItem>
+                                <SelectItem value="CODE128B">Code 128B</SelectItem>
+                                <SelectItem value="CODE128C">Code 128C</SelectItem>
+                                <SelectItem value="CODE39">Code 39</SelectItem>
+                                <SelectItem value="EAN13">EAN-13</SelectItem>
+                                <SelectItem value="EAN8">EAN-8</SelectItem>
+                                <SelectItem value="EAN5">EAN-5</SelectItem>
+                                <SelectItem value="EAN2">EAN-2</SelectItem>
+                                <SelectItem value="UPC">UPC</SelectItem>
+                                <SelectItem value="UPCE">UPC-E</SelectItem>
+                                <SelectItem value="ITF14">ITF-14</SelectItem>
+                                <SelectItem value="ITF">ITF</SelectItem>
+                                <SelectItem value="MSI">MSI</SelectItem>
+                                <SelectItem value="MSI10">MSI10</SelectItem>
+                                <SelectItem value="MSI11">MSI11</SelectItem>
+                                <SelectItem value="MSI1010">MSI1010</SelectItem>
+                                <SelectItem value="MSI1110">MSI1110</SelectItem>
+                                <SelectItem value="pharmacode">Pharmacode</SelectItem>
+                                <SelectItem value="codabar">Codabar</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="barcode-content">Content</Label>
+                        <Input
+                        id="barcode-content"
+                        placeholder="Enter barcode content"
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        className="text-sm"
+                        />
+                    </div>
                   </div>
                   <Separator />
                    <div className="flex items-center space-x-2">
