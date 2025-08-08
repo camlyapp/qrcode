@@ -125,13 +125,25 @@ export function QrickApp() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    canvas.width = size;
-    canvas.height = size;
+    // Define margin in pixels (approximating 2mm at 96 DPI)
+    const margin = 8;
+    const canvasSize = size;
+    const qrSize = size - margin * 2;
+
+    canvas.width = canvasSize;
+    canvas.height = canvasSize;
+    
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    
+    // Fill background for the entire canvas
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, canvasSize, canvasSize);
 
     QRCode.toDataURL(content, {
         errorCorrectionLevel: level,
-        width: size,
-        margin: 1,
+        width: qrSize,
+        margin: 1, 
         color: {
             dark: '#000000',
             light: '#FFFFFF'
@@ -140,20 +152,17 @@ export function QrickApp() {
     .then(() => {
         const qrCode = QRCode.create(content, { errorCorrectionLevel: level });
         const moduleCount = qrCode.modules.size;
-        const moduleSize = size / moduleCount;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
+        const moduleSize = qrSize / moduleCount;
 
-        ctx.clearRect(0, 0, size, size);
-        ctx.fillStyle = bgColor;
-        ctx.fillRect(0, 0, size, size);
-        
+        ctx.save();
+        ctx.translate(margin, margin); // Apply margin offset
+
         if (gradientType !== 'none') {
             let gradient: CanvasGradient;
             if (gradientType === 'linear') {
-                gradient = ctx.createLinearGradient(0, 0, size, size);
+                gradient = ctx.createLinearGradient(0, 0, qrSize, qrSize);
             } else { // radial
-                gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+                gradient = ctx.createRadialGradient(qrSize / 2, qrSize / 2, 0, qrSize / 2, qrSize / 2, qrSize / 2);
             }
             gradient.addColorStop(0, gradientStartColor);
             gradient.addColorStop(1, gradientEndColor);
@@ -161,7 +170,6 @@ export function QrickApp() {
         } else {
             ctx.fillStyle = fgColor;
         }
-
 
         for (let row = 0; row < moduleCount; row++) {
             for (let col = 0; col < moduleCount; col++) {
@@ -241,19 +249,23 @@ export function QrickApp() {
                 }
             }
         }
+        
+        ctx.restore(); // Restore context to pre-translation state
 
         if (imageUrl) {
             const img = new Image();
             img.crossOrigin = "anonymous";
             img.src = imageUrl;
             img.onload = () => {
-                const imgX = (size - imageSize) / 2;
-                const imgY = (size - imageSize) / 2;
+                const imgX = (canvasSize - imageSize) / 2;
+                const imgY = (canvasSize - imageSize) / 2;
                 
                 if (excavate) {
+                    ctx.save();
                     ctx.clearRect(imgX, imgY, imageSize, imageSize);
                     ctx.fillStyle = bgColor;
                     ctx.fillRect(imgX, imgY, imageSize, imageSize);
+                    ctx.restore();
                 }
                 ctx.drawImage(img, imgX, imgY, imageSize, imageSize);
             };
@@ -1622,3 +1634,5 @@ export function QrickApp() {
   );
 
 }
+
+    
