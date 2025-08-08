@@ -236,7 +236,7 @@ export function QrickApp() {
             lineColor: fgColor,
             background: bgColor,
             width: 8,
-            height: 160 * (barcodeHeight / 25),
+            height: 160 * (barcodeHeight / 100),
             displayValue: true,
             valid: (valid: boolean) => {
                 if (!valid) {
@@ -674,7 +674,7 @@ export function QrickApp() {
                 <Separator />
                 <div className="grid gap-2">
                     <Label htmlFor="barcode-height">Height ({barcodeHeight}%)</Label>
-                    <Slider id="barcode-height" min={25} max={150} value={[barcodeHeight]} onValueChange={(v) => setBarcodeHeight(v[0])} />
+                    <Slider id="barcode-height" min={50} max={150} value={[barcodeHeight]} onValueChange={(v) => setBarcodeHeight(v[0])} />
                 </div>
               </div>
             </TabsContent>
