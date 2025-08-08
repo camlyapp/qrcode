@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { QRCode } from "qrcode.react";
+import { QRCodeCanvas } from "qrcode.react";
 import { Download, QrCode } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -122,13 +122,12 @@ export function QrickApp() {
         <div className="flex justify-center items-center">
             <div ref={qrRef} className="p-4 bg-white rounded-lg shadow-inner transition-all duration-300 ease-in-out" aria-label="QR Code Preview">
               {content ? (
-                <QRCode
+                <QRCodeCanvas
                     value={content}
                     size={size}
                     level={level}
                     bgColor="#ffffff"
                     fgColor="#000000"
-                    renderAs="canvas"
                 />
               ) : (
                 <div style={{width: size, height: size}} className="bg-gray-100 flex items-center justify-center text-center text-gray-500 rounded-lg p-4">
