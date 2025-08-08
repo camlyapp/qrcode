@@ -5,7 +5,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2 } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2, Sun, Moon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +49,7 @@ type GeneratorType = "qr" | "barcode";
 type BarcodeFormat = "CODE128" | "CODE128A" | "CODE128B" | "CODE128C" | "EAN13" | "EAN8" | "EAN5" | "EAN2" | "UPC" | "UPCE" | "CODE39" | "ITF14" | "ITF" | "MSI" | "MSI10" | "MSI11" | "MSI1010" | "MSI1110" | "pharmacode" | "codabar";
 type CardDesign = "classic" | "modern" | "sleek" | "professional" | "vcard" | "marriage";
 type ResizeHandle = 'tl' | 'tr' | 'bl' | 'br';
+type Theme = 'light' | 'dark';
 
 interface CardElement {
     id: string;
@@ -96,6 +97,7 @@ export function QrickApp() {
   const [barcodeTextSize, setBarcodeTextSize] = useState<number>(20);
   const [textColor, setTextColor] = useState<string>("#000000");
   const [showBarcodeText, setShowBarcodeText] = useState<boolean>(true);
+  const [theme, setTheme] = useState<Theme>('light');
 
   // Card states
   const [generateCard, setGenerateCard] = useState<boolean>(false);
@@ -118,6 +120,26 @@ export function QrickApp() {
   const logoInputRef = useRef<HTMLInputElement>(null);
   const cardBgInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+   useEffect(() => {
+    const savedTheme = localStorage.getItem('qrick-theme') as Theme | null;
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const defaultTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+    setTheme(defaultTheme);
+  }, []);
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('qrick-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+  };
 
   const drawQR = useCallback(() => {
     setBarcodeError(null);
@@ -1084,14 +1106,32 @@ export function QrickApp() {
 
   return (
     <Card className="w-full max-w-4xl shadow-2xl">
-      <CardHeader className="text-center p-4">
-        <div className="mx-auto bg-primary text-primary-foreground rounded-full p-2 w-fit mb-2">
+      <CardHeader className="flex flex-row items-center justify-between p-4">
+        <div className="flex items-center gap-3">
+          <div className="bg-primary text-primary-foreground rounded-full p-2">
             <QrCode className="h-5 w-5" />
+          </div>
+          <div>
+            <CardTitle className="text-lg font-headline">QRick</CardTitle>
+            <CardDescription className="text-xs">
+              Generate and customize your barcodes and QR codes in real-time.
+            </CardDescription>
+          </div>
         </div>
-        <CardTitle className="text-lg font-headline">QRick</CardTitle>
-        <CardDescription className="text-xs">
-          Generate and customize your barcodes and QR codes in real-time.
-        </CardDescription>
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={toggleTheme}>
+                        <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                        <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                        <span className="sr-only">Toggle theme</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Toggle Theme</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
       </CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-[340px_1fr] p-4">
         <div className="grid gap-4">
