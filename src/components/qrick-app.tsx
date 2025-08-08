@@ -41,6 +41,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
@@ -761,7 +762,7 @@ export function QrickApp() {
                         }
                         break;
                     }
-                }
+                };
             };
             
             const renderElements = () => {
@@ -1650,27 +1651,26 @@ export function QrickApp() {
                 <div className="grid gap-4">
                      <div className="grid gap-2">
                         <Label>Data Type</Label>
-                         <ScrollArea className="w-full whitespace-nowrap">
-                            <RadioGroup value={qrDataType} onValueChange={(v) => handleQrDataTypeChange(v as QrDataType)} className="flex gap-2 pb-2">
-                                {qrDataTypes.map(item => (
-                                    <TooltipProvider key={item.id}>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Label htmlFor={`qr-data-type-${item.id}`} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer w-16 h-16 text-center">
-                                                    <RadioGroupItem value={item.id} id={`qr-data-type-${item.id}`} className="sr-only" />
-                                                    {item.icon}
-                                                    <span className="text-xs font-normal mt-1 hidden sm:block">{item.label}</span>
-                                                </Label>
-                                            </TooltipTrigger>
-                                            <TooltipContent className="block sm:hidden">
-                                                <p>{item.label}</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                ))}
-                            </RadioGroup>
-                            <ScrollBar orientation="horizontal" />
-                        </ScrollArea>
+                        <Select value={qrDataType} onValueChange={(v) => handleQrDataTypeChange(v as QrDataType)}>
+                          <SelectTrigger>
+                            <SelectValue asChild>
+                              <div className="flex items-center gap-2">
+                                {qrDataTypes.find(d => d.id === qrDataType)?.icon}
+                                <span>{qrDataTypes.find(d => d.id === qrDataType)?.label}</span>
+                              </div>
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {qrDataTypes.map(item => (
+                              <SelectItem key={item.id} value={item.id}>
+                                <div className="flex items-center gap-2">
+                                  {item.icon}
+                                  <span>{item.label}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                     </div>
 
                     {qrDataType === 'text' && (
