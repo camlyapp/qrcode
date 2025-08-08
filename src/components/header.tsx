@@ -12,7 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CardDescription, CardTitle } from "@/components/ui/card";
+import { CardTitle } from "@/components/ui/card";
 
 type Theme = "light" | "dark";
 
@@ -22,7 +22,11 @@ export function Header() {
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("qrick-theme") as Theme | null;
-    setTheme(savedTheme || "light");
+    if (savedTheme) {
+      setTheme(savedTheme);
+    } else {
+      setTheme("light");
+    }
 
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
@@ -64,9 +68,6 @@ export function Header() {
           </div>
           <div>
             <CardTitle className="text-xl font-headline font-bold tracking-tight">QRick</CardTitle>
-            <CardDescription className="text-xs">
-              Generate custom codes in real-time.
-            </CardDescription>
           </div>
         </div>
         <TooltipProvider>
