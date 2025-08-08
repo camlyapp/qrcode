@@ -223,13 +223,20 @@ export function QrickApp() {
     setBarcodeError(null);
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    const displayWidth = 320;
+    const displayHeight = 80;
+    const scale = 4;
+    
+    canvas.width = displayWidth * scale;
+    canvas.height = (displayHeight + (barcodeTextSize * 2.5 / 2)) * scale;
     
     const ctx = canvas.getContext('2d');
-    if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = bgColor;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
+    if (!ctx) return;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     try {
         let isValid = true;
@@ -239,8 +246,8 @@ export function QrickApp() {
             format: barcodeFormat,
             lineColor: fgColor,
             background: 'rgba(0,0,0,0)',
-            width: 4,
-            height: 160,
+            width: 2 * scale,
+            height: 80 * scale,
             displayValue: false,
             valid: (valid: boolean) => {
                 if (!valid) {
@@ -259,10 +266,10 @@ export function QrickApp() {
 
         if (ctx) {
             ctx.drawImage(tempCanvas, (canvas.width - barcodeWidth) / 2, 0, barcodeWidth, barcodeHeightCalculated);
-            ctx.font = `${barcodeTextSize * 2}px monospace`;
+            ctx.font = `${barcodeTextSize * scale}px monospace`;
             ctx.fillStyle = textColor;
             ctx.textAlign = 'center';
-            ctx.fillText(content, canvas.width / 2, barcodeHeightCalculated + (barcodeTextSize * 2));
+            ctx.fillText(content, canvas.width / 2, barcodeHeightCalculated + (barcodeTextSize * scale));
         }
 
     } catch (err: any) {
@@ -631,7 +638,7 @@ export function QrickApp() {
             
             <TabsContent value="barcode" className="pt-4">
               <ScrollArea className="h-[28rem]">
-                <div className="grid gap-4 pr-4">
+                <div className="grid gap-3 pr-4">
                   <div className="grid gap-2">
                       <Label htmlFor="format">Format</Label>
                       <Select
@@ -700,16 +707,18 @@ export function QrickApp() {
                         </div>
                     </div>
                   <Separator />
-                  <div className="grid gap-2">
-                      <Label htmlFor="barcode-height">Height ({barcodeHeight}%)</Label>
-                      <Slider id="barcode-height" min={50} max={150} value={[barcodeHeight]} onValueChange={(v) => setBarcodeHeight(v[0])} />
-                  </div>
-                  <div className="grid gap-2">
-                      <Label htmlFor="barcode-text-size" className="flex items-center">
-                        <CaseSensitive className="mr-2 h-4 w-4"/>
-                        Text Size ({barcodeTextSize}px)
-                      </Label>
-                      <Slider id="barcode-text-size" min={10} max={30} value={[barcodeTextSize]} onValueChange={(v) => setBarcodeTextSize(v[0])} />
+                   <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="barcode-height">Height ({barcodeHeight}%)</Label>
+                        <Slider id="barcode-height" min={50} max={150} value={[barcodeHeight]} onValueChange={(v) => setBarcodeHeight(v[0])} />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="barcode-text-size" className="flex items-center">
+                          <CaseSensitive className="mr-2 h-4 w-4"/>
+                          Text Size ({barcodeTextSize}px)
+                        </Label>
+                        <Slider id="barcode-text-size" min={10} max={30} value={[barcodeTextSize]} onValueChange={(v) => setBarcodeTextSize(v[0])} />
+                    </div>
                   </div>
                 </div>
               </ScrollArea>
@@ -727,7 +736,7 @@ export function QrickApp() {
                     style={generatorType === 'barcode' ? { width: 320, height: 80 + (barcodeTextSize * 2.5 / 2) } : {}}
                 />
               ) : (
-                <div style={{width: generatorType === 'qr' ? size : 320, height: generatorType === 'qr' ? size : 80}} className="bg-gray-100 flex items-center justify-center text-center text-red-500 rounded-lg p-4">
+                <div style={{width: generatorType === 'qr' ? size : 320, height: generatorType === 'qr' ? size : 80 + (barcodeTextSize * 2.5 / 2)}} className="bg-gray-100 flex items-center justify-center text-center text-red-500 rounded-lg p-4">
                     {barcodeError || 'Enter content to generate a code.'}
                 </div>
               )}
@@ -744,7 +753,5 @@ export function QrickApp() {
     </Card>
   );
 }
-
-    
 
     
