@@ -1600,33 +1600,36 @@ export function QrickApp() {
         </div>
 
       </CardContent>
-      <CardFooter className="p-4 flex gap-2">
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button className="w-full text-base py-5" disabled={!content || !!barcodeError}>
-                    <Download className="mr-2 h-5 w-5" />
-                    Download
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-                <DropdownMenuItem onClick={() => handleDownload('png')}>PNG</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleDownload('jpeg')}>JPEG</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleDownload('svg')}>SVG</DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                     <Button variant="outline" size="icon" className="h-auto" onClick={handleShare} disabled={!content || !!barcodeError}>
-                        <Share2 className="h-5 w-5" />
-                     </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>Share</p>
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
+      <CardFooter className="p-4 flex justify-between">
+        <div />
+        <div className="flex gap-2">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" disabled={!content || !!barcodeError}>
+                        <Download className="h-5 w-5" />
+                        <span className="sr-only">Download</span>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56">
+                    <DropdownMenuItem onClick={() => handleDownload('png')}>PNG</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownload('jpeg')}>JPEG</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownload('svg')}>SVG</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                         <Button variant="outline" size="icon" onClick={handleShare} disabled={!content || !!barcodeError}>
+                            <Share2 className="h-5 w-5" />
+                            <span className="sr-only">Share</span>
+                         </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Share</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        </div>
       </CardFooter>
     </Card>
   );
