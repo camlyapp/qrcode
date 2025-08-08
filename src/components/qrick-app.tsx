@@ -1146,16 +1146,8 @@ export function QrickApp() {
                                 <div className="grid gap-4 pr-4">
                                      <div className="grid grid-cols-2 gap-4">
                                         <div className="grid gap-2">
-                                        <Label htmlFor="size">Size (px)</Label>
-                                        <Input
-                                            id="size"
-                                            type="number"
-                                            min="64"
-                                            max="1024"
-                                            step="32"
-                                            value={size}
-                                            onChange={(e) => setSize(parseInt(e.target.value, 10) || 64)}
-                                        />
+                                            <Label htmlFor="size">Size ({size}px)</Label>
+                                            <Slider id="size" min={64} max={1024} step={32} value={[size]} onValueChange={(v) => setSize(v[0])} />
                                         </div>
                                         <div className="grid gap-2">
                                         <Label htmlFor="level">Error Correction</Label>
