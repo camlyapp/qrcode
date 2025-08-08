@@ -185,46 +185,47 @@ export function QrickApp() {
         ctx.save();
         ctx.fillStyle = qrTextColor;
         ctx.font = `${qrTextSize}px sans-serif`;
-        ctx.textBaseline = "middle";
-        ctx.textAlign = qrTextAlign;
         
-        let textX = 0;
-        let textY = 0;
-
         if (qrTextVertical) {
-          textY = canvasHeight / 2;
-          ctx.translate(0, textY);
-          ctx.rotate(-Math.PI / 2);
-          ctx.translate(0, -textY);
-          
-          textX = textY; // After rotation, y becomes x
-          if (qrTextPosition === 'left') {
-            textY = textHeight / 2;
-          } else { // right
-            textY = canvasWidth - textHeight / 2;
-          }
-          ctx.fillText(qrText, textX, textY);
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            let textX = 0;
+            if (qrTextPosition === 'left') {
+                textX = textHeight / 2;
+            } else { // right
+                textX = canvasWidth - (textHeight / 2);
+            }
+            const textY = canvasHeight / 2;
+            
+            ctx.translate(textX, textY);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText(qrText, 0, 0);
 
         } else {
-          switch (qrTextPosition) {
-              case 'top':
-                  textY = textHeight / 2;
-                  textX = qrTextAlign === 'center' ? canvasWidth / 2 : (qrTextAlign === 'left' ? 0 : canvasWidth);
-                  break;
-              case 'bottom':
-                  textY = size + qrTextMargin + textHeight / 2;
-                  textX = qrTextAlign === 'center' ? canvasWidth / 2 : (qrTextAlign === 'left' ? 0 : canvasWidth);
-                  break;
-              case 'left':
-                  textX = textWidth / 2;
-                  textY = canvasHeight / 2;
-                  break;
-              case 'right':
-                  textX = size + qrTextMargin + textWidth / 2;
-                  textY = canvasHeight / 2;
-                  break;
-          }
-          ctx.fillText(qrText, textX, textY);
+            ctx.textBaseline = "middle";
+            ctx.textAlign = qrTextAlign;
+            let textX = 0;
+            let textY = 0;
+
+            switch (qrTextPosition) {
+                case 'top':
+                    textY = textHeight / 2;
+                    textX = qrTextAlign === 'center' ? canvasWidth / 2 : (qrTextAlign === 'left' ? 0 : canvasWidth);
+                    break;
+                case 'bottom':
+                    textY = size + qrTextMargin + textHeight / 2;
+                    textX = qrTextAlign === 'center' ? canvasWidth / 2 : (qrTextAlign === 'left' ? 0 : canvasWidth);
+                    break;
+                case 'left':
+                    textX = textWidth / 2;
+                    textY = canvasHeight / 2;
+                    break;
+                case 'right':
+                    textX = size + qrTextMargin + textWidth / 2;
+                    textY = canvasHeight / 2;
+                    break;
+            }
+            ctx.fillText(qrText, textX, textY);
         }
 
         ctx.restore();
