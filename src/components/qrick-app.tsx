@@ -124,7 +124,7 @@ const qrDataTypes: { id: QrDataType, label: string, icon: React.ReactNode }[] = 
 export function QrickApp() {
   const [generatorType, setGeneratorType] = useState<GeneratorType>("qr");
   const [barcodeFormat, setBarcodeFormat] = useState<BarcodeFormat>("CODE128");
-  const [content, setContent] = useState<string>("https://firebase.google.com");
+  const [content, setContent] = useState<string>("camly.in");
   const [size, setSize] = useState<number>(256);
   const [level, setLevel] = useState<ErrorCorrectionLevel>("M");
   const [fgColor, setFgColor] = useState<string>("#000000");
@@ -300,7 +300,7 @@ export function QrickApp() {
     setQrDataType(value);
     switch (value) {
         case 'text':
-            setContent('https://firebase.google.com');
+            setContent('camly.in');
             break;
         case 'wifi':
             setContent(`WIFI:T:${wifiEncryption};S:${wifiSsid};P:${wifiPassword};;`);
@@ -1464,7 +1464,7 @@ export function QrickApp() {
     setGeneratorType(newType);
     setSelectedElement(null);
     if (newType === 'qr') {
-        setContent('https://firebase.google.com');
+        setContent('camly.in');
     } else if (newType === 'barcode') {
         handleBarcodeFormatChange(barcodeFormat, true);
     }
