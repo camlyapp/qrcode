@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -146,6 +145,8 @@ export function QrickApp() {
   const [qrTextElements, setQrTextElements] = useState<QrTextElement[]>([]);
   const [qrImageElements, setQrImageElements] = useState<QrImageElement[]>([]);
   const [selectedQrText, setSelectedQrText] = useState<string | null>(null);
+  const [qrPadding, setQrPadding] = useState<number>(8);
+  const [barcodeMargin, setBarcodeMargin] = useState<number>(10);
 
   // New QR Styling states
   const [qrStylingEngine, setQrStylingEngine] = useState<QRStylingEngine>("legacy");
@@ -383,8 +384,8 @@ export function QrickApp() {
         right: textSpace.right + imageSpace.right,
     };
 
-    const canvasWidth = size + totalSpace.left + totalSpace.right;
-    const canvasHeight = size + totalSpace.top + totalSpace.bottom;
+    const canvasWidth = size + totalSpace.left + totalSpace.right + (qrPadding * 2);
+    const canvasHeight = size + totalSpace.top + totalSpace.bottom + (qrPadding * 2);
     
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
@@ -393,11 +394,10 @@ export function QrickApp() {
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
     
-    const qrX = totalSpace.left;
-    const qrY = totalSpace.top;
+    const qrX = totalSpace.left + qrPadding;
+    const qrY = totalSpace.top + qrPadding;
     const qrSize = size;
-    const margin = qrStylingEngine === 'styling' ? 0 : 8;
-    const qrWithMarginSize = qrSize - margin * 2;
+    const qrWithMarginSize = qrSize;
 
 
     if (qrStylingEngine === 'styling') {
@@ -446,7 +446,7 @@ export function QrickApp() {
             await new Promise((resolve) => {
                 qrImage.onload = resolve;
             });
-            ctx.drawImage(qrImage, qrX + margin, qrY + margin);
+            ctx.drawImage(qrImage, qrX, qrY);
         }
 
     } else {
@@ -465,7 +465,7 @@ export function QrickApp() {
             const moduleSize = qrWithMarginSize / moduleCount;
 
             ctx.save();
-            ctx.translate(qrX + margin, qrY + margin);
+            ctx.translate(qrX, qrY);
 
             if (gradientType !== 'none') {
                 let gradient: CanvasGradient;
@@ -622,7 +622,7 @@ export function QrickApp() {
             if (textEl.position === 'left') {
                 textX = totalSpace.left - (textEl.size/2) - textEl.margin
             } else { // right
-                textX = qrX + qrSize + textEl.margin + (textEl.size/2);
+                textX = qrX + qrSize + qrPadding + textEl.margin + (textEl.size/2);
             }
             const textY = canvasHeight / 2;
             
@@ -642,7 +642,7 @@ export function QrickApp() {
                     textX = textEl.align === 'center' ? canvasWidth / 2 : (textEl.align === 'left' ? totalSpace.left : canvasWidth - totalSpace.right);
                     break;
                 case 'bottom':
-                    textY = qrY + qrSize + textEl.margin + (textEl.size/2)
+                    textY = qrY + qrSize + qrPadding + textEl.margin + (textEl.size/2)
                     textX = textEl.align === 'center' ? canvasWidth / 2 : (textEl.align === 'left' ? totalSpace.left : canvasWidth - totalSpace.right);
                     break;
                 case 'left':
@@ -650,7 +650,7 @@ export function QrickApp() {
                     textY = canvasHeight / 2;
                     break;
                 case 'right':
-                    textX = qrX + qrSize + textEl.margin + (ctx.measureText(textEl.text).width / 2);
+                    textX = qrX + qrSize + qrPadding + textEl.margin + (ctx.measureText(textEl.text).width / 2);
                     textY = canvasHeight / 2;
                     break;
             }
@@ -689,7 +689,7 @@ export function QrickApp() {
         });
     }
 
-  }, [content, size, level, fgColor, bgColor, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, qrTextElements, qrImageElements, selectedElement, qrStylingEngine, dotStyle, cornerSquareStyle, cornerDotStyle]);
+  }, [content, size, level, fgColor, bgColor, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, qrTextElements, qrImageElements, selectedElement, qrStylingEngine, dotStyle, cornerSquareStyle, cornerDotStyle, qrPadding]);
 
     const drawBarcodeOrCard = useCallback(() => {
         setBarcodeError(null);
@@ -871,9 +871,9 @@ export function QrickApp() {
             const displayHeight = 80;
             const scale = 4;
             
-            canvas.width = displayWidth * scale;
+            canvas.width = (displayWidth * scale) + (barcodeMargin * 2 * scale);
             const textHeight = showBarcodeText ? (barcodeTextSize * 2.5) * scale / 2 : 0;
-            const canvasHeight = (displayHeight * scale) + textHeight;
+            const canvasHeight = (displayHeight * scale) + textHeight + (barcodeMargin * 2 * scale);
             canvas.height = canvasHeight;
             
             const ctx = canvas.getContext('2d');
@@ -903,7 +903,7 @@ export function QrickApp() {
 
                 const barcodeWidth = tempCanvas.width;
                 const barcodeHeightCalculated = tempCanvas.height * (barcodeHeight / 100);
-                const barcodeTop = barcodeTextPosition === 'top' && showBarcodeText ? textHeight : 0;
+                const barcodeTop = (barcodeTextPosition === 'top' && showBarcodeText ? textHeight : 0) + (barcodeMargin * scale);
 
                 if (ctx) {
                     ctx.drawImage(tempCanvas, (canvas.width - barcodeWidth) / 2, barcodeTop, barcodeWidth, barcodeHeightCalculated);
@@ -911,7 +911,7 @@ export function QrickApp() {
                         ctx.font = `${barcodeTextSize * scale}px monospace`;
                         ctx.fillStyle = textColor;
                         ctx.textAlign = 'center';
-                        const textY = barcodeTextPosition === 'top' ? (barcodeTextSize * scale) : barcodeHeightCalculated + (barcodeTextSize * scale);
+                        const textY = barcodeTextPosition === 'top' ? (barcodeTextSize * scale) + (barcodeMargin * scale) : barcodeHeightCalculated + (barcodeTextSize * scale) + (barcodeMargin * scale);
                         ctx.fillText(content, canvas.width / 2, textY);
                     }
                 }
@@ -924,7 +924,7 @@ export function QrickApp() {
                 }
             }
         }
-    }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize, textColor, showBarcodeText, generateCard, cardBgColor, cardTextColor, cardDesign, cardAccentColor, cardElements, selectedElement, cardBgImageUrl, barcodeTextPosition]);
+    }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize, textColor, showBarcodeText, generateCard, cardBgColor, cardTextColor, cardDesign, cardAccentColor, cardElements, selectedElement, cardBgImageUrl, barcodeTextPosition, barcodeMargin]);
 
   const getTextMetrics = (text: string, font: string, fontSize: number, ctx: CanvasRenderingContext2D) => {
     ctx.font = `bold ${fontSize}px ${font}`;
@@ -1072,7 +1072,7 @@ export function QrickApp() {
         }
         setBarcodeError(null);
       }
-  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, barcodeHeight, barcodeTextSize, level, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, generateCard, cardElements, selectedElement, showBarcodeText, barcodeTextPosition, qrTextElements, qrImageElements, qrStylingEngine, dotStyle, cornerSquareStyle, cornerDotStyle]);
+  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, barcodeHeight, barcodeTextSize, level, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, generateCard, cardElements, selectedElement, showBarcodeText, barcodeTextPosition, qrTextElements, qrImageElements, qrStylingEngine, dotStyle, cornerSquareStyle, cornerDotStyle, qrPadding, barcodeMargin]);
 
     const getPointerPosition = (e: React.MouseEvent | React.TouchEvent) => {
         const canvas = canvasRef.current;
@@ -1266,6 +1266,7 @@ export function QrickApp() {
                 fontSize: showBarcodeText ? barcodeTextSize : 0,
                 textPosition: barcodeTextPosition,
                 fontOptions: "monospace",
+                margin: barcodeMargin,
                 textMargin: 5,
                 xmlns: "http://www.w3.org/2000/svg",
             });
@@ -1283,7 +1284,8 @@ export function QrickApp() {
          let svgString = await QRCode.toString(content, {
                 type: 'svg',
                 errorCorrectionLevel: level,
-                color: { dark: fgColor, light: bgColor }
+                color: { dark: fgColor, light: bgColor },
+                margin: qrPadding / 8, // SVG margin is in modules, not pixels
             });
         const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
         downloadLink.href = URL.createObjectURL(blob);
@@ -1312,7 +1314,7 @@ export function QrickApp() {
       title: "Success",
       description: `Download started for ${fileName}.`,
     });
-  }, [toast, generatorType, barcodeFormat, barcodeError, content, level, fgColor, bgColor, barcodeHeight, barcodeTextSize, generateCard, showBarcodeText, barcodeTextPosition]);
+  }, [toast, generatorType, barcodeFormat, barcodeError, content, level, fgColor, bgColor, barcodeHeight, barcodeTextSize, generateCard, showBarcodeText, barcodeTextPosition, qrPadding, barcodeMargin]);
 
   const handleShare = async () => {
     if (!content || barcodeError) {
@@ -1576,7 +1578,7 @@ export function QrickApp() {
 
   const getCanvasDisplaySize = () => {
     if (generatorType === 'barcode') {
-        return generateCard ? { width: 400, height: 225 } : { width: 320, height: (showBarcodeText ? 80 + (barcodeTextSize * 2.5) : 80) };
+        return generateCard ? { width: 400, height: 225 } : { width: 320 + (barcodeMargin * 2), height: (showBarcodeText ? 80 + (barcodeTextSize * 2.5) : 80) + (barcodeMargin * 2) };
     }
     const canvas = canvasRef.current;
     if (canvas) {
@@ -1795,6 +1797,10 @@ export function QrickApp() {
                                             <Slider id="size" min={64} max={1024} step={32} value={[size]} onValueChange={(v) => setSize(v[0])} />
                                         </div>
                                         <div className="grid gap-2">
+                                            <Label htmlFor="qr-padding">Padding ({qrPadding}px)</Label>
+                                            <Slider id="qr-padding" min={0} max={64} step={2} value={[qrPadding]} onValueChange={(v) => setQrPadding(v[0])} />
+                                        </div>
+                                        <div className="grid gap-2 col-span-2">
                                         <Label htmlFor="level">Error Correction</Label>
                                         <Select
                                             value={level}
@@ -2312,6 +2318,10 @@ export function QrickApp() {
                             </div>
                         </div>
                         <Separator />
+                        <div className="grid gap-2">
+                            <Label htmlFor="barcode-margin">Margin ({barcodeMargin}px)</Label>
+                            <Slider id="barcode-margin" min={0} max={50} value={[barcodeMargin]} onValueChange={(v) => setBarcodeMargin(v[0])} />
+                        </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="barcode-height">Height ({barcodeHeight}%)</Label>
@@ -2421,3 +2431,6 @@ export function QrickApp() {
     
 
 
+
+
+    
