@@ -373,10 +373,12 @@ export function QrickApp() {
     if (forceContent || generatorType === 'barcode') {
         switch (value) {
             case 'CODE128':
-            case 'CODE128A':
             case 'CODE128B':
             case 'CODE128C':
                 setContent('Example 1234');
+                break;
+            case 'CODE128A':
+                setContent('EXAMPLE');
                 break;
             case 'EAN13':
                 setContent('1234567890128');
@@ -747,5 +749,7 @@ export function QrickApp() {
     </Card>
   );
 }
+
+    
 
     
