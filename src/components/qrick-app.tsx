@@ -38,7 +38,7 @@ type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
 type QRStyle = "squares" | "dots" | "rounded" | "fluid" | "wavy" | "diamond";
 type GradientType = "none" | "linear" | "radial";
 type GeneratorType = "qr" | "barcode";
-type BarcodeFormat = "CODE128" | "EAN13" | "EAN8" | "UPC" | "CODE39" | "ITF14" | "ITF" | "MSI" | "MSI10" | "MSI11" | "MSI1010" | "MSI1110" | "pharmacode" | "codabar";
+type BarcodeFormat = "CODE128" | "CODE128A" | "CODE128B" | "CODE128C" | "EAN13" | "EAN8" | "EAN5" | "EAN2" | "UPC" | "UPCE" | "CODE39" | "ITF14" | "ITF" | "MSI" | "MSI10" | "MSI11" | "MSI1010" | "MSI1110" | "pharmacode" | "codabar";
 
 const colorPresets = [
     { name: "Classic", fg: "#000000", bg: "#ffffff" },
@@ -352,11 +352,23 @@ export function QrickApp() {
             case 'EAN8':
                 setContent('12345670');
                 break;
+            case 'EAN5':
+                setContent('12345');
+                break;
+            case 'EAN2':
+                setContent('12');
+                break;
             case 'CODE128':
+            case 'CODE128A':
+            case 'CODE128B':
+            case 'CODE128C':
                 setContent('Example 1234');
                 break;
             case 'UPC':
                 setContent('123456789012');
+                break;
+            case 'UPCE':
+                setContent('01234567');
                 break;
             case 'CODE39':
                 setContent('CODE39');
@@ -368,17 +380,9 @@ export function QrickApp() {
                 setContent('123456');
                 break;
             case 'MSI':
-                setContent('123456');
-                break;
             case 'MSI10':
-                setContent('123456');
-                break;
             case 'MSI11':
-                setContent('123456');
-                break;
             case 'MSI1010':
-                setContent('123456');
-                break;
             case 'MSI1110':
                 setContent('123456');
                 break;
@@ -619,10 +623,16 @@ export function QrickApp() {
                         </SelectTrigger>
                         <SelectContent className="max-h-60">
                             <SelectItem value="CODE128">Code 128</SelectItem>
+                            <SelectItem value="CODE128A">Code 128A</SelectItem>
+                            <SelectItem value="CODE128B">Code 128B</SelectItem>
+                            <SelectItem value="CODE128C">Code 128C</SelectItem>
                             <SelectItem value="CODE39">Code 39</SelectItem>
                             <SelectItem value="EAN13">EAN-13</SelectItem>
                             <SelectItem value="EAN8">EAN-8</SelectItem>
+                            <SelectItem value="EAN5">EAN-5</SelectItem>
+                            <SelectItem value="EAN2">EAN-2</SelectItem>
                             <SelectItem value="UPC">UPC</SelectItem>
+                            <SelectItem value="UPCE">UPC-E</SelectItem>
                             <SelectItem value="ITF14">ITF-14</SelectItem>
                             <SelectItem value="ITF">ITF</SelectItem>
                             <SelectItem value="MSI">MSI</SelectItem>
@@ -687,5 +697,3 @@ export function QrickApp() {
     </Card>
   );
 }
-
-    
