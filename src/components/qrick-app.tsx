@@ -980,31 +980,29 @@ export function QrickApp() {
                                 </div>
                             </div>
                         )}
-                      <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="card-bg-color">Card BG</Label>
-                            <Input id="card-bg-color" type="color" value={cardBgColor} onChange={(e) => setCardBgColor(e.target.value)} className="p-1 h-9" />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="card-text-color">Card Text</Label>
-                            <Input id="card-text-color" type="color" value={cardTextColor} onChange={(e) => setCardTextColor(e.target.value)} className="p-1 h-9" />
-                        </div>
-                     </div>
-                     {(cardDesign !== 'classic') && (
-                        <div className="grid gap-2">
-                            <Label htmlFor="card-accent-color">Accent Color</Label>
-                            <Input id="card-accent-color" type="color" value={cardAccentColor} onChange={(e) => setCardAccentColor(e.target.value)} className="p-1 h-9 w-full" />
-                        </div>
-                     )}
-                      <div className="grid gap-2">
-                        <Label>Barcode Colors</Label>
-                         <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                                <Label htmlFor="barcode-fg-color" className="text-xs">Bar</Label>
-                                <Input id="barcode-fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-0 h-6 w-6" />
+                            <Label>Colors</Label>
+                            <div className="flex items-center flex-wrap gap-4">
+                                <div className="flex items-center gap-2">
+                                    <Label htmlFor="card-bg-color" className="text-xs">BG</Label>
+                                    <Input id="card-bg-color" type="color" value={cardBgColor} onChange={(e) => setCardBgColor(e.target.value)} className="p-0 h-6 w-6" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Label htmlFor="card-text-color" className="text-xs">Text</Label>
+                                    <Input id="card-text-color" type="color" value={cardTextColor} onChange={(e) => setCardTextColor(e.target.value)} className="p-0 h-6 w-6" />
+                                </div>
+                                {(cardDesign !== 'classic') && (
+                                    <div className="flex items-center gap-2">
+                                        <Label htmlFor="card-accent-color" className="text-xs">Accent</Label>
+                                        <Input id="card-accent-color" type="color" value={cardAccentColor} onChange={(e) => setCardAccentColor(e.target.value)} className="p-0 h-6 w-6" />
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-2">
+                                    <Label htmlFor="barcode-fg-color" className="text-xs">Bar</Label>
+                                    <Input id="barcode-fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-0 h-6 w-6" />
+                                </div>
                             </div>
                         </div>
-                      </div>
                     </div>
                    ) : (
                     <div className="grid gap-4">
@@ -1088,3 +1086,5 @@ export function QrickApp() {
       </CardFooter>
     </Card>
   );
+
+    
