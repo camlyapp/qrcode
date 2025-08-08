@@ -4,7 +4,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
-import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2, Sun, Moon, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Star, Plus } from "lucide-react";
+import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2, Sun, Moon, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Star, Plus, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +49,7 @@ type BarcodeFormat = "CODE128" | "CODE128A" | "CODE128B" | "CODE128C" | "EAN13" 
 type CardDesign = "classic" | "modern" | "sleek" | "professional" | "vcard" | "marriage";
 type ResizeHandle = 'tl' | 'tr' | 'bl' | 'br';
 type BarcodeTextPosition = 'top' | 'bottom';
+type QrTextPosition = "top" | "bottom" | "left" | "right";
 
 interface CardElement {
     id: string;
@@ -97,6 +98,12 @@ export function QrickApp() {
   const [textColor, setTextColor] = useState<string>("#000000");
   const [showBarcodeText, setShowBarcodeText] = useState<boolean>(true);
   const [barcodeTextPosition, setBarcodeTextPosition] = useState<BarcodeTextPosition>('bottom');
+  const [qrText, setQrText] = useState<string>("");
+  const [qrTextColor, setQrTextColor] = useState<string>("#000000");
+  const [qrTextPosition, setQrTextPosition] = useState<QrTextPosition>("bottom");
+  const [qrTextSize, setQrTextSize] = useState<number>(20);
+  const [qrTextAlign, setQrTextAlign] = useState<CanvasTextAlign>("center");
+  const [qrTextMargin, setQrTextMargin] = useState<number>(12);
 
 
   // Card states
@@ -126,24 +133,82 @@ export function QrickApp() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Define margin in pixels (approximating 2mm at 96 DPI)
-    const margin = 8;
-    const canvasSize = size;
-    const qrSize = size - margin * 2;
-
-    canvas.width = canvasSize;
-    canvas.height = canvasSize;
-    
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     
+    // Calculate text dimensions
+    const hasText = qrText.trim() !== "";
+    let textWidth = 0;
+    let textHeight = 0;
+
+    if (hasText) {
+        ctx.font = `${qrTextSize}px sans-serif`;
+        const metrics = ctx.measureText(qrText);
+        textWidth = metrics.width;
+        textHeight = qrTextSize;
+    }
+    
+    let canvasWidth = size;
+    let canvasHeight = size;
+    let qrX = 0;
+    let qrY = 0;
+    let qrSize = size;
+    const margin = 8;
+    const qrWithMarginSize = size - margin * 2;
+
+    if (hasText) {
+        if (qrTextPosition === 'top' || qrTextPosition === 'bottom') {
+            canvasHeight += textHeight + qrTextMargin;
+            qrSize = size;
+            qrY = qrTextPosition === 'top' ? textHeight + qrTextMargin : 0;
+        } else { // left or right
+            canvasWidth += textWidth + qrTextMargin;
+            qrSize = size;
+            qrX = qrTextPosition === 'left' ? textWidth + qrTextMargin : 0;
+        }
+    }
+
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+
     // Fill background for the entire canvas
     ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, canvasSize, canvasSize);
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
+    // Draw text
+    if (hasText) {
+        ctx.fillStyle = qrTextColor;
+        ctx.font = `${qrTextSize}px sans-serif`;
+        ctx.textBaseline = "middle";
+        ctx.textAlign = qrTextAlign;
+        
+        let textX = 0;
+        let textY = 0;
+
+        switch (qrTextPosition) {
+            case 'top':
+                textY = textHeight / 2;
+                textX = qrTextAlign === 'center' ? canvasWidth / 2 : (qrTextAlign === 'left' ? 0 : canvasWidth);
+                break;
+            case 'bottom':
+                textY = size + textHeight / 2 + qrTextMargin;
+                textX = qrTextAlign === 'center' ? canvasWidth / 2 : (qrTextAlign === 'left' ? 0 : canvasWidth);
+                break;
+            case 'left':
+                textX = textWidth / 2;
+                textY = canvasHeight / 2;
+                break;
+            case 'right':
+                textX = size + textWidth / 2 + qrTextMargin;
+                textY = canvasHeight / 2;
+                break;
+        }
+        ctx.fillText(qrText, textX, textY);
+    }
+    
     QRCode.toDataURL(content, {
         errorCorrectionLevel: level,
-        width: qrSize,
+        width: qrWithMarginSize,
         margin: 1, 
         color: {
             dark: '#000000',
@@ -153,17 +218,17 @@ export function QrickApp() {
     .then(() => {
         const qrCode = QRCode.create(content, { errorCorrectionLevel: level });
         const moduleCount = qrCode.modules.size;
-        const moduleSize = qrSize / moduleCount;
+        const moduleSize = qrWithMarginSize / moduleCount;
 
         ctx.save();
-        ctx.translate(margin, margin); // Apply margin offset
+        ctx.translate(qrX + margin, qrY + margin); // Apply margin and text offset
 
         if (gradientType !== 'none') {
             let gradient: CanvasGradient;
             if (gradientType === 'linear') {
-                gradient = ctx.createLinearGradient(0, 0, qrSize, qrSize);
+                gradient = ctx.createLinearGradient(0, 0, qrWithMarginSize, qrWithMarginSize);
             } else { // radial
-                gradient = ctx.createRadialGradient(qrSize / 2, qrSize / 2, 0, qrSize / 2, qrSize / 2, qrSize / 2);
+                gradient = ctx.createRadialGradient(qrWithMarginSize / 2, qrWithMarginSize / 2, 0, qrWithMarginSize / 2, qrWithMarginSize / 2, qrWithMarginSize / 2);
             }
             gradient.addColorStop(0, gradientStartColor);
             gradient.addColorStop(1, gradientEndColor);
@@ -281,8 +346,8 @@ export function QrickApp() {
             img.crossOrigin = "anonymous";
             img.src = imageUrl;
             img.onload = () => {
-                const imgX = (canvasSize - imageSize) / 2;
-                const imgY = (canvasSize - imageSize) / 2;
+                const imgX = qrX + (qrSize - imageSize) / 2;
+                const imgY = qrY + (qrSize - imageSize) / 2;
                 
                 if (excavate) {
                     ctx.save();
@@ -299,7 +364,7 @@ export function QrickApp() {
         setBarcodeError("Error generating QR code. The content may be too long for the selected error correction level.");
         console.error(err);
     });
-  }, [content, size, level, fgColor, bgColor, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor]);
+  }, [content, size, level, fgColor, bgColor, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, qrText, qrTextColor, qrTextPosition, qrTextSize, qrTextAlign, qrTextMargin]);
 
     const drawBarcodeOrCard = useCallback(() => {
         setBarcodeError(null);
@@ -682,7 +747,7 @@ export function QrickApp() {
         }
         setBarcodeError(null);
       }
-  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, barcodeHeight, barcodeTextSize, level, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, generateCard, cardElements, selectedElement, showBarcodeText, barcodeTextPosition]);
+  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, barcodeHeight, barcodeTextSize, level, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, generateCard, cardElements, selectedElement, showBarcodeText, barcodeTextPosition, qrText, qrTextColor, qrTextPosition, qrTextSize, qrTextAlign, qrTextMargin]);
 
     const getPointerPosition = (e: React.MouseEvent | React.TouchEvent) => {
         const canvas = canvasRef.current;
@@ -1139,6 +1204,31 @@ export function QrickApp() {
 
   const currentSelectedElement = cardElements.find(el => el.id === selectedElement);
 
+  const getCanvasDisplaySize = () => {
+    if (generatorType === 'barcode') {
+        return generateCard ? { width: 400, height: 225 } : { width: 320, height: (showBarcodeText ? 80 + (barcodeTextSize * 2.5) : 80) };
+    }
+    // QR Code
+    const hasText = qrText.trim() !== "";
+    let displayWidth = size;
+    let displayHeight = size;
+    if (hasText) {
+        const ctx = canvasRef.current?.getContext("2d");
+        if(ctx) {
+            ctx.font = `${qrTextSize}px sans-serif`;
+            const metrics = ctx.measureText(qrText);
+            const textWidth = metrics.width;
+            const textHeight = qrTextSize;
+             if (qrTextPosition === 'top' || qrTextPosition === 'bottom') {
+                displayHeight += textHeight + qrTextMargin;
+            } else {
+                displayWidth += textWidth + qrTextMargin;
+            }
+        }
+    }
+    return { width: displayWidth, height: displayHeight };
+  }
+
   return (
     <Card className="w-full max-w-4xl shadow-2xl">
       <CardContent className="grid gap-4 md:grid-cols-[340px_1fr] p-4 pt-6">
@@ -1164,6 +1254,7 @@ export function QrickApp() {
                     <Tabs defaultValue="style">
                         <TabsList>
                             <TabsTrigger value="style"><Palette className="mr-2"/>Style</TabsTrigger>
+                            <TabsTrigger value="text"><Text className="mr-2"/>Text</TabsTrigger>
                         </TabsList>
                         <TabsContent value="style" className="pt-4">
                             <ScrollArea className="h-96">
@@ -1317,6 +1408,61 @@ export function QrickApp() {
                                                 </div>
                                             </>
                                         )}
+                                    </div>
+                                </div>
+                            </ScrollArea>
+                        </TabsContent>
+                        <TabsContent value="text" className="pt-4">
+                            <ScrollArea className="h-96">
+                                <div className="grid gap-4 pr-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="qr-text">Text</Label>
+                                        <Input id="qr-text" placeholder="Enter text" value={qrText} onChange={(e) => setQrText(e.target.value)} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Position</Label>
+                                        <Select value={qrTextPosition} onValueChange={(v) => setQrTextPosition(v as QrTextPosition)}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select position" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="top">Top</SelectItem>
+                                                <SelectItem value="bottom">Bottom</SelectItem>
+                                                <SelectItem value="left">Left</SelectItem>
+                                                <SelectItem value="right">Right</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Align</Label>
+                                        <RadioGroup value={qrTextAlign} onValueChange={(v) => setQrTextAlign(v as CanvasTextAlign)} className="flex gap-2">
+                                            <Label htmlFor="align-left" className="p-2 border rounded-md cursor-pointer has-[input:checked]:bg-accent has-[input:checked]:text-accent-foreground">
+                                                <RadioGroupItem value="left" id="align-left" className="sr-only"/>
+                                                <AlignLeft className="h-5 w-5"/>
+                                            </Label>
+                                            <Label htmlFor="align-center" className="p-2 border rounded-md cursor-pointer has-[input:checked]:bg-accent has-[input:checked]:text-accent-foreground">
+                                                <RadioGroupItem value="center" id="align-center" className="sr-only"/>
+                                                <AlignCenter className="h-5 w-5"/>
+                                            </Label>
+                                            <Label htmlFor="align-right" className="p-2 border rounded-md cursor-pointer has-[input:checked]:bg-accent has-[input:checked]:text-accent-foreground">
+                                                <RadioGroupItem value="right" id="align-right" className="sr-only"/>
+                                                <AlignRight className="h-5 w-5"/>
+                                            </Label>
+                                        </RadioGroup>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="qr-text-color">Color</Label>
+                                            <Input id="qr-text-color" type="color" value={qrTextColor} onChange={(e) => setQrTextColor(e.target.value)} className="p-1 h-9" />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="qr-text-size">Font Size ({qrTextSize}px)</Label>
+                                            <Slider id="qr-text-size" min={8} max={48} step={1} value={[qrTextSize]} onValueChange={(v) => setQrTextSize(v[0])} />
+                                        </div>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="qr-text-margin">Margin ({qrTextMargin}px)</Label>
+                                        <Slider id="qr-text-margin" min={0} max={40} step={1} value={[qrTextMargin]} onValueChange={(v) => setQrTextMargin(v[0])} />
                                     </div>
                                 </div>
                             </ScrollArea>
@@ -1586,11 +1732,11 @@ export function QrickApp() {
               {content && !barcodeError ? (
                 <canvas 
                     ref={canvasRef} 
-                    width={generatorType === 'qr' ? size : (generateCard ? 1600 : 1280)} 
-                    height={generatorType === 'qr' ? size : (generateCard ? 900 : (showBarcodeText ? 320 + (barcodeTextSize * 2.5) : 320))}
+                    width={getCanvasDisplaySize().width}
+                    height={getCanvasDisplaySize().height}
                     style={
                         (generatorType === 'barcode' && !generateCard) ? { width: 320, height: (showBarcodeText ? 80 + (barcodeTextSize * 2.5) : 80), cursor: 'default' } : 
-                        (generateCard ? { width: 400, height: 225, cursor: cursorStyle } : {width: size, height: size, cursor: 'default'})
+                        (generateCard ? { width: 400, height: 225, cursor: cursorStyle } : { width: getCanvasDisplaySize().width, height: getCanvasDisplaySize().height, maxWidth: 320, cursor: 'default'})
                     }
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
@@ -1644,6 +1790,8 @@ export function QrickApp() {
 }
 
     
+    
+
     
 
     
