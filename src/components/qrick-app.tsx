@@ -234,8 +234,8 @@ export function QrickApp() {
             format: barcodeFormat,
             lineColor: fgColor,
             background: bgColor,
-            width: 4,
-            height: 200,
+            width: 8,
+            height: 400,
             displayValue: true,
             valid: (valid: boolean) => {
                 if (!valid) {
@@ -686,8 +686,8 @@ export function QrickApp() {
               {content && !barcodeError ? (
                 <canvas 
                     ref={canvasRef} 
-                    width={generatorType === 'qr' ? size : '640'} 
-                    height={generatorType === 'qr' ? size : '320'} 
+                    width={generatorType === 'qr' ? size : '1280'} 
+                    height={generatorType === 'qr' ? size : '640'} 
                     style={generatorType === 'barcode' ? { width: 320, height: 160 } : {}}
                 />
               ) : (
