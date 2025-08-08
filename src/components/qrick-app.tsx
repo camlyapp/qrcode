@@ -313,6 +313,43 @@ export function QrickApp() {
         fileInputRef.current.value = "";
     }
   }
+  
+  const handleFormatChange = (value: BarcodeFormat) => {
+    setFormat(value);
+    switch (value) {
+        case 'QR':
+            setContent('https://firebase.google.com');
+            break;
+        case 'EAN13':
+            setContent('1234567890128');
+            break;
+        case 'EAN8':
+            setContent('12345670');
+            break;
+        case 'CODE128':
+            setContent('Example 1234');
+            break;
+        case 'UPC':
+            setContent('123456789012');
+            break;
+        case 'CODE39':
+            setContent('CODE39');
+            break;
+        case 'ITF14':
+            setContent('12345678901231');
+            break;
+        case 'MSI':
+            setContent('123456');
+            break;
+        case 'pharmacode':
+            setContent('12345');
+            break;
+        default:
+            setContent('');
+            break;
+    }
+  }
+
 
   return (
     <Card className="w-full max-w-4xl shadow-2xl">
@@ -339,14 +376,7 @@ export function QrickApp() {
                             <Label htmlFor="format">Format</Label>
                             <Select
                                 value={format}
-                                onValueChange={(value: BarcodeFormat) => {
-                                    setFormat(value);
-                                    if(value !== 'QR' && content === 'https://firebase.google.com') {
-                                        setContent('123456789012');
-                                    } else if (value === 'QR' && content === '123456789012') {
-                                        setContent('https://firebase.google.com');
-                                    }
-                                }}
+                                onValueChange={handleFormatChange}
                             >
                                 <SelectTrigger id="format">
                                 <SelectValue placeholder="Select format" />
