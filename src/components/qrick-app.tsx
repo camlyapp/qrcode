@@ -38,7 +38,7 @@ type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
 type QRStyle = "squares" | "dots" | "rounded" | "fluid" | "wavy" | "diamond";
 type GradientType = "none" | "linear" | "radial";
 type GeneratorType = "qr" | "barcode";
-type BarcodeFormat = "CODE128" | "EAN13" | "EAN8" | "UPC" | "CODE39" | "ITF14" | "MSI" | "pharmacode";
+type BarcodeFormat = "CODE128" | "EAN13" | "EAN8" | "UPC" | "CODE39" | "ITF14" | "ITF" | "MSI" | "MSI10" | "MSI11" | "MSI1010" | "MSI1110" | "pharmacode" | "codabar";
 
 const colorPresets = [
     { name: "Classic", fg: "#000000", bg: "#ffffff" },
@@ -364,11 +364,29 @@ export function QrickApp() {
             case 'ITF14':
                 setContent('12345678901231');
                 break;
+            case 'ITF':
+                setContent('123456');
+                break;
             case 'MSI':
+                setContent('123456');
+                break;
+            case 'MSI10':
+                setContent('123456');
+                break;
+            case 'MSI11':
+                setContent('123456');
+                break;
+            case 'MSI1010':
+                setContent('123456');
+                break;
+            case 'MSI1110':
                 setContent('123456');
                 break;
             case 'pharmacode':
                 setContent('12345');
+                break;
+            case 'codabar':
+                setContent('A12345B');
                 break;
             default:
                 setContent('');
@@ -601,13 +619,19 @@ export function QrickApp() {
                         </SelectTrigger>
                         <SelectContent className="max-h-60">
                             <SelectItem value="CODE128">Code 128</SelectItem>
+                            <SelectItem value="CODE39">Code 39</SelectItem>
                             <SelectItem value="EAN13">EAN-13</SelectItem>
                             <SelectItem value="EAN8">EAN-8</SelectItem>
                             <SelectItem value="UPC">UPC</SelectItem>
-                            <SelectItem value="CODE39">Code 39</SelectItem>
                             <SelectItem value="ITF14">ITF-14</SelectItem>
+                            <SelectItem value="ITF">ITF</SelectItem>
                             <SelectItem value="MSI">MSI</SelectItem>
+                            <SelectItem value="MSI10">MSI10</SelectItem>
+                            <SelectItem value="MSI11">MSI11</SelectItem>
+                            <SelectItem value="MSI1010">MSI1010</SelectItem>
+                            <SelectItem value="MSI1110">MSI1110</SelectItem>
                             <SelectItem value="pharmacode">Pharmacode</SelectItem>
+                            <SelectItem value="codabar">Codabar</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -663,3 +687,5 @@ export function QrickApp() {
     </Card>
   );
 }
+
+    
