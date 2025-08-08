@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -622,31 +621,21 @@ export function QrickApp() {
                     className="text-sm"
                     />
                 </div>
-                 <Tabs defaultValue="style">
-                    <TabsList>
-                        <TabsTrigger value="style"><Palette className="mr-2"/>Style</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="style" className="pt-4">
-                        <ScrollArea className="h-96">
-                          <div className="grid gap-4 pr-4">
-                              <div className="grid grid-cols-2 gap-4">
-                                  <div className="grid gap-2">
-                                      <Label htmlFor="barcode-fg-color">Foreground</Label>
-                                      <div className="relative">
-                                          <Input id="barcode-fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-1 h-9" />
-                                      </div>
-                                  </div>
-                                  <div className="grid gap-2">
-                                      <Label htmlFor="barcode-bg-color">Background</Label>
-                                      <div className="relative">
-                                          <Input id="barcode-bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-1 h-9" />
-                                      </div>
-                                  </div>
-                              </div>
-                          </div>
-                        </ScrollArea>
-                    </TabsContent>
-               </Tabs>
+                <Separator />
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="barcode-fg-color">Foreground</Label>
+                        <div className="relative">
+                            <Input id="barcode-fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-1 h-9" />
+                        </div>
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="barcode-bg-color">Background</Label>
+                        <div className="relative">
+                            <Input id="barcode-bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-1 h-9" />
+                        </div>
+                    </div>
+                </div>
               </div>
             </TabsContent>
           </Tabs>
@@ -674,5 +663,3 @@ export function QrickApp() {
     </Card>
   );
 }
-
-    
