@@ -238,7 +238,7 @@ export function QrickApp() {
             background: bgColor,
             width: 4,
             height: 160 * (barcodeHeight / 100),
-            fontSize: barcodeTextSize,
+            fontSize: barcodeTextSize * 2,
             displayValue: true,
             valid: (valid: boolean) => {
                 if (!valid) {
@@ -698,11 +698,11 @@ export function QrickApp() {
                 <canvas 
                     ref={canvasRef} 
                     width={generatorType === 'qr' ? size : '1280'} 
-                    height={generatorType === 'qr' ? size : '640'} 
-                    style={generatorType === 'barcode' ? { width: 320, height: 160 } : {}}
+                    height={generatorType === 'qr' ? size : '320'} 
+                    style={generatorType === 'barcode' ? { width: 320, height: 80 } : {}}
                 />
               ) : (
-                <div style={{width: generatorType === 'qr' ? size : 320, height: generatorType === 'qr' ? size : 160}} className="bg-gray-100 flex items-center justify-center text-center text-red-500 rounded-lg p-4">
+                <div style={{width: generatorType === 'qr' ? size : 320, height: generatorType === 'qr' ? size : 80}} className="bg-gray-100 flex items-center justify-center text-center text-red-500 rounded-lg p-4">
                     {barcodeError || 'Enter content to generate a code.'}
                 </div>
               )}
