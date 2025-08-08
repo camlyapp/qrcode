@@ -384,14 +384,14 @@ export function QrickApp() {
         <div className="grid gap-4">
             <Tabs defaultValue="qr" value={generatorType} onValueChange={(v) => handleGeneratorTypeChange(v as GeneratorType)} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="qr"><QrCode className="mr-2"/>QR Code</TabsTrigger>
-                    <TabsTrigger value="barcode"><Barcode className="mr-2"/>Barcode</TabsTrigger>
+                    <TabsTrigger value="qr" className="p-2 h-auto"><QrCode/></TabsTrigger>
+                    <TabsTrigger value="barcode" className="p-2 h-auto"><Barcode/></TabsTrigger>
                 </TabsList>
                 <TabsContent value="qr" className="pt-4">
                     <Tabs defaultValue="content" className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="content"><Text className="mr-2"/>Content</TabsTrigger>
-                            <TabsTrigger value="style"><Palette className="mr-2"/>Style</TabsTrigger>
+                            <TabsTrigger value="content" className="p-2 h-auto"><Text/></TabsTrigger>
+                            <TabsTrigger value="style" className="p-2 h-auto"><Palette/></TabsTrigger>
                         </TabsList>
                         <TabsContent value="content" className="pt-4">
                             <div className="grid gap-4">
@@ -583,8 +583,8 @@ export function QrickApp() {
                 <TabsContent value="barcode" className="pt-4">
                      <Tabs defaultValue="content" className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="content"><Text className="mr-2"/>Content</TabsTrigger>
-                            <TabsTrigger value="style"><Palette className="mr-2"/>Style</TabsTrigger>
+                             <TabsTrigger value="content" className="p-2 h-auto"><Text/></TabsTrigger>
+                            <TabsTrigger value="style" className="p-2 h-auto"><Palette/></TabsTrigger>
                         </TabsList>
                         <TabsContent value="content" className="pt-4">
                             <div className="grid gap-4">
