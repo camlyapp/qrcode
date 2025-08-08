@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -49,7 +47,6 @@ type GeneratorType = "qr" | "barcode";
 type BarcodeFormat = "CODE128" | "CODE128A" | "CODE128B" | "CODE128C" | "EAN13" | "EAN8" | "EAN5" | "EAN2" | "UPC" | "UPCE" | "CODE39" | "ITF14" | "ITF" | "MSI" | "MSI10" | "MSI11" | "MSI1010" | "MSI1110" | "pharmacode" | "codabar";
 type CardDesign = "classic" | "modern" | "sleek" | "professional" | "vcard" | "marriage";
 type ResizeHandle = 'tl' | 'tr' | 'bl' | 'br';
-type Theme = 'light' | 'dark';
 
 interface CardElement {
     id: string;
@@ -97,7 +94,6 @@ export function QrickApp() {
   const [barcodeTextSize, setBarcodeTextSize] = useState<number>(20);
   const [textColor, setTextColor] = useState<string>("#000000");
   const [showBarcodeText, setShowBarcodeText] = useState<boolean>(true);
-  const [theme, setTheme] = useState<Theme>('light');
 
   // Card states
   const [generateCard, setGenerateCard] = useState<boolean>(false);
@@ -120,26 +116,6 @@ export function QrickApp() {
   const logoInputRef = useRef<HTMLInputElement>(null);
   const cardBgInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-
-   useEffect(() => {
-    const savedTheme = localStorage.getItem('qrick-theme') as Theme | null;
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const defaultTheme = savedTheme || (prefersDark ? 'dark' : 'light');
-    setTheme(defaultTheme);
-  }, []);
-
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('qrick-theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-  };
 
   const drawQR = useCallback(() => {
     setBarcodeError(null);
@@ -436,10 +412,18 @@ export function QrickApp() {
                 bgImg.crossOrigin = "anonymous";
                 bgImg.src = cardBgImageUrl;
                 bgImg.onload = () => {
-                    ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+                    const pattern = ctx.createPattern(bgImg, 'repeat');
+                    if (pattern) {
+                        ctx.fillStyle = pattern;
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    }
                     renderElements();
                 };
-                 ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+                 const pattern = ctx.createPattern(bgImg, 'repeat');
+                 if (pattern) {
+                    ctx.fillStyle = pattern;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                 }
             } else {
                 drawBackground();
             }
@@ -512,9 +496,10 @@ export function QrickApp() {
         // Fallback for browsers that don't support these properties or return 0
         height = fontSize * 1.2;
     }
+    const lines = text.split('\n').length;
     return {
         width: metrics.width,
-        height: height
+        height: height * lines
     };
   };
 
@@ -534,7 +519,8 @@ export function QrickApp() {
     // Common barcode properties
     const tempCanvas = document.createElement('canvas');
     try {
-      JsBarcode(tempCanvas, content, { format: barcodeFormat, displayValue: false, width: 2 * 4, height: 40 * 4 });
+      const barcodeScale = 8;
+      JsBarcode(tempCanvas, content, { format: barcodeFormat, displayValue: false, width: 2 * barcodeScale, height: 40 * barcodeScale });
     } catch(e) { console.error("barcode error"); }
     const barcodeWidth = tempCanvas.width || 200 * scale;
     const barcodeHeightVal = tempCanvas.height || 40 * scale;
@@ -1106,34 +1092,7 @@ export function QrickApp() {
 
   return (
     <Card className="w-full max-w-4xl shadow-2xl">
-      <CardHeader className="flex flex-row items-center justify-between p-4">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary text-primary-foreground rounded-full p-2">
-            <QrCode className="h-5 w-5" />
-          </div>
-          <div>
-            <CardTitle className="text-lg font-headline">QRick</CardTitle>
-            <CardDescription className="text-xs">
-              Generate and customize your barcodes and QR codes in real-time.
-            </CardDescription>
-          </div>
-        </div>
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={toggleTheme}>
-                        <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                        <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                        <span className="sr-only">Toggle theme</span>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>Toggle Theme</p>
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
-      </CardHeader>
-      <CardContent className="grid gap-4 md:grid-cols-[340px_1fr] p-4">
+      <CardContent className="grid gap-4 md:grid-cols-[340px_1fr] p-4 pt-6">
         <div className="grid gap-4">
           <Tabs defaultValue="qr" value={generatorType} onValueChange={handleGeneratorTypeChange} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
@@ -1426,21 +1385,21 @@ export function QrickApp() {
                             <div className="flex items-center flex-wrap gap-4">
                                 <div className="flex items-center gap-2">
                                     <Label htmlFor="card-bg-color" className="text-xs">BG</Label>
-                                    <Input id="card-bg-color" type="color" value={cardBgColor} onChange={(e) => setCardBgColor(e.target.value)} className="p-0 h-6 w-6" />
+                                    <Input id="card-bg-color" type="color" value={cardBgColor} onChange={(e) => setCardBgColor(e.target.value)} className="p-0 h-6 w-6 rounded-full" />
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Label htmlFor="card-text-color" className="text-xs">Text</Label>
-                                    <Input id="card-text-color" type="color" value={cardTextColor} onChange={(e) => setCardTextColor(e.target.value)} className="p-0 h-6 w-6" />
+                                    <Input id="card-text-color" type="color" value={cardTextColor} onChange={(e) => setCardTextColor(e.target.value)} className="p-0 h-6 w-6 rounded-full" />
                                 </div>
                                 {(cardDesign !== 'classic') && (
                                     <div className="flex items-center gap-2">
                                         <Label htmlFor="card-accent-color" className="text-xs">Accent</Label>
-                                        <Input id="card-accent-color" type="color" value={cardAccentColor} onChange={(e) => setCardAccentColor(e.target.value)} className="p-0 h-6 w-6" />
+                                        <Input id="card-accent-color" type="color" value={cardAccentColor} onChange={(e) => setCardAccentColor(e.target.value)} className="p-0 h-6 w-6 rounded-full" />
                                     </div>
                                 )}
                                 <div className="flex items-center gap-2">
                                     <Label htmlFor="barcode-fg-color" className="text-xs">Bar</Label>
-                                    <Input id="barcode-fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-0 h-6 w-6" />
+                                    <Input id="barcode-fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-0 h-6 w-6 rounded-full" />
                                 </div>
                             </div>
                         </div>
@@ -1532,15 +1491,15 @@ export function QrickApp() {
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-2">
                                     <Label htmlFor="barcode-fg-color" className="text-xs">Bar</Label>
-                                    <Input id="barcode-fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-0 h-6 w-6" />
+                                    <Input id="barcode-fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-0 h-6 w-6 rounded-full" />
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Label htmlFor="barcode-bg-color" className="text-xs">BG</Label>
-                                    <Input id="barcode-bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-0 h-6 w-6" />
+                                    <Input id="barcode-bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-0 h-6 w-6 rounded-full" />
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Label htmlFor="text-color" className="text-xs">Text</Label>
-                                    <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="p-0 h-6 w-6" />
+                                    <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="p-0 h-6 w-6 rounded-full" />
                                 </div>
                             </div>
                         </div>
@@ -1607,7 +1566,6 @@ export function QrickApp() {
                 <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon" disabled={!content || !!barcodeError}>
                         <Download className="h-5 w-5" />
-                        <span className="sr-only">Download</span>
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56">
@@ -1621,7 +1579,6 @@ export function QrickApp() {
                     <TooltipTrigger asChild>
                          <Button variant="outline" size="icon" onClick={handleShare} disabled={!content || !!barcodeError}>
                             <Share2 className="h-5 w-5" />
-                            <span className="sr-only">Share</span>
                          </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -1635,5 +1592,3 @@ export function QrickApp() {
   );
 
 }
-
-    
