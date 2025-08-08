@@ -38,7 +38,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -99,6 +99,14 @@ const colorPresets = [
     { name: "Royal", fg: "#4169E1", bg: "#F8F8FF" },
     { name: "Charcoal", fg: "#36454F", bg: "#F5F5F5" },
     { name: "Mint", fg: "#3EB489", bg: "#F5FFFA" },
+];
+
+const qrDataTypes: { id: QrDataType, label: string, icon: React.ReactNode }[] = [
+  { id: 'text', label: 'Text/URL', icon: <Text className="h-5 w-5" /> },
+  { id: 'wifi', label: 'Wi-Fi', icon: <Wifi className="h-5 w-5" /> },
+  { id: 'sms', label: 'SMS', icon: <MessageSquare className="h-5 w-5" /> },
+  { id: 'phone', label: 'Phone', icon: <Phone className="h-5 w-5" /> },
+  { id: 'email', label: 'Email', icon: <Mail className="h-5 w-5" /> },
 ];
 
 
@@ -181,7 +189,7 @@ export function QrickApp() {
         break;
       case 'text':
       default:
-        newContent = content.startsWith('https://') || content.startsWith('http://') ? content : content;
+        // do not change content if it is already text
         return;
     }
     setContent(newContent);
@@ -316,7 +324,7 @@ export function QrickApp() {
                 type: cornerDotStyle
             },
             backgroundOptions: {
-                color: bgColor
+                color: 'rgba(0,0,0,0)'
             },
             imageOptions: {
                 hideBackgroundDots: excavate,
@@ -508,7 +516,7 @@ export function QrickApp() {
             if (textEl.position === 'left') {
                 textX = totalSpace.left - (textEl.size/2) - textEl.margin
             } else { // right
-                textX = canvasWidth - totalSpace.right + (textEl.size/2) + textEl.margin
+                textX = qrX + qrSize + textEl.margin + (textEl.size/2);
             }
             const textY = canvasHeight / 2;
             
@@ -528,7 +536,7 @@ export function QrickApp() {
                     textX = textEl.align === 'center' ? canvasWidth / 2 : (textEl.align === 'left' ? totalSpace.left : canvasWidth - totalSpace.right);
                     break;
                 case 'bottom':
-                    textY = canvasHeight - totalSpace.bottom + (textEl.size/2) + textEl.margin
+                    textY = qrY + qrSize + textEl.margin + (textEl.size/2)
                     textX = textEl.align === 'center' ? canvasWidth / 2 : (textEl.align === 'left' ? totalSpace.left : canvasWidth - totalSpace.right);
                     break;
                 case 'left':
@@ -536,7 +544,7 @@ export function QrickApp() {
                     textY = canvasHeight / 2;
                     break;
                 case 'right':
-                    textX = canvasWidth - totalSpace.right + (ctx.measureText(textEl.text).width / 2) + textEl.margin;
+                    textX = qrX + qrSize + textEl.margin + (ctx.measureText(textEl.text).width / 2);
                     textY = canvasHeight / 2;
                     break;
             }
@@ -1522,20 +1530,21 @@ export function QrickApp() {
             <TabsContent value="qr" className="pt-4">
                 <div className="grid gap-4">
                      <div className="grid gap-2">
-                        <Label htmlFor="qr-data-type">Data Type</Label>
-                        <Select value={qrDataType} onValueChange={(v) => handleQrDataTypeChange(v as QrDataType)}>
-                            <SelectTrigger id="qr-data-type">
-                                <SelectValue placeholder="Select data type"/>
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="text"><Text className="mr-2"/>Text/URL</SelectItem>
-                                <SelectItem value="wifi"><Wifi className="mr-2"/>Wi-Fi</SelectItem>
-                                <SelectItem value="sms"><MessageSquare className="mr-2"/>SMS</SelectItem>
-                                <SelectItem value="phone"><Phone className="mr-2"/>Phone</SelectItem>
-                                <SelectItem value="email"><Mail className="mr-2"/>Email</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <Label>Data Type</Label>
+                         <ScrollArea className="w-full whitespace-nowrap">
+                            <RadioGroup value={qrDataType} onValueChange={(v) => handleQrDataTypeChange(v as QrDataType)} className="flex gap-2 pb-2">
+                                {qrDataTypes.map(item => (
+                                    <Label key={item.id} htmlFor={`qr-data-type-${item.id}`} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer w-20 h-20 text-center">
+                                        <RadioGroupItem value={item.id} id={`qr-data-type-${item.id}`} className="sr-only" />
+                                        {item.icon}
+                                        <span className="text-xs font-normal mt-1">{item.label}</span>
+                                    </Label>
+                                ))}
+                            </RadioGroup>
+                            <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
                     </div>
+
                     {qrDataType === 'text' && (
                         <div className="grid gap-2">
                             <Label htmlFor="qr-content">Content</Label>
@@ -2246,3 +2255,4 @@ export function QrickApp() {
     
 
     
+
