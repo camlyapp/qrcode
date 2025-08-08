@@ -47,6 +47,7 @@ type GradientType = "none" | "linear" | "radial";
 type GeneratorType = "qr" | "barcode";
 type BarcodeFormat = "CODE128" | "CODE128A" | "CODE128B" | "CODE128C" | "EAN13" | "EAN8" | "EAN5" | "EAN2" | "UPC" | "UPCE" | "CODE39" | "ITF14" | "ITF" | "MSI" | "MSI10" | "MSI11" | "MSI1010" | "MSI1110" | "pharmacode" | "codabar";
 type CardDesign = "classic" | "modern" | "sleek" | "professional" | "vcard";
+type ResizeHandle = 'tl' | 'tr' | 'bl' | 'br';
 
 interface CardElement {
     id: string;
@@ -54,8 +55,8 @@ interface CardElement {
     content?: string;
     x: number;
     y: number;
-    width?: number;
-    height?: number;
+    width: number;
+    height: number;
     font?: string;
     color?: string;
     align?: CanvasTextAlign;
@@ -106,8 +107,11 @@ export function QrickApp() {
   const [cardAccentColor, setCardAccentColor] = useState<string>("#3B82F6");
   const [cardElements, setCardElements] = useState<CardElement[]>([]);
   const [draggingElement, setDraggingElement] = useState<string | null>(null);
+  const [resizingState, setResizingState] = useState<{ elementId: string, handle: ResizeHandle } | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [hoveredElement, setHoveredElement] = useState<string | null>(null);
+  const [selectedElement, setSelectedElement] = useState<string | null>(null);
+  const [cursorStyle, setCursorStyle] = useState('default');
 
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -308,10 +312,16 @@ export function QrickApp() {
        // Draw elements
         cardElements.forEach(element => {
             if (element.type === 'text' && element.content) {
+                const fontSize = parseFloat(element.font?.match(/(\d+)px/)?.[1] || '16');
                 ctx.fillStyle = element.color || cardTextColor;
-                ctx.font = element.font || `16px sans-serif`;
-                ctx.textAlign = element.align || 'center';
-                ctx.fillText(element.content, element.x, element.y);
+                ctx.font = element.font || `${fontSize}px sans-serif`;
+                ctx.textAlign = element.align || 'left';
+
+                const lines = element.content.split('\n');
+                lines.forEach((line, i) => {
+                    ctx.fillText(line, element.x, element.y + (i * fontSize));
+                });
+
             } else if (element.type === 'barcode') {
                 try {
                     const tempCanvas = document.createElement('canvas');
@@ -320,14 +330,9 @@ export function QrickApp() {
                         format: barcodeFormat,
                         lineColor: fgColor,
                         background: 'rgba(0,0,0,0)',
-                        width: 1.5 * scale,
-                        height: 40 * scale,
-                        displayValue: true,
-                        fontOptions: "bold",
-                        textAlign: "center",
-                        textPosition: "bottom",
-                        textMargin: 2 * scale,
-                        fontSize: 12 * scale,
+                        width: 2,
+                        height: 40,
+                        displayValue: false, // Text is handled separately for positioning
                         valid: (valid: boolean) => { isValid = valid; }
                     });
                     
@@ -335,18 +340,40 @@ export function QrickApp() {
                         setBarcodeError("Invalid barcode content for card.");
                         return;
                     }
-                    ctx.drawImage(tempCanvas, element.x, element.y, element.width!, element.height!);
+                    ctx.drawImage(tempCanvas, element.x, element.y, element.width, element.height);
+                    
+                    // Draw barcode text separately if needed
+                    ctx.font = `${barcodeTextSize}px monospace`;
+                    ctx.fillStyle = textColor;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(content, element.x + element.width / 2, element.y + element.height + barcodeTextSize + 4);
+
                 } catch (err: any) {
                     setBarcodeError(err.message || "Error generating barcode for card.");
                 }
             }
-
-            if (hoveredElement === element.id && element.width && element.height) {
-                 ctx.strokeStyle = 'rgba(0, 123, 255, 0.7)';
-                 ctx.lineWidth = 2;
-                 ctx.strokeRect(element.x, element.y, element.width, element.height);
-            }
         });
+        
+        // Draw selection box and handles
+        const selected = cardElements.find(el => el.id === selectedElement);
+        if (selected) {
+            ctx.strokeStyle = 'rgba(0, 123, 255, 0.7)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(selected.x, selected.y, selected.width, selected.height);
+
+            const handleSize = 8;
+            const handles = {
+                tl: { x: selected.x - handleSize / 2, y: selected.y - handleSize / 2 },
+                tr: { x: selected.x + selected.width - handleSize / 2, y: selected.y - handleSize / 2 },
+                bl: { x: selected.x - handleSize / 2, y: selected.y + selected.height - handleSize / 2 },
+                br: { x: selected.x + selected.width - handleSize / 2, y: selected.y + selected.height - handleSize / 2 },
+            };
+
+            ctx.fillStyle = 'rgba(0, 123, 255, 0.9)';
+            Object.values(handles).forEach(handle => {
+                ctx.fillRect(handle.x, handle.y, handleSize, handleSize);
+            });
+        }
 
 
     } else {
@@ -402,7 +429,7 @@ export function QrickApp() {
             }
         }
     }
-  }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize, textColor, generateCard, cardBgColor, cardTextColor, cardDesign, cardAccentColor, cardElements, hoveredElement]);
+  }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize, textColor, generateCard, cardBgColor, cardTextColor, cardDesign, cardAccentColor, cardElements, selectedElement]);
 
 
   // Initialize card elements based on design
@@ -412,6 +439,10 @@ export function QrickApp() {
     const scale = 4;
     const canvasWidth = 400 * scale;
     const canvasHeight = 225 * scale;
+    const ctx = canvasRef.current?.getContext('2d');
+    
+    if(!ctx) return;
+
     const newElements: CardElement[] = [];
 
     // Common barcode properties
@@ -422,7 +453,16 @@ export function QrickApp() {
     const barcodeWidth = tempCanvas.width || 200 * scale;
     const barcodeHeightVal = tempCanvas.height || 40 * scale;
 
-    const textElements: { [key: string]: Omit<CardElement, 'id' | 'type'> } = {
+    const getTextMetrics = (text: string, font: string) => {
+        ctx.font = font;
+        const metrics = ctx.measureText(text);
+        return {
+            width: metrics.width,
+            height: metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
+        };
+    };
+
+    const textElements: { [key: string]: Omit<CardElement, 'id' | 'type' | 'width' | 'height'> } = {
         title: { content: cardTitle, font: `bold ${24 * scale}px sans-serif`, align: 'center', color: cardTextColor },
         subtitle: { content: cardSubtitle, font: `${16 * scale}px sans-serif`, align: 'center', color: cardTextColor },
         email: { content: cardEmail, font: `${14 * scale}px sans-serif`, align: 'left', color: cardTextColor },
@@ -432,55 +472,57 @@ export function QrickApp() {
     
     // Position elements based on design
     switch (cardDesign) {
-        case 'classic':
-            newElements.push({ id: 'title', type: 'text', ...textElements.title, x: canvasWidth / 2, y: 50 * scale });
-            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, x: canvasWidth / 2, y: 80 * scale });
+        case 'classic': {
+            const titleMetrics = getTextMetrics(cardTitle, `bold ${24 * scale}px sans-serif`);
+            const subtitleMetrics = getTextMetrics(cardSubtitle, `${16 * scale}px sans-serif`);
+            newElements.push({ id: 'title', type: 'text', ...textElements.title, x: (canvasWidth - titleMetrics.width) / 2, y: 50 * scale, ...titleMetrics });
+            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, x: (canvasWidth - subtitleMetrics.width) / 2, y: 80 * scale, ...subtitleMetrics });
             newElements.push({ id: 'barcode', type: 'barcode', x: (canvasWidth - barcodeWidth) / 2, y: 120 * scale, width: barcodeWidth, height: barcodeHeightVal });
             break;
-        case 'modern':
+        }
+        case 'modern': {
             const accentWidth = 100 * scale;
-            newElements.push({ id: 'title', type: 'text', ...textElements.title, font: `bold ${22 * scale}px sans-serif`, align: 'left', x: accentWidth + 20 * scale, y: 60 * scale });
-            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: `${14 * scale}px sans-serif`, align: 'left', x: accentWidth + 20 * scale, y: 90 * scale });
+            const titleMetrics = getTextMetrics(cardTitle, `bold ${22 * scale}px sans-serif`);
+            const subtitleMetrics = getTextMetrics(cardSubtitle, `${14 * scale}px sans-serif`);
+            newElements.push({ id: 'title', type: 'text', ...textElements.title, font: `bold ${22 * scale}px sans-serif`, align: 'left', x: accentWidth + 20 * scale, y: 60 * scale, ...titleMetrics });
+            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: `${14 * scale}px sans-serif`, align: 'left', x: accentWidth + 20 * scale, y: 90 * scale, ...subtitleMetrics });
             newElements.push({ id: 'barcode', type: 'barcode', x: (canvasWidth - barcodeWidth + accentWidth) / 2, y: 120 * scale, width: barcodeWidth, height: barcodeHeightVal });
             break;
-        case 'sleek':
-            newElements.push({ id: 'title', type: 'text', ...textElements.title, font: `bold ${20 * scale}px sans-serif`, color: cardBgColor, align: 'left', x: 20 * scale, y: 40 * scale });
-            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: `${14 * scale}px sans-serif`, align: 'left', x: 20 * scale, y: (60 * scale) + 30 * scale });
+        }
+        case 'sleek': {
+            const titleMetrics = getTextMetrics(cardTitle, `bold ${20 * scale}px sans-serif`);
+            const subtitleMetrics = getTextMetrics(cardSubtitle, `${14 * scale}px sans-serif`);
+            newElements.push({ id: 'title', type: 'text', ...textElements.title, font: `bold ${20 * scale}px sans-serif`, color: cardBgColor, align: 'left', x: 20 * scale, y: 40 * scale, ...titleMetrics });
+            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: `${14 * scale}px sans-serif`, align: 'left', x: 20 * scale, y: (60 * scale) + 30 * scale, ...subtitleMetrics });
             newElements.push({ id: 'barcode', type: 'barcode', x: (canvasWidth - barcodeWidth) / 2, y: 110 * scale, width: barcodeWidth, height: barcodeHeightVal });
             break;
-        case 'professional':
-            newElements.push({ id: 'title', type: 'text', ...textElements.title, font: `bold ${22 * scale}px sans-serif`, x: canvasWidth / 2, y: 50 * scale });
-            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: `${14 * scale}px sans-serif`, x: canvasWidth / 2, y: 75 * scale });
+        }
+        case 'professional': {
+            const titleMetrics = getTextMetrics(cardTitle, `bold ${22 * scale}px sans-serif`);
+            const subtitleMetrics = getTextMetrics(cardSubtitle, `${14 * scale}px sans-serif`);
+            newElements.push({ id: 'title', type: 'text', ...textElements.title, font: `bold ${22 * scale}px sans-serif`, x: (canvasWidth - titleMetrics.width) / 2, y: 50 * scale, ...titleMetrics });
+            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: `${14 * scale}px sans-serif`, x: (canvasWidth - subtitleMetrics.width) / 2, y: 75 * scale, ...subtitleMetrics });
             newElements.push({ id: 'barcode', type: 'barcode', x: (canvasWidth - barcodeWidth) / 2, y: 115 * scale, width: barcodeWidth, height: barcodeHeightVal });
             break;
-        case 'vcard':
-            newElements.push({ id: 'title', type: 'text', ...textElements.title, font: `bold ${20 * scale}px sans-serif`, color: cardBgColor, align: 'left', x: 20 * scale, y: 30 * scale });
-            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: `italic ${12 * scale}px sans-serif`, color: cardBgColor, align: 'left', x: 20 * scale, y: 50 * scale });
+        }
+        case 'vcard': {
+            const titleMetrics = getTextMetrics(cardTitle, `bold ${20 * scale}px sans-serif`);
+            const subtitleMetrics = getTextMetrics(cardSubtitle, `italic ${12 * scale}px sans-serif`);
+            const emailMetrics = getTextMetrics(cardEmail, `${14 * scale}px sans-serif`);
+            const phoneMetrics = getTextMetrics(cardPhone, `${14 * scale}px sans-serif`);
+            const websiteMetrics = getTextMetrics(cardWebsite, `${14 * scale}px sans-serif`);
+
+            newElements.push({ id: 'title', type: 'text', ...textElements.title, font: `bold ${20 * scale}px sans-serif`, color: cardBgColor, align: 'left', x: 20 * scale, y: 30 * scale, ...titleMetrics });
+            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: `italic ${12 * scale}px sans-serif`, color: cardBgColor, align: 'left', x: 20 * scale, y: 50 * scale, ...subtitleMetrics });
             const infoStartY = 80 * scale;
             const infoSpacing = 25 * scale;
-            if(cardEmail) newElements.push({ id: 'email', type: 'text', ...textElements.email, x: 40 * scale, y: infoStartY });
-            if(cardPhone) newElements.push({ id: 'phone', type: 'text', ...textElements.phone, x: 40 * scale, y: infoStartY + infoSpacing });
-            if(cardWebsite) newElements.push({ id: 'website', type: 'text', ...textElements.website, x: 40 * scale, y: infoStartY + infoSpacing * 2 });
+            if(cardEmail) newElements.push({ id: 'email', type: 'text', ...textElements.email, x: 40 * scale, y: infoStartY, ...emailMetrics });
+            if(cardPhone) newElements.push({ id: 'phone', type: 'text', ...textElements.phone, x: 40 * scale, y: infoStartY + infoSpacing, ...phoneMetrics });
+            if(cardWebsite) newElements.push({ id: 'website', type: 'text', ...textElements.website, x: 40 * scale, y: infoStartY + infoSpacing * 2, ...websiteMetrics });
             newElements.push({ id: 'barcode', type: 'barcode', x: canvasWidth - barcodeWidth - 20 * scale, y: 155 * scale, width: barcodeWidth, height: barcodeHeightVal });
             break;
+        }
     }
-
-    const ctx = canvasRef.current?.getContext('2d');
-    if (ctx) {
-        newElements.forEach(el => {
-            if (el.type === 'text' && el.font && el.content) {
-                ctx.font = el.font;
-                const metrics = ctx.measureText(el.content);
-                el.width = metrics.width;
-                el.height = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
-
-                if (el.align === 'center') {
-                    el.x -= el.width / 2;
-                }
-            }
-        });
-    }
-
     setCardElements(newElements);
 }, [generateCard, cardDesign, cardTitle, cardSubtitle, cardEmail, cardPhone, cardWebsite, cardTextColor, cardBgColor, content, barcodeFormat, fgColor]);
 
@@ -504,7 +546,7 @@ export function QrickApp() {
         }
         setBarcodeError(null);
       }
-  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, barcodeHeight, barcodeTextSize, level, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, generateCard, cardElements]);
+  }, [drawQR, drawBarcodeOrCard, content, size, generatorType, fgColor, bgColor, textColor, barcodeHeight, barcodeTextSize, level, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, generateCard, cardElements, selectedElement]);
 
     const getPointerPosition = (e: React.MouseEvent | React.TouchEvent) => {
         const canvas = canvasRef.current;
@@ -529,44 +571,112 @@ export function QrickApp() {
         };
     };
 
+    const getResizeHandle = (pos: {x: number, y: number}, element: CardElement): ResizeHandle | null => {
+        const handleSize = 10;
+        if (pos.x >= element.x - handleSize && pos.x <= element.x + handleSize &&
+            pos.y >= element.y - handleSize && pos.y <= element.y + handleSize) return 'tl';
+        if (pos.x >= element.x + element.width - handleSize && pos.x <= element.x + element.width + handleSize &&
+            pos.y >= element.y - handleSize && pos.y <= element.y + handleSize) return 'tr';
+        if (pos.x >= element.x - handleSize && pos.x <= element.x + handleSize &&
+            pos.y >= element.y + element.height - handleSize && pos.y <= element.y + element.height + handleSize) return 'bl';
+        if (pos.x >= element.x + element.width - handleSize && pos.x <= element.x + element.width + handleSize &&
+            pos.y >= element.y + element.height - handleSize && pos.y <= element.y + element.height + handleSize) return 'br';
+        return null;
+    };
+
     const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
         if (!generateCard) return;
         e.preventDefault();
         const pos = getPointerPosition(e);
+        
+        if (selectedElement) {
+            const element = cardElements.find(el => el.id === selectedElement);
+            if(element) {
+                const handle = getResizeHandle(pos, element);
+                if (handle) {
+                    setResizingState({ elementId: selectedElement, handle });
+                    return;
+                }
+            }
+        }
 
         const clickedElement = [...cardElements].reverse().find(el => 
-            el.width && el.height &&
             pos.x >= el.x && pos.x <= el.x + el.width &&
             pos.y >= el.y && pos.y <= el.y + el.height
         );
 
         if (clickedElement) {
+            setSelectedElement(clickedElement.id);
             setDraggingElement(clickedElement.id);
             setDragOffset({ x: pos.x - clickedElement.x, y: pos.y - clickedElement.y });
+        } else {
+            setSelectedElement(null);
         }
     };
 
     const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
         const pos = getPointerPosition(e);
-        if (draggingElement) {
-             e.preventDefault();
+        e.preventDefault();
+        
+        if (resizingState) {
+            setCardElements(prev => prev.map(el => {
+                if (el.id === resizingState.elementId) {
+                    let { x, y, width, height } = el;
+                    switch (resizingState.handle) {
+                        case 'tl':
+                            width = x + width - pos.x;
+                            height = y + height - pos.y;
+                            x = pos.x;
+                            y = pos.y;
+                            break;
+                        case 'tr':
+                            width = pos.x - x;
+                            height = y + height - pos.y;
+                            y = pos.y;
+                            break;
+                        case 'bl':
+                            width = x + width - pos.x;
+                            height = pos.y - y;
+                            x = pos.x;
+                            break;
+                        case 'br':
+                            width = pos.x - x;
+                            height = pos.y - y;
+                            break;
+                    }
+                    return { ...el, x, y, width: Math.max(width, 20), height: Math.max(height, 20) };
+                }
+                return el;
+            }));
+        } else if (draggingElement) {
             setCardElements(prev => prev.map(el =>
                 el.id === draggingElement
                     ? { ...el, x: pos.x - dragOffset.x, y: pos.y - dragOffset.y }
                     : el
             ));
         } else if (generateCard) {
-            const currentHoveredElement = [...cardElements].reverse().find(el => 
-                el.width && el.height &&
-                pos.x >= el.x && pos.x <= el.x + el.width &&
-                pos.y >= el.y && pos.y <= el.y + el.height
-            );
-            setHoveredElement(currentHoveredElement?.id || null);
+            const currentSelected = cardElements.find(el => el.id === selectedElement);
+            let handleCursor = 'default';
+            if (currentSelected) {
+                const handle = getResizeHandle(pos, currentSelected);
+                if (handle === 'tl' || handle === 'br') handleCursor = 'nwse-resize';
+                else if (handle === 'tr' || handle === 'bl') handleCursor = 'nesw-resize';
+            }
+             if (handleCursor === 'default') {
+                const currentHoveredElement = [...cardElements].reverse().find(el => 
+                    pos.x >= el.x && pos.x <= el.x + el.width &&
+                    pos.y >= el.y && pos.y <= el.y + el.height
+                );
+                setHoveredElement(currentHoveredElement?.id || null);
+                handleCursor = currentHoveredElement ? 'grab' : 'default';
+            }
+             setCursorStyle(handleCursor);
         }
     };
 
     const handleMouseUp = () => {
         setDraggingElement(null);
+        setResizingState(null);
     };
 
   const handleDownload = useCallback(async (format: 'png' | 'jpeg' | 'svg') => {
@@ -1133,7 +1243,7 @@ export function QrickApp() {
                     height={generatorType === 'qr' ? size : (generateCard ? 900 : 320 + (barcodeTextSize * 2.5 / 2))}
                     style={
                         (generatorType === 'barcode' && !generateCard) ? { width: 320, height: 80 + (barcodeTextSize * 2.5 / 2), cursor: 'default' } : 
-                        (generateCard ? { width: 400, height: 225, cursor: draggingElement ? 'grabbing' : (hoveredElement ? 'grab' : 'default') } : {width: size, height: size, cursor: 'default'})
+                        (generateCard ? { width: 400, height: 225, cursor: cursorStyle } : {width: size, height: size, cursor: 'default'})
                     }
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
@@ -1172,3 +1282,5 @@ export function QrickApp() {
   );
 
 }
+
+    
