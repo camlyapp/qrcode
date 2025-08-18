@@ -831,7 +831,7 @@ export function QrickApp() {
                                 errorCorrectionLevel: level,
                                 width: element.width * pixelRatio, // Draw QR at high res
                                 margin: 1, 
-                                color: { dark: fgColor, light: 'rgba(0,0,0,0)' }
+                                color: { dark: fgColor, light: '#00000000' }
                             });
                             
                             const qrImg = new Image();
