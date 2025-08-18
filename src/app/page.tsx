@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <div className="relative">
       <Header />
-      <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-br from-background to-muted/40 -z-10" />
+      <div className="absolute top-0 left-0 w-full h-screen bg-gradient-to-br from-rose-100 via-white to-sky-100 dark:from-slate-900 dark:via-gray-900 dark:to-slate-800 -z-10" />
       <HeroSection />
       <main className="flex flex-1 w-full flex-col items-center justify-center p-4">
         <QrickApp />
