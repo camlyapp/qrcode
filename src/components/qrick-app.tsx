@@ -1507,7 +1507,7 @@ export function QrickApp() {
                 newContent = '123456789012';
                 break;
             case 'UPCE':
-                newContent = '01234567';
+                newContent = '123456';
                 break;
             case 'CODE39':
                 newContent = 'CODE39 EXAMPLE';
@@ -1789,13 +1789,6 @@ export function QrickApp() {
     <Card className="w-full max-w-7xl shadow-2xl">
       <CardContent className="grid gap-8 md:grid-cols-[450px_1fr] p-4 pt-6">
         <div className="grid gap-4">
-            <div className="flex items-center space-x-2">
-                <Switch id="generate-card" checked={generateCard} onCheckedChange={setGenerateCard} />
-                <Label htmlFor="generate-card" className="flex items-center gap-2 cursor-pointer">
-                   <CreditCard className="h-4 w-4" />
-                   Generate on Card
-                </Label>
-            </div>
           <Tabs defaultValue="qr" value={generatorType} onValueChange={handleGeneratorTypeChange} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="qr"><QrCode className="mr-2"/>QR Code</TabsTrigger>
@@ -2267,6 +2260,7 @@ export function QrickApp() {
                             </ScrollArea>
                         </TabsContent>
                     </Tabs>
+                    {generateCard && <CardOptions />}
                 </div>
             </TabsContent>
             
@@ -2386,7 +2380,6 @@ export function QrickApp() {
             </TabsContent>
 
           </Tabs>
-            {generateCard && <CardOptions />}
         </div>
         
         <div className="flex justify-center items-center rounded-lg bg-muted p-2">
@@ -2415,6 +2408,24 @@ export function QrickApp() {
       <CardFooter className="p-4 flex justify-between">
         <div />
         <div className="flex gap-2">
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setGenerateCard(!generateCard)}
+                          className={cn(generateCard && "bg-accent")}
+                        >
+                            <CreditCard className="h-5 w-5" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Generate on Card</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon" disabled={!content || !!barcodeError}>
