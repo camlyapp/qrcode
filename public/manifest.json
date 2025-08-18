@@ -1,0 +1,21 @@
+{
+  "name": "QRick - Free QR & Barcode Generator",
+  "short_name": "QRick",
+  "description": "Create, customize, and download high-quality QR codes and barcodes for free. Supports various data types including URLs, vCards, Wi-Fi, and social media links.",
+  "icons": [
+    {
+      "src": "/camly.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/camly.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff"
+}

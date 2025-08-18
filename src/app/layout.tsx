@@ -1,6 +1,7 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
+import { PWAInstaller } from '@/components/pwa-installer';
 
 export const metadata: Metadata = {
   title: 'QRick - Free QR Code & Barcode Generator',
@@ -37,12 +38,15 @@ export default function RootLayout({
   return (
     <html lang="en" className="!scroll-smooth">
       <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#ffffff" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased bg-background text-foreground flex flex-col min-h-screen">
+        <PWAInstaller />
         {children}
         <Toaster />
       </body>
