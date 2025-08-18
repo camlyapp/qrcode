@@ -1502,7 +1502,7 @@ export function QrickApp() {
                 newContent = '123456789012';
                 break;
             case 'UPCE':
-                newContent = '042100005264';
+                newContent = '123456';
                 break;
             case 'CODE39':
                 newContent = 'CODE39 EXAMPLE';
