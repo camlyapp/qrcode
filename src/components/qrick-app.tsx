@@ -60,7 +60,7 @@ type QrDataType = 'text' | 'wifi' | 'sms' | 'phone' | 'email' | 'vcard' | 'geolo
 
 interface CardElement {
     id: string;
-    type: 'text' | 'barcode' | 'image';
+    type: 'text' | 'barcode' | 'image' | 'qrcode';
     content: string;
     x: number;
     y: number;
@@ -698,7 +698,7 @@ export function QrickApp() {
 
   }, [content, size, level, fgColor, bgColor, qrStyle, imageUrl, imageSize, excavate, useShieldCorners, gradientType, gradientStartColor, gradientEndColor, qrTextElements, qrImageElements, selectedElement, qrStylingEngine, dotStyle, cornerSquareStyle, cornerDotStyle, qrPadding]);
 
-    const drawBarcodeOrCard = useCallback(() => {
+    const drawBarcodeOrCard = useCallback(async () => {
         setBarcodeError(null);
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -706,54 +706,52 @@ export function QrickApp() {
         if (generateCard) {
             const cardWidth = 400;
             const cardHeight = 225;
+            const pixelRatio = 4; // Increase for higher quality
             
-            canvas.width = cardWidth;
-            canvas.height = cardHeight;
+            canvas.width = cardWidth * pixelRatio;
+            canvas.height = cardHeight * pixelRatio;
             canvas.style.width = `${cardWidth}px`;
             canvas.style.height = `${cardHeight}px`;
 
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
             
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.scale(pixelRatio, pixelRatio);
+            ctx.clearRect(0, 0, cardWidth, cardHeight);
 
 
             const drawBackground = () => {
                 // Background
                 ctx.fillStyle = cardBgColor;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillRect(0, 0, cardWidth, cardHeight);
 
                 // Card design elements
+                ctx.fillStyle = cardAccentColor;
+                ctx.strokeStyle = cardAccentColor;
+                ctx.lineWidth = 2;
                 switch (cardDesign) {
                     case 'modern':
-                        ctx.fillStyle = cardAccentColor;
-                        ctx.fillRect(0, 0, 100, canvas.height);
+                        ctx.fillRect(0, 0, 100, cardHeight);
                         break;
                     case 'sleek':
-                        ctx.fillStyle = cardAccentColor;
-                        ctx.fillRect(0, 0, canvas.width, 60);
+                        ctx.fillRect(0, 0, cardWidth, 60);
                         break;
                     case 'professional':
-                        ctx.strokeStyle = cardAccentColor;
-                        ctx.lineWidth = 2;
                         ctx.beginPath();
                         ctx.moveTo(50, 95);
-                        ctx.lineTo(canvas.width - 50, 95);
+                        ctx.lineTo(cardWidth - 50, 95);
                         ctx.stroke();
                         break;
                     case 'vcard':
-                        ctx.fillStyle = cardAccentColor;
-                        ctx.fillRect(0, 0, canvas.width, 60);
+                        ctx.fillRect(0, 0, cardWidth, 60);
                         break;
                     case 'marriage': {
-                        // Example decorative background
-                        ctx.strokeStyle = cardAccentColor;
                         ctx.lineWidth = 1;
                         for (let i = 0; i < 20; i++) {
                             ctx.beginPath();
                             ctx.arc(
-                                Math.random() * canvas.width,
-                                Math.random() * canvas.height,
+                                Math.random() * cardWidth,
+                                Math.random() * cardHeight,
                                 Math.random() * 20,
                                 0, 2 * Math.PI
                             );
@@ -764,17 +762,18 @@ export function QrickApp() {
                 };
             };
             
-            const renderElements = () => {
+            const renderElements = async () => {
                 // Draw elements
-                cardElements.forEach(element => {
+                for (const element of cardElements) {
                     if (element.type === 'image') {
                         const elImg = new Image();
                         elImg.crossOrigin = "anonymous";
                         elImg.src = element.content;
-                        elImg.onload = () => {
-                           ctx.drawImage(elImg, element.x, element.y, element.width, element.height);
-                        };
-                         ctx.drawImage(elImg, element.x, element.y, element.width, element.height);
+                        try {
+                            await elImg.decode();
+                            ctx.drawImage(elImg, element.x, element.y, element.width, element.height);
+                        } catch (e) { console.error("image load error");}
+
                     } else if (element.type === 'text' && element.content) {
                         const font = element.font || 'sans-serif';
                         const fontSize = element.fontSize || 16;
@@ -795,18 +794,20 @@ export function QrickApp() {
                                 format: barcodeFormat,
                                 lineColor: fgColor,
                                 background: 'rgba(0,0,0,0)',
-                                width: 2,
-                                height: 40,
+                                width: 4, // Higher resolution
+                                height: 80, // Higher resolution
                                 displayValue: false,
                                 valid: (valid: boolean) => { isValid = valid; }
                             });
                             
                             if (!isValid) {
                                 setBarcodeError("Invalid barcode content for card.");
-                                return;
+                                continue;
                             }
                             
-                            const barcodeTop = barcodeTextPosition === 'top' && showBarcodeText ? barcodeTextSize + 5 : 0;
+                            const textHeight = showBarcodeText ? (barcodeTextSize + 10) : 0;
+                            const barcodeTop = barcodeTextPosition === 'top' ? textHeight : 0;
+                            
                             ctx.drawImage(tempCanvas, element.x, element.y + barcodeTop, element.width, element.height);
                             
                             if (showBarcodeText) {
@@ -815,8 +816,8 @@ export function QrickApp() {
                                 ctx.textAlign = 'center';
 
                                 const textY = barcodeTextPosition === 'top'
-                                    ? element.y + barcodeTextSize - 5
-                                    : element.y + element.height + barcodeTextSize + 5;
+                                    ? element.y + barcodeTextSize
+                                    : element.y + element.height + textHeight;
                                 
                                 ctx.fillText(element.content, element.x + element.width / 2, textY);
                             }
@@ -824,14 +825,30 @@ export function QrickApp() {
                         } catch (err: any) {
                             setBarcodeError(err.message || "Error generating barcode for card.");
                         }
+                    } else if (element.type === 'qrcode') {
+                         try {
+                            const qrDataUrl = await QRCode.toDataURL(element.content, {
+                                errorCorrectionLevel: level,
+                                width: element.width * pixelRatio, // Draw QR at high res
+                                margin: 1, 
+                                color: { dark: fgColor, light: 'rgba(0,0,0,0)' }
+                            });
+                            
+                            const qrImg = new Image();
+                            qrImg.src = qrDataUrl;
+                            await qrImg.decode();
+                            ctx.drawImage(qrImg, element.x, element.y, element.width, element.height);
+                         } catch (e) {
+                             console.error("Failed to generate QR code for card", e);
+                         }
                     }
-                });
+                }
                 
                 // Draw selection box and handles
                 const selected = cardElements.find(el => el.id === selectedElement);
                 if (selected) {
                     ctx.strokeStyle = 'rgba(0, 123, 255, 0.7)';
-                    ctx.lineWidth = 2;
+                    ctx.lineWidth = 2 / pixelRatio;
                     ctx.strokeRect(selected.x, selected.y, selected.width, selected.height);
 
                     const handleSize = 8;
@@ -853,24 +870,19 @@ export function QrickApp() {
                 const bgImg = new Image();
                 bgImg.crossOrigin = "anonymous";
                 bgImg.src = cardBgImageUrl;
-                bgImg.onload = () => {
+                bgImg.onload = async () => {
                     const pattern = ctx.createPattern(bgImg, 'repeat');
                     if (pattern) {
                         ctx.fillStyle = pattern;
-                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.fillRect(0, 0, cardWidth, cardHeight);
                     }
-                    renderElements();
+                    await renderElements();
                 };
-                 const pattern = ctx.createPattern(bgImg, 'repeat');
-                 if (pattern) {
-                    ctx.fillStyle = pattern;
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                 }
             } else {
                 drawBackground();
+                await renderElements();
             }
 
-            renderElements();
 
         } else {
             // Barcode-only Drawing Logic
@@ -933,7 +945,7 @@ export function QrickApp() {
                 }
             }
         }
-    }, [content, barcodeFormat, fgColor, bgColor, barcodeHeight, barcodeTextSize, textColor, showBarcodeText, generateCard, cardBgColor, cardTextColor, cardDesign, cardAccentColor, cardElements, selectedElement, cardBgImageUrl, barcodeTextPosition, barcodeMargin]);
+    }, [content, barcodeFormat, fgColor, bgColor, textColor, showBarcodeText, generateCard, cardBgColor, cardTextColor, cardDesign, cardAccentColor, cardElements, selectedElement, cardBgImageUrl, barcodeTextPosition, barcodeMargin, barcodeHeight, barcodeTextSize, level, content]);
 
   const getTextMetrics = (text: string, font: string, fontSize: number, ctx: CanvasRenderingContext2D) => {
     ctx.font = `bold ${fontSize}px ${font}`;
@@ -963,12 +975,8 @@ export function QrickApp() {
     const newElements: CardElement[] = [];
 
     // Common barcode properties
-    const tempCanvas = document.createElement('canvas');
-    try {
-      JsBarcode(tempCanvas, content, { format: barcodeFormat, displayValue: false, width: 2, height: 40 });
-    } catch(e) { console.error("barcode error"); }
-    const barcodeWidth = tempCanvas.width || 200;
-    const barcodeHeightVal = tempCanvas.height || 40;
+    const barcodeWidth = 120;
+    const barcodeHeightVal = 40;
 
     
     let defaultTitle = 'John Doe';
@@ -997,7 +1005,7 @@ export function QrickApp() {
             const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, textElements.subtitle.fontSize!, ctx);
             newElements.push({ id: 'title', type: 'text', ...textElements.title, x: (canvasWidth - titleMetrics.width) / 2, y: 50, ...titleMetrics });
             newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, x: (canvasWidth - subtitleMetrics.width) / 2, y: 80, ...subtitleMetrics });
-            newElements.push({ id: 'barcode', type: 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 120, width: barcodeWidth, height: barcodeHeightVal });
+            newElements.push({ id: 'barcode', type: generatorType === 'qr' ? 'qrcode' : 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 120, width: barcodeWidth, height: generatorType === 'qr' ? barcodeWidth : barcodeHeightVal });
             break;
         }
         case 'modern': {
@@ -1006,7 +1014,7 @@ export function QrickApp() {
             const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, 14, ctx);
             newElements.push({ id: 'title', type: 'text', ...textElements.title, fontSize: 22, align: 'left', x: accentWidth + 20, y: 60, ...titleMetrics });
             newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, fontSize: 14, align: 'left', x: accentWidth + 20, y: 90, ...subtitleMetrics });
-            newElements.push({ id: 'barcode', type: 'barcode', content: content, x: (canvasWidth - barcodeWidth + accentWidth) / 2, y: 120, width: barcodeWidth, height: barcodeHeightVal });
+            newElements.push({ id: 'barcode', type: generatorType === 'qr' ? 'qrcode' : 'barcode', content: content, x: (canvasWidth - barcodeWidth + accentWidth) / 2, y: 120, width: barcodeWidth, height: generatorType === 'qr' ? barcodeWidth : barcodeHeightVal });
             break;
         }
         case 'sleek': {
@@ -1014,7 +1022,7 @@ export function QrickApp() {
             const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, 14, ctx);
             newElements.push({ id: 'title', type: 'text', ...textElements.title, fontSize: 20, color: cardBgColor, align: 'left', x: 20, y: 40, ...titleMetrics });
             newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, fontSize: 14, align: 'left', x: 20, y: 60 + 30, ...subtitleMetrics });
-            newElements.push({ id: 'barcode', type: 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 110, width: barcodeWidth, height: barcodeHeightVal });
+            newElements.push({ id: 'barcode', type: generatorType === 'qr' ? 'qrcode' : 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 110, width: barcodeWidth, height: generatorType === 'qr' ? barcodeWidth : barcodeHeightVal });
             break;
         }
         case 'professional': {
@@ -1022,10 +1030,11 @@ export function QrickApp() {
             const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, 14, ctx);
             newElements.push({ id: 'title', type: 'text', ...textElements.title, fontSize: 22, x: (canvasWidth - titleMetrics.width) / 2, y: 50, ...titleMetrics });
             newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, fontSize: 14, x: (canvasWidth - subtitleMetrics.width) / 2, y: 75, ...subtitleMetrics });
-            newElements.push({ id: 'barcode', type: 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 115, width: barcodeWidth, height: barcodeHeightVal });
+            newElements.push({ id: 'barcode', type: generatorType === 'qr' ? 'qrcode' : 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 115, width: barcodeWidth, height: generatorType === 'qr' ? barcodeWidth : barcodeHeightVal });
             break;
         }
         case 'vcard': {
+            const qrCodeSize = 80;
             const titleMetrics = getTextMetrics(textElements.title.content!, textElements.title.font!, 20, ctx);
             const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, 12, ctx);
             const emailMetrics = getTextMetrics(defaultEmail, textElements.email.font!, textElements.email.fontSize!, ctx);
@@ -1039,7 +1048,7 @@ export function QrickApp() {
             newElements.push({ id: 'email', type: 'text', ...textElements.email, x: 40, y: infoStartY, ...emailMetrics });
             newElements.push({ id: 'phone', type: 'text', ...textElements.phone, x: 40, y: infoStartY + infoSpacing, ...phoneMetrics });
             newElements.push({ id: 'website', type: 'text', ...textElements.website, x: 40, y: infoStartY + infoSpacing * 2, ...websiteMetrics });
-            newElements.push({ id: 'barcode', type: 'barcode', content: content, x: canvasWidth - barcodeWidth - 20, y: 155, width: barcodeWidth, height: barcodeHeightVal });
+            newElements.push({ id: 'qrcode', type: 'qrcode', content: content, x: canvasWidth - qrCodeSize - 20, y: infoStartY, width: qrCodeSize, height: qrCodeSize });
             break;
         }
          case 'marriage': {
@@ -1051,20 +1060,20 @@ export function QrickApp() {
             
             newElements.push({ id: 'title', type: 'text', ...textElements.title, font: titleFont, fontSize: 36, x: (canvasWidth - titleMetrics.width) / 2, y: 80, ...titleMetrics });
             newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: subtitleFont, fontSize: 16, x: (canvasWidth - subtitleMetrics.width) / 2, y: 120, ...subtitleMetrics });
-            newElements.push({ id: 'barcode', type: 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 155, width: barcodeWidth, height: barcodeHeightVal });
+            newElements.push({ id: 'barcode', type: generatorType === 'qr' ? 'qrcode' : 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 155, width: barcodeWidth, height: generatorType === 'qr' ? barcodeWidth : barcodeHeightVal });
             break;
         }
     }
     setCardElements(newElements);
     setSelectedElement(null);
-}, [generateCard, cardDesign, content, barcodeFormat, fgColor, cardTextColor, cardBgColor]);
+}, [generateCard, cardDesign, content, barcodeFormat, fgColor, cardTextColor, cardBgColor, generatorType]);
 
 
   useEffect(() => {
       if (content) {
-        if (generatorType === 'qr') {
+        if (generatorType === 'qr' && !generateCard) {
             drawQR();
-        } else if (generatorType === 'barcode') {
+        } else if (generatorType === 'barcode' || generateCard) {
             drawBarcodeOrCard();
         }
       } else {
@@ -1094,9 +1103,12 @@ export function QrickApp() {
             clientX = e.clientX;
             clientY = e.clientY;
         }
-
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
+        
+        const displayWidth = parseInt(canvas.style.width, 10);
+        const displayHeight = parseInt(canvas.style.height, 10);
+        
+        const scaleX = displayWidth / rect.width;
+        const scaleY = displayHeight / rect.height;
 
         return {
             x: (clientX - rect.left) * scaleX,
@@ -1180,35 +1192,35 @@ export function QrickApp() {
                     const originalY = el.y;
                     const originalWidth = el.width;
                     const originalHeight = el.height;
+                    const aspectRatio = originalWidth / originalHeight;
 
                     switch (resizingState.handle) {
                         case 'tl':
                             width = originalX + originalWidth - pos.x;
-                            height = originalY + originalHeight - pos.y;
+                            height = width / aspectRatio;
                             x = pos.x;
-                            y = pos.y;
+                            y = originalY + originalHeight - height;
                             break;
                         case 'tr':
                             width = pos.x - originalX;
-                            height = originalY + originalHeight - pos.y;
-                            y = pos.y;
+                            height = width / aspectRatio;
+                            y = originalY + originalHeight - height;
                             break;
                         case 'bl':
                             width = originalX + originalWidth - pos.x;
-                            height = pos.y - originalY;
+                            height = width / aspectRatio;
                             x = pos.x;
                             break;
                         case 'br':
                             width = pos.x - originalX;
-                            height = pos.y - originalY;
+                            height = width / aspectRatio;
                             break;
                     }
                     const newWidth = Math.max(width, 20);
                     const newHeight = Math.max(height, 20);
                     
                     if (el.type === 'text' && generateCard) {
-                        const aspectRatio = el.width / (el.fontSize || 16);
-                        const newFontSize = newWidth / aspectRatio;
+                        const newFontSize = newHeight / 1.2;
                         return { ...el, x, y, width: newWidth, height: newHeight, fontSize: newFontSize };
                     }
 
@@ -1457,9 +1469,9 @@ export function QrickApp() {
     const newType = value as GeneratorType;
     setGeneratorType(newType);
     setSelectedElement(null);
-    if (newType === 'qr') {
+    if (newType === 'qr' && !generateCard) {
         setContent('camly.in');
-    } else if (newType === 'barcode') {
+    } else if (newType === 'barcode' || generateCard) {
         handleBarcodeFormatChange(barcodeFormat, true);
     }
   }
@@ -1525,7 +1537,7 @@ export function QrickApp() {
         }
         setContent(newContent);
         if (generateCard) {
-            setCardElements(prev => prev.map(el => el.type === 'barcode' ? { ...el, content: newContent } : el));
+            setCardElements(prev => prev.map(el => (el.type === 'barcode' || el.type === 'qrcode') ? { ...el, content: newContent } : el));
         }
     }
   }
@@ -1582,7 +1594,7 @@ export function QrickApp() {
   };
 
   const getCanvasDisplaySize = () => {
-    if (generatorType === 'barcode') {
+    if (generatorType === 'barcode' || generateCard) {
         return generateCard ? { width: 400, height: 225 } : { width: 320 + (barcodeMargin * 2), height: (showBarcodeText ? 80 + (barcodeTextSize * 2.5) : 80) + (barcodeMargin * 2) };
     }
     const canvas = canvasRef.current;
@@ -1795,6 +1807,14 @@ export function QrickApp() {
                         <TabsContent value="style" className="pt-4">
                             <ScrollArea className="h-96">
                                 <div className="grid gap-4 pr-4">
+                                    <div className="flex items-center space-x-2">
+                                        <Switch id="generate-card-qr" checked={generateCard} onCheckedChange={setGenerateCard} />
+                                        <Label htmlFor="generate-card-qr" className="flex items-center gap-2 cursor-pointer">
+                                           <CreditCard className="h-4 w-4" />
+                                           Generate on Card
+                                        </Label>
+                                    </div>
+                                    <Separator/>
                                      <div className="grid grid-cols-2 gap-4">
                                         <div className="grid gap-2">
                                             <Label htmlFor="size">Size ({size}px)</Label>
@@ -2383,7 +2403,7 @@ export function QrickApp() {
                     style={{ cursor: cursorStyle }}
                 />
               ) : (
-                <div style={{width: generatorType === 'qr' ? size : 320, height: generatorType === 'qr' ? size : 80 + (barcodeTextSize * 2.5 / 2)}} className="bg-gray-100 flex items-center justify-center text-center text-red-500 rounded-lg p-4">
+                <div style={getCanvasDisplaySize()} className="bg-gray-100 flex items-center justify-center text-center text-red-500 rounded-lg p-4">
                     {barcodeError || 'Enter content to generate a code.'}
                 </div>
               )}
@@ -2424,7 +2444,3 @@ export function QrickApp() {
   );
 
 }
-
-    
-
-    
