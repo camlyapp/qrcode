@@ -1356,8 +1356,9 @@ export function QrickApp() {
         if (navigator.share) {
             await navigator.share({
                 title: 'QRick Code',
-                text: `Here is my ${generatorType === 'qr' ? 'QR code' : 'barcode'}.`,
+                text: `Here is my ${generatorType === 'qr' ? 'QR code' : 'barcode'}. Generated with QRick.`,
                 files: [file],
+                url: 'https://qrick.vercel.app/',
             });
             toast({
                 title: "Shared!",
