@@ -98,10 +98,10 @@ export default {
           },
         },
         'border-beam': {
-           '100%': {
+          '100%': {
             '--border-beam-angle': '360deg',
           },
-        }
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
