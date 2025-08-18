@@ -706,10 +706,9 @@ export function QrickApp() {
         if (generateCard) {
             const cardWidth = 400;
             const cardHeight = 225;
-            const scale = 4;
             
-            canvas.width = cardWidth * scale;
-            canvas.height = cardHeight * scale;
+            canvas.width = cardWidth;
+            canvas.height = cardHeight;
             canvas.style.width = `${cardWidth}px`;
             canvas.style.height = `${cardHeight}px`;
 
@@ -717,7 +716,6 @@ export function QrickApp() {
             if (!ctx) return;
             
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.scale(scale, scale);
 
 
             const drawBackground = () => {
@@ -729,34 +727,34 @@ export function QrickApp() {
                 switch (cardDesign) {
                     case 'modern':
                         ctx.fillStyle = cardAccentColor;
-                        ctx.fillRect(0, 0, 100 * scale, canvas.height);
+                        ctx.fillRect(0, 0, 100, canvas.height);
                         break;
                     case 'sleek':
                         ctx.fillStyle = cardAccentColor;
-                        ctx.fillRect(0, 0, canvas.width, 60 * scale);
+                        ctx.fillRect(0, 0, canvas.width, 60);
                         break;
                     case 'professional':
                         ctx.strokeStyle = cardAccentColor;
-                        ctx.lineWidth = 2 * scale;
+                        ctx.lineWidth = 2;
                         ctx.beginPath();
-                        ctx.moveTo(50 * scale, 95 * scale);
-                        ctx.lineTo(canvas.width - 50 * scale, 95 * scale);
+                        ctx.moveTo(50, 95);
+                        ctx.lineTo(canvas.width - 50, 95);
                         ctx.stroke();
                         break;
                     case 'vcard':
                         ctx.fillStyle = cardAccentColor;
-                        ctx.fillRect(0, 0, canvas.width, 60 * scale);
+                        ctx.fillRect(0, 0, canvas.width, 60);
                         break;
                     case 'marriage': {
                         // Example decorative background
                         ctx.strokeStyle = cardAccentColor;
-                        ctx.lineWidth = 1 * scale;
+                        ctx.lineWidth = 1;
                         for (let i = 0; i < 20; i++) {
                             ctx.beginPath();
                             ctx.arc(
                                 Math.random() * canvas.width,
                                 Math.random() * canvas.height,
-                                Math.random() * 20 * scale,
+                                Math.random() * 20,
                                 0, 2 * Math.PI
                             );
                             ctx.stroke();
@@ -769,9 +767,9 @@ export function QrickApp() {
             const renderElements = () => {
                 // Draw elements
                 cardElements.forEach(element => {
-                    const elImg = new Image();
-                    elImg.crossOrigin = "anonymous";
                     if (element.type === 'image') {
+                        const elImg = new Image();
+                        elImg.crossOrigin = "anonymous";
                         elImg.src = element.content;
                         elImg.onload = () => {
                            ctx.drawImage(elImg, element.x, element.y, element.width, element.height);
@@ -793,14 +791,12 @@ export function QrickApp() {
                         try {
                             const tempCanvas = document.createElement('canvas');
                             let isValid = true;
-                            // Generate barcode at high resolution for quality
-                            const barcodeScale = 8;
                             JsBarcode(tempCanvas, element.content, {
                                 format: barcodeFormat,
                                 lineColor: fgColor,
                                 background: 'rgba(0,0,0,0)',
-                                width: 2 * barcodeScale,
-                                height: 40 * barcodeScale,
+                                width: 2,
+                                height: 40,
                                 displayValue: false,
                                 valid: (valid: boolean) => { isValid = valid; }
                             });
@@ -809,18 +805,18 @@ export function QrickApp() {
                                 setBarcodeError("Invalid barcode content for card.");
                                 return;
                             }
-                             const barcodeTop = barcodeTextPosition === 'top' && showBarcodeText ? (barcodeTextSize * scale) + 5 : 0;
+                            
+                            const barcodeTop = barcodeTextPosition === 'top' && showBarcodeText ? barcodeTextSize + 5 : 0;
                             ctx.drawImage(tempCanvas, element.x, element.y + barcodeTop, element.width, element.height);
                             
                             if (showBarcodeText) {
-                                // Draw barcode text separately if needed
-                                ctx.font = `${barcodeTextSize * scale}px monospace`;
+                                ctx.font = `${barcodeTextSize}px monospace`;
                                 ctx.fillStyle = textColor;
                                 ctx.textAlign = 'center';
 
                                 const textY = barcodeTextPosition === 'top'
-                                    ? element.y + (barcodeTextSize * scale) - 5
-                                    : element.y + element.height + (barcodeTextSize * scale) + 5;
+                                    ? element.y + barcodeTextSize - 5
+                                    : element.y + element.height + barcodeTextSize + 5;
                                 
                                 ctx.fillText(element.content, element.x + element.width / 2, textY);
                             }
@@ -958,9 +954,8 @@ export function QrickApp() {
   useEffect(() => {
     if (!generateCard) return;
 
-    const scale = 4;
-    const canvasWidth = 400 * scale;
-    const canvasHeight = 225 * scale;
+    const canvasWidth = 400;
+    const canvasHeight = 225;
     const ctx = canvasRef.current?.getContext('2d');
     
     if(!ctx) return;
@@ -970,11 +965,10 @@ export function QrickApp() {
     // Common barcode properties
     const tempCanvas = document.createElement('canvas');
     try {
-      const barcodeScale = 8;
-      JsBarcode(tempCanvas, content, { format: barcodeFormat, displayValue: false, width: 2 * barcodeScale, height: 40 * barcodeScale });
+      JsBarcode(tempCanvas, content, { format: barcodeFormat, displayValue: false, width: 2, height: 40 });
     } catch(e) { console.error("barcode error"); }
-    const barcodeWidth = tempCanvas.width || 200 * scale;
-    const barcodeHeightVal = tempCanvas.height || 40 * scale;
+    const barcodeWidth = tempCanvas.width || 200;
+    const barcodeHeightVal = tempCanvas.height || 40;
 
     
     let defaultTitle = 'John Doe';
@@ -989,11 +983,11 @@ export function QrickApp() {
     } 
 
     const textElements: { [key: string]: Omit<CardElement, 'id' | 'type' | 'width' | 'height'> } = {
-        title: { content: defaultTitle, font: `sans-serif`, fontSize: 24 * scale, align: 'center', color: cardTextColor },
-        subtitle: { content: defaultSubtitle, font: `sans-serif`, fontSize: 16 * scale, align: 'center', color: cardTextColor },
-        email: { content: defaultEmail, font: `sans-serif`, fontSize: 14 * scale, align: 'left', color: cardTextColor },
-        phone: { content: defaultPhone, font: `sans-serif`, fontSize: 14 * scale, align: 'left', color: cardTextColor },
-        website: { content: defaultWebsite, font: `sans-serif`, fontSize: 14 * scale, align: 'left', color: cardTextColor },
+        title: { content: defaultTitle, font: `sans-serif`, fontSize: 24, align: 'center', color: cardTextColor },
+        subtitle: { content: defaultSubtitle, font: `sans-serif`, fontSize: 16, align: 'center', color: cardTextColor },
+        email: { content: defaultEmail, font: `sans-serif`, fontSize: 14, align: 'left', color: cardTextColor },
+        phone: { content: defaultPhone, font: `sans-serif`, fontSize: 14, align: 'left', color: cardTextColor },
+        website: { content: defaultWebsite, font: `sans-serif`, fontSize: 14, align: 'left', color: cardTextColor },
     };
     
     // Position elements based on design
@@ -1001,63 +995,63 @@ export function QrickApp() {
         case 'classic': {
             const titleMetrics = getTextMetrics(textElements.title.content!, textElements.title.font!, textElements.title.fontSize!, ctx);
             const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, textElements.subtitle.fontSize!, ctx);
-            newElements.push({ id: 'title', type: 'text', ...textElements.title, x: (canvasWidth - titleMetrics.width) / 2, y: 50 * scale, ...titleMetrics });
-            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, x: (canvasWidth - subtitleMetrics.width) / 2, y: 80 * scale, ...subtitleMetrics });
-            newElements.push({ id: 'barcode', type: 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 120 * scale, width: barcodeWidth, height: barcodeHeightVal });
+            newElements.push({ id: 'title', type: 'text', ...textElements.title, x: (canvasWidth - titleMetrics.width) / 2, y: 50, ...titleMetrics });
+            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, x: (canvasWidth - subtitleMetrics.width) / 2, y: 80, ...subtitleMetrics });
+            newElements.push({ id: 'barcode', type: 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 120, width: barcodeWidth, height: barcodeHeightVal });
             break;
         }
         case 'modern': {
-            const accentWidth = 100 * scale;
-            const titleMetrics = getTextMetrics(textElements.title.content!, textElements.title.font!, 22 * scale, ctx);
-            const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, 14 * scale, ctx);
-            newElements.push({ id: 'title', type: 'text', ...textElements.title, fontSize: 22 * scale, align: 'left', x: accentWidth + 20 * scale, y: 60 * scale, ...titleMetrics });
-            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, fontSize: 14 * scale, align: 'left', x: accentWidth + 20 * scale, y: 90 * scale, ...subtitleMetrics });
-            newElements.push({ id: 'barcode', type: 'barcode', content: content, x: (canvasWidth - barcodeWidth + accentWidth) / 2, y: 120 * scale, width: barcodeWidth, height: barcodeHeightVal });
+            const accentWidth = 100;
+            const titleMetrics = getTextMetrics(textElements.title.content!, textElements.title.font!, 22, ctx);
+            const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, 14, ctx);
+            newElements.push({ id: 'title', type: 'text', ...textElements.title, fontSize: 22, align: 'left', x: accentWidth + 20, y: 60, ...titleMetrics });
+            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, fontSize: 14, align: 'left', x: accentWidth + 20, y: 90, ...subtitleMetrics });
+            newElements.push({ id: 'barcode', type: 'barcode', content: content, x: (canvasWidth - barcodeWidth + accentWidth) / 2, y: 120, width: barcodeWidth, height: barcodeHeightVal });
             break;
         }
         case 'sleek': {
-            const titleMetrics = getTextMetrics(textElements.title.content!, textElements.title.font!, 20 * scale, ctx);
-            const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, 14 * scale, ctx);
-            newElements.push({ id: 'title', type: 'text', ...textElements.title, fontSize: 20 * scale, color: cardBgColor, align: 'left', x: 20 * scale, y: 40 * scale, ...titleMetrics });
-            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, fontSize: 14 * scale, align: 'left', x: 20 * scale, y: (60 * scale) + 30 * scale, ...subtitleMetrics });
-            newElements.push({ id: 'barcode', type: 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 110 * scale, width: barcodeWidth, height: barcodeHeightVal });
+            const titleMetrics = getTextMetrics(textElements.title.content!, textElements.title.font!, 20, ctx);
+            const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, 14, ctx);
+            newElements.push({ id: 'title', type: 'text', ...textElements.title, fontSize: 20, color: cardBgColor, align: 'left', x: 20, y: 40, ...titleMetrics });
+            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, fontSize: 14, align: 'left', x: 20, y: 60 + 30, ...subtitleMetrics });
+            newElements.push({ id: 'barcode', type: 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 110, width: barcodeWidth, height: barcodeHeightVal });
             break;
         }
         case 'professional': {
-            const titleMetrics = getTextMetrics(textElements.title.content!, textElements.title.font!, 22 * scale, ctx);
-            const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, 14 * scale, ctx);
-            newElements.push({ id: 'title', type: 'text', ...textElements.title, fontSize: 22 * scale, x: (canvasWidth - titleMetrics.width) / 2, y: 50 * scale, ...titleMetrics });
-            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, fontSize: 14 * scale, x: (canvasWidth - subtitleMetrics.width) / 2, y: 75 * scale, ...subtitleMetrics });
-            newElements.push({ id: 'barcode', type: 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 115 * scale, width: barcodeWidth, height: barcodeHeightVal });
+            const titleMetrics = getTextMetrics(textElements.title.content!, textElements.title.font!, 22, ctx);
+            const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, 14, ctx);
+            newElements.push({ id: 'title', type: 'text', ...textElements.title, fontSize: 22, x: (canvasWidth - titleMetrics.width) / 2, y: 50, ...titleMetrics });
+            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, fontSize: 14, x: (canvasWidth - subtitleMetrics.width) / 2, y: 75, ...subtitleMetrics });
+            newElements.push({ id: 'barcode', type: 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 115, width: barcodeWidth, height: barcodeHeightVal });
             break;
         }
         case 'vcard': {
-            const titleMetrics = getTextMetrics(textElements.title.content!, textElements.title.font!, 20 * scale, ctx);
-            const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, 12 * scale, ctx);
+            const titleMetrics = getTextMetrics(textElements.title.content!, textElements.title.font!, 20, ctx);
+            const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, 12, ctx);
             const emailMetrics = getTextMetrics(defaultEmail, textElements.email.font!, textElements.email.fontSize!, ctx);
             const phoneMetrics = getTextMetrics(defaultPhone, textElements.phone.font!, textElements.phone.fontSize!, ctx);
             const websiteMetrics = getTextMetrics(defaultWebsite, textElements.website.font!, textElements.website.fontSize!, ctx);
 
-            newElements.push({ id: 'title', type: 'text', ...textElements.title, fontSize: 20 * scale, color: cardBgColor, align: 'left', x: 20 * scale, y: 30 * scale, ...titleMetrics });
-            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, fontSize: 12 * scale, font: 'italic sans-serif', color: cardBgColor, align: 'left', x: 20 * scale, y: 50 * scale, ...subtitleMetrics });
-            const infoStartY = 80 * scale;
-            const infoSpacing = 25 * scale;
-            newElements.push({ id: 'email', type: 'text', ...textElements.email, x: 40 * scale, y: infoStartY, ...emailMetrics });
-            newElements.push({ id: 'phone', type: 'text', ...textElements.phone, x: 40 * scale, y: infoStartY + infoSpacing, ...phoneMetrics });
-            newElements.push({ id: 'website', type: 'text', ...textElements.website, x: 40 * scale, y: infoStartY + infoSpacing * 2, ...websiteMetrics });
-            newElements.push({ id: 'barcode', type: 'barcode', content: content, x: canvasWidth - barcodeWidth - 20 * scale, y: 155 * scale, width: barcodeWidth, height: barcodeHeightVal });
+            newElements.push({ id: 'title', type: 'text', ...textElements.title, fontSize: 20, color: cardBgColor, align: 'left', x: 20, y: 30, ...titleMetrics });
+            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, fontSize: 12, font: 'italic sans-serif', color: cardBgColor, align: 'left', x: 20, y: 50, ...subtitleMetrics });
+            const infoStartY = 80;
+            const infoSpacing = 25;
+            newElements.push({ id: 'email', type: 'text', ...textElements.email, x: 40, y: infoStartY, ...emailMetrics });
+            newElements.push({ id: 'phone', type: 'text', ...textElements.phone, x: 40, y: infoStartY + infoSpacing, ...phoneMetrics });
+            newElements.push({ id: 'website', type: 'text', ...textElements.website, x: 40, y: infoStartY + infoSpacing * 2, ...websiteMetrics });
+            newElements.push({ id: 'barcode', type: 'barcode', content: content, x: canvasWidth - barcodeWidth - 20, y: 155, width: barcodeWidth, height: barcodeHeightVal });
             break;
         }
          case 'marriage': {
             const titleFont = `'Great Vibes', cursive`;
             const subtitleFont = `italic sans-serif`;
 
-            const titleMetrics = getTextMetrics(textElements.title.content!, titleFont, 36 * scale, ctx);
-            const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, subtitleFont, 16 * scale, ctx);
+            const titleMetrics = getTextMetrics(textElements.title.content!, titleFont, 36, ctx);
+            const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, subtitleFont, 16, ctx);
             
-            newElements.push({ id: 'title', type: 'text', ...textElements.title, font: titleFont, fontSize: 36 * scale, x: (canvasWidth - titleMetrics.width) / 2, y: 80 * scale, ...titleMetrics });
-            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: subtitleFont, fontSize: 16 * scale, x: (canvasWidth - subtitleMetrics.width) / 2, y: 120 * scale, ...subtitleMetrics });
-            newElements.push({ id: 'barcode', type: 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 155 * scale, width: barcodeWidth, height: barcodeHeightVal });
+            newElements.push({ id: 'title', type: 'text', ...textElements.title, font: titleFont, fontSize: 36, x: (canvasWidth - titleMetrics.width) / 2, y: 80, ...titleMetrics });
+            newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: subtitleFont, fontSize: 16, x: (canvasWidth - subtitleMetrics.width) / 2, y: 120, ...subtitleMetrics });
+            newElements.push({ id: 'barcode', type: 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 155, width: barcodeWidth, height: barcodeHeightVal });
             break;
         }
     }
@@ -1419,15 +1413,14 @@ export function QrickApp() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const logoUrl = reader.result as string;
-        const scale = 4;
         const newLogoElement: CardElement = {
             id: `image-${Date.now()}`,
             type: 'image',
             content: logoUrl,
-            x: 50 * scale,
-            y: 50 * scale,
-            width: 100 * scale,
-            height: 100 * scale,
+            x: 50,
+            y: 50,
+            width: 100,
+            height: 100,
         };
         setCardElements(prev => [...prev, newLogoElement]);
         setSelectedElement(newLogoElement.id);
@@ -1502,7 +1495,7 @@ export function QrickApp() {
                 newContent = '123456789012';
                 break;
             case 'UPCE':
-                newContent = '123456';
+                newContent = '01234567';
                 break;
             case 'CODE39':
                 newContent = 'CODE39 EXAMPLE';
@@ -1538,16 +1531,15 @@ export function QrickApp() {
   }
 
   const addTextElement = () => {
-    const scale = 4;
     const newTextElement: CardElement = {
       id: `text-${Date.now()}`,
       type: 'text',
       content: 'New Text',
-      x: 50 * scale,
-      y: 50 * scale,
-      width: 150 * scale,
-      height: 30 * scale,
-      fontSize: 16 * scale,
+      x: 50,
+      y: 50,
+      width: 150,
+      height: 30,
+      fontSize: 16,
       color: cardTextColor,
       align: 'left',
       font: 'sans-serif'
@@ -2273,8 +2265,8 @@ export function QrickApp() {
                                         <Input
                                             id="selected-text-size"
                                             type="number"
-                                            value={currentSelectedElement.fontSize ? Math.round(currentSelectedElement.fontSize / 4) : 16}
-                                            onChange={(e) => updateSelectedElement('fontSize', parseInt(e.target.value, 10) * 4)}
+                                            value={currentSelectedElement.fontSize ? Math.round(currentSelectedElement.fontSize) : 16}
+                                            onChange={(e) => updateSelectedElement('fontSize', parseInt(e.target.value, 10))}
                                         />
                                     </div>
                                     <div className="grid gap-2">
