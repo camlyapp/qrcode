@@ -1080,9 +1080,9 @@ export function QrickApp() {
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext("2d");
         if (ctx) {
-            if (generatorType === 'qr') {
+            if (generatorType === 'qr' && !generateCard) {
                 ctx.clearRect(0,0,size,size);
-            } else if (generatorType === 'barcode') {
+            } else if (generatorType === 'barcode' || generateCard) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
         }
@@ -1634,6 +1634,156 @@ export function QrickApp() {
           setSelectedElement(null);
       }
   }
+  
+  const CardOptions = () => (
+    <div className="grid gap-4">
+        <div className="flex items-center space-x-2">
+            <Switch id="generate-card" checked={generateCard} onCheckedChange={setGenerateCard} />
+            <Label htmlFor="generate-card" className="flex items-center gap-2 cursor-pointer">
+               <CreditCard className="h-4 w-4" />
+               Generate on Card
+            </Label>
+        </div>
+        {generateCard && (
+           <ScrollArea className="h-[28rem]">
+            <div className="grid gap-4 pr-4">
+                <div className="grid gap-2">
+                    <Label>Card Style</Label>
+                    <RadioGroup value={cardDesign} onValueChange={(v) => setCardDesign(v as CardDesign)} className="flex flex-wrap gap-4">
+                        <Label htmlFor="card-classic" className="flex items-center gap-2 cursor-pointer text-sm">
+                            <RadioGroupItem value="classic" id="card-classic" />
+                            Classic
+                        </Label>
+                        <Label htmlFor="card-modern" className="flex items-center gap-2 cursor-pointer text-sm">
+                            <RadioGroupItem value="modern" id="card-modern" />
+                            Modern
+                        </Label>
+                         <Label htmlFor="card-sleek" className="flex items-center gap-2 cursor-pointer text-sm">
+                            <RadioGroupItem value="sleek" id="card-sleek" />
+                            Sleek
+                        </Label>
+                        <Label htmlFor="card-professional" className="flex items-center gap-2 cursor-pointer text-sm">
+                            <RadioGroupItem value="professional" id="card-professional" />
+                            Professional
+                        </Label>
+                        <Label htmlFor="card-vcard" className="flex items-center gap-2 cursor-pointer text-sm">
+                            <RadioGroupItem value="vcard" id="card-vcard" />
+                            V-Card
+                        </Label>
+                         <Label htmlFor="card-marriage" className="flex items-center gap-2 cursor-pointer text-sm">
+                            <RadioGroupItem value="marriage" id="card-marriage" />
+                            <Heart className="h-4 w-4"/>
+                            Marriage
+                        </Label>
+                    </RadioGroup>
+                </div>
+               
+                <div className="grid gap-2">
+                    <Label>Colors</Label>
+                    <div className="flex items-center flex-wrap gap-4">
+                        <div className="flex items-center gap-2">
+                            <Label htmlFor="card-bg-color" className="text-xs">BG</Label>
+                            <Input id="card-bg-color" type="color" value={cardBgColor} onChange={(e) => setCardBgColor(e.target.value)} className="p-0 h-6 w-6 rounded-full" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Label htmlFor="card-text-color" className="text-xs">Text</Label>
+                            <Input id="card-text-color" type="color" value={cardTextColor} onChange={(e) => setCardTextColor(e.target.value)} className="p-0 h-6 w-6 rounded-full" />
+                        </div>
+                        {(cardDesign !== 'classic') && (
+                            <div className="flex items-center gap-2">
+                                <Label htmlFor="card-accent-color" className="text-xs">Accent</Label>
+                                <Input id="card-accent-color" type="color" value={cardAccentColor} onChange={(e) => setCardAccentColor(e.target.value)} className="p-0 h-6 w-6 rounded-full" />
+                            </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                            <Label htmlFor="barcode-fg-color" className="text-xs">Bar</Label>
+                            <Input id="barcode-fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-0 h-6 w-6 rounded-full" />
+                        </div>
+                    </div>
+                </div>
+
+                <Separator />
+                <div className="grid gap-2">
+                     <Label>Assets</Label>
+                     <div className="flex gap-2">
+                        <Input type="file" ref={logoInputRef} onChange={handleLogoUpload} accept="image/*" className="hidden"/>
+                        <Button onClick={triggerLogoSelect} variant="outline" size="sm" className="flex-1">
+                            <ImageIcon className="mr-2" /> Add Logo
+                        </Button>
+                        <Input type="file" ref={cardBgInputRef} onChange={handleCardBgImageUpload} accept="image/*" className="hidden"/>
+                        <Button onClick={triggerCardBgSelect} variant="outline" size="sm" className="flex-1">
+                            <FileImage className="mr-2" /> Add BG
+                        </Button>
+                     </div>
+                </div>
+                <Separator />
+                <div className="grid gap-2">
+                    <Button onClick={addTextElement} variant="outline" size="sm">
+                        <PlusCircle className="mr-2" /> Add Text
+                    </Button>
+                </div>
+                
+                {currentSelectedElement && currentSelectedElement.type === 'text' && (
+                    <div className="grid gap-4 p-4 border rounded-lg">
+                        <div className="flex justify-between items-center">
+                            <Label className="font-bold">Selected Text</Label>
+                            <Button variant="ghost" size="icon" onClick={deleteSelectedElement} className="h-7 w-7">
+                                <Trash2 className="text-red-500" />
+                            </Button>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="selected-text-content">Content</Label>
+                            <Textarea
+                                id="selected-text-content"
+                                value={currentSelectedElement.content}
+                                onChange={(e) => updateSelectedElement('content', e.target.value)}
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="selected-text-size">Font Size</Label>
+                                <Input
+                                    id="selected-text-size"
+                                    type="number"
+                                    value={currentSelectedElement.fontSize ? Math.round(currentSelectedElement.fontSize) : 16}
+                                    onChange={(e) => updateSelectedElement('fontSize', parseInt(e.target.value, 10))}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="selected-text-color">Color</Label>
+                                <Input
+                                    id="selected-text-color"
+                                    type="color"
+                                    value={currentSelectedElement.color}
+                                    onChange={(e) => updateSelectedElement('color', e.target.value)}
+                                    className="p-1 h-9"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+                 {currentSelectedElement && currentSelectedElement.type !== 'text' && (
+                    <div className="grid gap-4 p-4 border rounded-lg">
+                        <div className="flex justify-between items-center">
+                            <Label className="font-bold">Selected Element</Label>
+                            <Button variant="ghost" size="icon" onClick={deleteSelectedElement} className="h-7 w-7">
+                                <Trash2 className="text-red-500" />
+                            </Button>
+                        </div>
+                        <p className="text-sm text-muted-foreground">Move or resize the selected {currentSelectedElement.type} on the canvas.</p>
+                        {currentSelectedElement.type === 'barcode' && (
+                            <div className="flex items-center space-x-2 mt-2">
+                                <Switch id="show-barcode-text" checked={showBarcodeText} onCheckedChange={setShowBarcodeText} />
+                                <Label htmlFor="show-barcode-text">Show Text</Label>
+                            </div>
+                        )}
+                    </div>
+                 )}
+            </div>
+          </ScrollArea>
+        )}
+    </div>
+  );
 
   const selectedQrTextElement = qrTextElements.find(el => el.id === selectedQrText);
 
@@ -1796,25 +1946,18 @@ export function QrickApp() {
                         </div>
                     )}
 
-
+                    <Separator/>
                     <Tabs defaultValue="style">
-                        <TabsList className="grid w-full grid-cols-4">
+                        <TabsList className="grid w-full grid-cols-5">
                            <TabsTrigger value="style"><Palette className="mr-0 md:mr-2"/><span className="hidden md:inline">Style</span></TabsTrigger>
                            <TabsTrigger value="shape"><Shapes className="mr-0 md:mr-2"/><span className="hidden md:inline">Shape</span></TabsTrigger>
                            <TabsTrigger value="text"><Text className="mr-0 md:mr-2"/><span className="hidden md:inline">Text</span></TabsTrigger>
                            <TabsTrigger value="images"><ImageIcon className="mr-0 md:mr-2"/><span className="hidden md:inline">Images</span></TabsTrigger>
+                           <TabsTrigger value="card"><CreditCard className="mr-0 md:mr-2"/><span className="hidden md:inline">Card</span></TabsTrigger>
                         </TabsList>
                         <TabsContent value="style" className="pt-4">
                             <ScrollArea className="h-96">
                                 <div className="grid gap-4 pr-4">
-                                    <div className="flex items-center space-x-2">
-                                        <Switch id="generate-card-qr" checked={generateCard} onCheckedChange={setGenerateCard} />
-                                        <Label htmlFor="generate-card-qr" className="flex items-center gap-2 cursor-pointer">
-                                           <CreditCard className="h-4 w-4" />
-                                           Generate on Card
-                                        </Label>
-                                    </div>
-                                    <Separator/>
                                      <div className="grid grid-cols-2 gap-4">
                                         <div className="grid gap-2">
                                             <Label htmlFor="size">Size ({size}px)</Label>
@@ -2124,6 +2267,9 @@ export function QrickApp() {
                                 </div>
                             </ScrollArea>
                         </TabsContent>
+                        <TabsContent value="card" className="pt-4">
+                            <CardOptions />
+                        </TabsContent>
                     </Tabs>
                 </div>
             </TabsContent>
@@ -2177,151 +2323,9 @@ export function QrickApp() {
                     </div>
                   </div>
                   <Separator />
-                   <div className="flex items-center space-x-2">
-                        <Switch id="generate-card" checked={generateCard} onCheckedChange={setGenerateCard} />
-                        <Label htmlFor="generate-card" className="flex items-center gap-2 cursor-pointer">
-                           <CreditCard className="h-4 w-4" />
-                           Generate on Card
-                        </Label>
-                    </div>
-                  <Separator />
+                   
                    {generateCard ? (
-                    <div className="grid gap-4">
-                        <div className="grid gap-2">
-                            <Label>Card Style</Label>
-                            <RadioGroup value={cardDesign} onValueChange={(v) => setCardDesign(v as CardDesign)} className="flex flex-wrap gap-4">
-                                <Label htmlFor="card-classic" className="flex items-center gap-2 cursor-pointer text-sm">
-                                    <RadioGroupItem value="classic" id="card-classic" />
-                                    Classic
-                                </Label>
-                                <Label htmlFor="card-modern" className="flex items-center gap-2 cursor-pointer text-sm">
-                                    <RadioGroupItem value="modern" id="card-modern" />
-                                    Modern
-                                </Label>
-                                 <Label htmlFor="card-sleek" className="flex items-center gap-2 cursor-pointer text-sm">
-                                    <RadioGroupItem value="sleek" id="card-sleek" />
-                                    Sleek
-                                </Label>
-                                <Label htmlFor="card-professional" className="flex items-center gap-2 cursor-pointer text-sm">
-                                    <RadioGroupItem value="professional" id="card-professional" />
-                                    Professional
-                                </Label>
-                                <Label htmlFor="card-vcard" className="flex items-center gap-2 cursor-pointer text-sm">
-                                    <RadioGroupItem value="vcard" id="card-vcard" />
-                                    V-Card
-                                </Label>
-                                 <Label htmlFor="card-marriage" className="flex items-center gap-2 cursor-pointer text-sm">
-                                    <RadioGroupItem value="marriage" id="card-marriage" />
-                                    <Heart className="h-4 w-4"/>
-                                    Marriage
-                                </Label>
-                            </RadioGroup>
-                        </div>
-                       
-                        <div className="grid gap-2">
-                            <Label>Colors</Label>
-                            <div className="flex items-center flex-wrap gap-4">
-                                <div className="flex items-center gap-2">
-                                    <Label htmlFor="card-bg-color" className="text-xs">BG</Label>
-                                    <Input id="card-bg-color" type="color" value={cardBgColor} onChange={(e) => setCardBgColor(e.target.value)} className="p-0 h-6 w-6 rounded-full" />
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Label htmlFor="card-text-color" className="text-xs">Text</Label>
-                                    <Input id="card-text-color" type="color" value={cardTextColor} onChange={(e) => setCardTextColor(e.target.value)} className="p-0 h-6 w-6 rounded-full" />
-                                </div>
-                                {(cardDesign !== 'classic') && (
-                                    <div className="flex items-center gap-2">
-                                        <Label htmlFor="card-accent-color" className="text-xs">Accent</Label>
-                                        <Input id="card-accent-color" type="color" value={cardAccentColor} onChange={(e) => setCardAccentColor(e.target.value)} className="p-0 h-6 w-6 rounded-full" />
-                                    </div>
-                                )}
-                                <div className="flex items-center gap-2">
-                                    <Label htmlFor="barcode-fg-color" className="text-xs">Bar</Label>
-                                    <Input id="barcode-fg-color" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-0 h-6 w-6 rounded-full" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <Separator />
-                        <div className="grid gap-2">
-                             <Label>Assets</Label>
-                             <div className="flex gap-2">
-                                <Input type="file" ref={logoInputRef} onChange={handleLogoUpload} accept="image/*" className="hidden"/>
-                                <Button onClick={triggerLogoSelect} variant="outline" size="sm" className="flex-1">
-                                    <ImageIcon className="mr-2" /> Add Logo
-                                </Button>
-                                <Input type="file" ref={cardBgInputRef} onChange={handleCardBgImageUpload} accept="image/*" className="hidden"/>
-                                <Button onClick={triggerCardBgSelect} variant="outline" size="sm" className="flex-1">
-                                    <FileImage className="mr-2" /> Add BG
-                                </Button>
-                             </div>
-                        </div>
-                        <Separator />
-                        <div className="grid gap-2">
-                            <Button onClick={addTextElement} variant="outline" size="sm">
-                                <PlusCircle className="mr-2" /> Add Text
-                            </Button>
-                        </div>
-                        
-                        {currentSelectedElement && currentSelectedElement.type === 'text' && (
-                            <div className="grid gap-4 p-4 border rounded-lg">
-                                <div className="flex justify-between items-center">
-                                    <Label className="font-bold">Selected Text</Label>
-                                    <Button variant="ghost" size="icon" onClick={deleteSelectedElement} className="h-7 w-7">
-                                        <Trash2 className="text-red-500" />
-                                    </Button>
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="selected-text-content">Content</Label>
-                                    <Textarea
-                                        id="selected-text-content"
-                                        value={currentSelectedElement.content}
-                                        onChange={(e) => updateSelectedElement('content', e.target.value)}
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="selected-text-size">Font Size</Label>
-                                        <Input
-                                            id="selected-text-size"
-                                            type="number"
-                                            value={currentSelectedElement.fontSize ? Math.round(currentSelectedElement.fontSize) : 16}
-                                            onChange={(e) => updateSelectedElement('fontSize', parseInt(e.target.value, 10))}
-                                        />
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="selected-text-color">Color</Label>
-                                        <Input
-                                            id="selected-text-color"
-                                            type="color"
-                                            value={currentSelectedElement.color}
-                                            onChange={(e) => updateSelectedElement('color', e.target.value)}
-                                            className="p-1 h-9"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                         {currentSelectedElement && currentSelectedElement.type !== 'text' && (
-                            <div className="grid gap-4 p-4 border rounded-lg">
-                                <div className="flex justify-between items-center">
-                                    <Label className="font-bold">Selected Element</Label>
-                                    <Button variant="ghost" size="icon" onClick={deleteSelectedElement} className="h-7 w-7">
-                                        <Trash2 className="text-red-500" />
-                                    </Button>
-                                </div>
-                                <p className="text-sm text-muted-foreground">Move or resize the selected {currentSelectedElement.type} on the canvas.</p>
-                                {currentSelectedElement.type === 'barcode' && (
-                                    <div className="flex items-center space-x-2 mt-2">
-                                        <Switch id="show-barcode-text" checked={showBarcodeText} onCheckedChange={setShowBarcodeText} />
-                                        <Label htmlFor="show-barcode-text">Show Text</Label>
-                                    </div>
-                                )}
-                            </div>
-                         )}
-
-
-                    </div>
+                        <CardOptions />
                    ) : (
                     <div className="grid gap-4">
                         <div className="grid gap-2">
