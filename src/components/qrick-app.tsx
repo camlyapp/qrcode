@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -1501,7 +1502,7 @@ export function QrickApp() {
                 newContent = '123456789012';
                 break;
             case 'UPCE':
-                newContent = '0123456';
+                newContent = '042100005264';
                 break;
             case 'CODE39':
                 newContent = 'CODE39 EXAMPLE';
@@ -2431,5 +2432,7 @@ export function QrickApp() {
   );
 
 }
+
+    
 
     
