@@ -1005,7 +1005,7 @@ export function QrickApp() {
             const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, textElements.subtitle.fontSize!, ctx);
             newElements.push({ id: 'title', type: 'text', ...textElements.title, x: (canvasWidth - titleMetrics.width) / 2, y: 50, ...titleMetrics });
             newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, x: (canvasWidth - subtitleMetrics.width) / 2, y: 80, ...subtitleMetrics });
-            newElements.push({ id: 'barcode', type: generatorType === 'qr' ? 'qrcode' : 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 120, width: barcodeWidth, height: generatorType === 'qr' ? barcodeWidth : barcodeHeightVal });
+            newElements.push({ id: `code-${Date.now()}`, type: generatorType === 'qr' ? 'qrcode' : 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 120, width: barcodeWidth, height: generatorType === 'qr' ? barcodeWidth : barcodeHeightVal });
             break;
         }
         case 'modern': {
@@ -1014,7 +1014,7 @@ export function QrickApp() {
             const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, 14, ctx);
             newElements.push({ id: 'title', type: 'text', ...textElements.title, fontSize: 22, align: 'left', x: accentWidth + 20, y: 60, ...titleMetrics });
             newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, fontSize: 14, align: 'left', x: accentWidth + 20, y: 90, ...subtitleMetrics });
-            newElements.push({ id: 'barcode', type: generatorType === 'qr' ? 'qrcode' : 'barcode', content: content, x: (canvasWidth - barcodeWidth + accentWidth) / 2, y: 120, width: barcodeWidth, height: generatorType === 'qr' ? barcodeWidth : barcodeHeightVal });
+            newElements.push({ id: `code-${Date.now()}`, type: generatorType === 'qr' ? 'qrcode' : 'barcode', content: content, x: (canvasWidth - barcodeWidth + accentWidth) / 2, y: 120, width: barcodeWidth, height: generatorType === 'qr' ? barcodeWidth : barcodeHeightVal });
             break;
         }
         case 'sleek': {
@@ -1022,7 +1022,7 @@ export function QrickApp() {
             const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, 14, ctx);
             newElements.push({ id: 'title', type: 'text', ...textElements.title, fontSize: 20, color: cardBgColor, align: 'left', x: 20, y: 40, ...titleMetrics });
             newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, fontSize: 14, align: 'left', x: 20, y: 60 + 30, ...subtitleMetrics });
-            newElements.push({ id: 'barcode', type: generatorType === 'qr' ? 'qrcode' : 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 110, width: barcodeWidth, height: generatorType === 'qr' ? barcodeWidth : barcodeHeightVal });
+            newElements.push({ id: `code-${Date.now()}`, type: generatorType === 'qr' ? 'qrcode' : 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 110, width: barcodeWidth, height: generatorType === 'qr' ? barcodeWidth : barcodeHeightVal });
             break;
         }
         case 'professional': {
@@ -1030,7 +1030,7 @@ export function QrickApp() {
             const subtitleMetrics = getTextMetrics(textElements.subtitle.content!, textElements.subtitle.font!, 14, ctx);
             newElements.push({ id: 'title', type: 'text', ...textElements.title, fontSize: 22, x: (canvasWidth - titleMetrics.width) / 2, y: 50, ...titleMetrics });
             newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, fontSize: 14, x: (canvasWidth - subtitleMetrics.width) / 2, y: 75, ...subtitleMetrics });
-            newElements.push({ id: 'barcode', type: generatorType === 'qr' ? 'qrcode' : 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 115, width: barcodeWidth, height: generatorType === 'qr' ? barcodeWidth : barcodeHeightVal });
+            newElements.push({ id: `code-${Date.now()}`, type: generatorType === 'qr' ? 'qrcode' : 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 115, width: barcodeWidth, height: generatorType === 'qr' ? barcodeWidth : barcodeHeightVal });
             break;
         }
         case 'vcard': {
@@ -1048,7 +1048,7 @@ export function QrickApp() {
             newElements.push({ id: 'email', type: 'text', ...textElements.email, x: 40, y: infoStartY, ...emailMetrics });
             newElements.push({ id: 'phone', type: 'text', ...textElements.phone, x: 40, y: infoStartY + infoSpacing, ...phoneMetrics });
             newElements.push({ id: 'website', type: 'text', ...textElements.website, x: 40, y: infoStartY + infoSpacing * 2, ...websiteMetrics });
-            newElements.push({ id: 'qrcode', type: 'qrcode', content: content, x: canvasWidth - qrCodeSize - 20, y: infoStartY, width: qrCodeSize, height: qrCodeSize });
+            newElements.push({ id: `code-${Date.now()}`, type: 'qrcode', content: content, x: canvasWidth - qrCodeSize - 20, y: infoStartY, width: qrCodeSize, height: qrCodeSize });
             break;
         }
          case 'marriage': {
@@ -1060,7 +1060,7 @@ export function QrickApp() {
             
             newElements.push({ id: 'title', type: 'text', ...textElements.title, font: titleFont, fontSize: 36, x: (canvasWidth - titleMetrics.width) / 2, y: 80, ...titleMetrics });
             newElements.push({ id: 'subtitle', type: 'text', ...textElements.subtitle, font: subtitleFont, fontSize: 16, x: (canvasWidth - subtitleMetrics.width) / 2, y: 120, ...subtitleMetrics });
-            newElements.push({ id: 'barcode', type: generatorType === 'qr' ? 'qrcode' : 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 155, width: barcodeWidth, height: generatorType === 'qr' ? barcodeWidth : barcodeHeightVal });
+            newElements.push({ id: `code-${Date.now()}`, type: generatorType === 'qr' ? 'qrcode' : 'barcode', content: content, x: (canvasWidth - barcodeWidth) / 2, y: 155, width: barcodeWidth, height: generatorType === 'qr' ? barcodeWidth : barcodeHeightVal });
             break;
         }
     }
@@ -1637,13 +1637,6 @@ export function QrickApp() {
   
   const CardOptions = () => (
     <div className="grid gap-4">
-        <div className="flex items-center space-x-2">
-            <Switch id="generate-card" checked={generateCard} onCheckedChange={setGenerateCard} />
-            <Label htmlFor="generate-card" className="flex items-center gap-2 cursor-pointer">
-               <CreditCard className="h-4 w-4" />
-               Generate on Card
-            </Label>
-        </div>
         {generateCard && (
            <ScrollArea className="h-[28rem]">
             <div className="grid gap-4 pr-4">
@@ -1796,6 +1789,13 @@ export function QrickApp() {
     <Card className="w-full max-w-7xl shadow-2xl">
       <CardContent className="grid gap-8 md:grid-cols-[450px_1fr] p-4 pt-6">
         <div className="grid gap-4">
+            <div className="flex items-center space-x-2">
+                <Switch id="generate-card" checked={generateCard} onCheckedChange={setGenerateCard} />
+                <Label htmlFor="generate-card" className="flex items-center gap-2 cursor-pointer">
+                   <CreditCard className="h-4 w-4" />
+                   Generate on Card
+                </Label>
+            </div>
           <Tabs defaultValue="qr" value={generatorType} onValueChange={handleGeneratorTypeChange} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="qr"><QrCode className="mr-2"/>QR Code</TabsTrigger>
@@ -1948,12 +1948,11 @@ export function QrickApp() {
 
                     <Separator/>
                     <Tabs defaultValue="style">
-                        <TabsList className="grid w-full grid-cols-5">
+                        <TabsList className="grid w-full grid-cols-4">
                            <TabsTrigger value="style"><Palette className="mr-0 md:mr-2"/><span className="hidden md:inline">Style</span></TabsTrigger>
                            <TabsTrigger value="shape"><Shapes className="mr-0 md:mr-2"/><span className="hidden md:inline">Shape</span></TabsTrigger>
                            <TabsTrigger value="text"><Text className="mr-0 md:mr-2"/><span className="hidden md:inline">Text</span></TabsTrigger>
                            <TabsTrigger value="images"><ImageIcon className="mr-0 md:mr-2"/><span className="hidden md:inline">Images</span></TabsTrigger>
-                           <TabsTrigger value="card"><CreditCard className="mr-0 md:mr-2"/><span className="hidden md:inline">Card</span></TabsTrigger>
                         </TabsList>
                         <TabsContent value="style" className="pt-4">
                             <ScrollArea className="h-96">
@@ -2267,9 +2266,6 @@ export function QrickApp() {
                                 </div>
                             </ScrollArea>
                         </TabsContent>
-                        <TabsContent value="card" className="pt-4">
-                            <CardOptions />
-                        </TabsContent>
                     </Tabs>
                 </div>
             </TabsContent>
@@ -2390,6 +2386,7 @@ export function QrickApp() {
             </TabsContent>
 
           </Tabs>
+            {generateCard && <CardOptions />}
         </div>
         
         <div className="flex justify-center items-center rounded-lg bg-muted p-2">
