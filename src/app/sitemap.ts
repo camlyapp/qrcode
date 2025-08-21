@@ -3,7 +3,7 @@ import { MetadataRoute } from 'next'
 const barcodeFormats = ["CODE128", "CODE128A", "CODE128B", "CODE128C", "EAN13", "EAN8", "EAN5", "EAN2", "UPC", "UPCE", "CODE39", "ITF14", "ITF", "MSI", "MSI10", "MSI11", "MSI1010", "MSI1110", "pharmacode", "codabar"];
  
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+  const baseUrl = 'https://qrick.vercel.app';
 
   const mainRoutes = [
     {

@@ -10,11 +10,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'QRick - Free QR Code & Barcode Generator',
     description: 'Design professional, custom QR codes and barcodes in seconds. Easy to use, free to download, and ready for anything.',
-    url: 'https://qrick.io', // replace with your actual domain
+    url: 'https://qrick.vercel.app',
     siteName: 'QRick',
     images: [
       {
-        url: 'https://qrick.io/og-image.png', // replace with your actual og image url
+        url: 'https://qrick.vercel.app/og-image.png',
         width: 1200,
         height: 630,
       },
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'QRick - Free QR Code & Barcode Generator',
     description: 'Design professional, custom QR codes and barcodes in seconds. Easy to use, free to download, and ready for anything.',
-    images: ['https://qrick.io/og-image.png'], // replace with your actual og image url
+    images: ['https://qrick.vercel.app/og-image.png'],
   },
 };
 
