@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next'
 
 const barcodeFormats = ["CODE128", "CODE128A", "CODE128B", "CODE128C", "EAN13", "EAN8", "EAN5", "EAN2", "UPC", "UPCE", "CODE39", "ITF14", "ITF", "MSI", "MSI10", "MSI11", "MSI1010", "MSI1110", "pharmacode", "codabar"];
+const qrDataTypes = ['text', 'wifi', 'sms', 'phone', 'email', 'vcard', 'geolocation', 'event', 'whatsapp', 'facebook', 'twitter', 'instagram', 'linkedin', 'youtube', 'tiktok'];
  
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://qrick.vercel.app';
@@ -9,7 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       url: baseUrl,
       lastModified: new Date(),
-      changeFrequency: 'monthly',
+      changeFrequency: 'daily',
       priority: 1,
     },
     {
@@ -33,5 +34,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...mainRoutes, ...barcodeRoutes];
+  const qrCodeRoutes = qrDataTypes.map(type => ({
+    url: `${baseUrl}/#qr-code/${type}`,
+    lastModified: new Date(),
+    changeFrequency: 'yearly',
+    priority: 0.8,
+  }));
+
+  return [...mainRoutes, ...barcodeRoutes, ...qrCodeRoutes];
 }
