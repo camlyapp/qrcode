@@ -1788,7 +1788,7 @@ export function QrickApp() {
 
   return (
     <Card className="w-full max-w-7xl shadow-2xl">
-      <CardContent className="grid gap-8 md:grid-cols-[450px_1fr] p-4 pt-6">
+      <CardContent className="grid gap-8 lg:grid-cols-[450px_1fr] p-4 pt-6">
         <div className="grid gap-4">
           <Tabs defaultValue="qr" value={generatorType} onValueChange={handleGeneratorTypeChange} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
@@ -2383,7 +2383,7 @@ export function QrickApp() {
           </Tabs>
         </div>
         
-        <div className="flex justify-center items-center rounded-lg bg-muted p-2">
+        <div className="flex justify-center items-center rounded-lg bg-muted p-2 lg:grid lg:place-items-center">
             <div className="p-2 bg-white rounded-md shadow-inner transition-all duration-300 ease-in-out" aria-label="Preview">
               {content && !barcodeError ? (
                 <canvas 
