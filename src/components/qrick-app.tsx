@@ -1358,7 +1358,6 @@ export function QrickApp() {
                 title: 'QRick Code',
                 text: `Here is my ${generatorType === 'qr' ? 'QR code' : 'barcode'}. Generated with QRick.`,
                 files: [file],
-                url: 'https://qrick.vercel.app/',
             });
             toast({
                 title: "Shared!",
@@ -1788,7 +1787,7 @@ export function QrickApp() {
 
   return (
     <Card className="w-full max-w-7xl shadow-2xl">
-      <CardContent className="grid gap-8 lg:grid-cols-[450px_1fr] p-4 pt-6">
+      <CardContent className="grid gap-8 p-4 pt-6 lg:grid-cols-[450px_1fr]">
         <div className="grid gap-4">
           <Tabs defaultValue="qr" value={generatorType} onValueChange={handleGeneratorTypeChange} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
