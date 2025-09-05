@@ -64,7 +64,7 @@ export function Header() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-3">
           <div className="rounded-lg p-2">
-            <Image src="/camly.png" alt="QRick Logo" width={32} height={32} className="h-8 w-8 animate-spin-slow" />
+            <Image src="/camly.png" alt="QRick Logo" width={32} height={32} className="h-8 w-8" />
           </div>
           <div>
             <CardTitle className="text-xl font-headline font-bold tracking-tight">QRick</CardTitle>
