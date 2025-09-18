@@ -62,13 +62,16 @@ export function Header() {
       )}
     >
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg p-2">
-            <Image src="/camly.png" alt="QRick Logo" width={32} height={32} className="h-8 w-8" />
-          </div>
-          <div>
-            <CardTitle className="text-xl font-headline font-bold tracking-tight">QRick</CardTitle>
-          </div>
+        <div className="relative flex items-center justify-center h-10">
+            <Image 
+                src="/camly.png" 
+                alt="QRick Background Logo" 
+                width={32} 
+                height={32} 
+                className="absolute left-0 top-1 h-8 w-8 opacity-20"
+                aria-hidden="true"
+            />
+            <CardTitle className="text-xl font-bold tracking-tight pl-2">QRick</CardTitle>
         </div>
         <TooltipProvider>
           <Tooltip>
