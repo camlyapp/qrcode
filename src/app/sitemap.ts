@@ -22,14 +22,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
 
   const barcodeRoutes = barcodeFormats.map(format => ({
-    url: `${baseUrl}/?type=barcode&format=${format.toLowerCase()}`,
+    url: `${baseUrl}/?type=barcode&amp;format=${format.toLowerCase()}`,
     lastModified: new Date(),
     changeFrequency: 'yearly',
     priority: 0.7,
   }));
 
   const qrCodeRoutes = qrDataTypes.map(type => ({
-    url: `${baseUrl}/?type=qr-code&format=${type}`,
+    url: `${baseUrl}/?type=qr-code&amp;format=${type}`,
     lastModified: new Date(),
     changeFrequency: 'monthly',
     priority: 0.8,
