@@ -13,29 +13,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'daily',
       priority: 1,
     },
-    {
-      url: `${baseUrl}/#qr-code`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-     {
-      url: `${baseUrl}/#barcode`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
   ];
 
   const barcodeRoutes = barcodeFormats.map(format => ({
-    url: `${baseUrl}/#barcode/${format.toLowerCase()}`,
+    url: `${baseUrl}/?type=barcode&format=${format.toLowerCase()}`,
     lastModified: new Date(),
     changeFrequency: 'yearly',
     priority: 0.7,
   }));
 
   const qrCodeRoutes = qrDataTypes.map(type => ({
-    url: `${baseUrl}/#qr-code/${type}`,
+    url: `${baseUrl}/?type=qr-code&format=${type}`,
     lastModified: new Date(),
     changeFrequency: 'monthly',
     priority: 0.8,

@@ -7,6 +7,7 @@ import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
 import QRCodeStyling, { type DotType, type CornerSquareType, type CornerDotType } from "qr-code-styling";
 import { Download, QrCode, Image as ImageIcon, Palette, Text, X, Waves, Diamond, Shield, GitCommitHorizontal, CircleDot, Barcode, CaseSensitive, PaintBucket, ChevronDown, CreditCard, Mail, Phone, Globe, Heart, Trash2, PlusCircle, FileImage, Share2, Sun, Moon, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Star, Plus, AlignLeft, AlignCenter, AlignRight, Pilcrow, Edit, ImagePlus, Shapes, Wifi, MessageSquare, MapPin, Calendar, User, VenetianMask, Rss, Instagram, Facebook, Linkedin, Twitter, Youtube, AtSign, Building, Briefcase } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -123,6 +124,7 @@ const qrDataTypes: { id: QrDataType, label: string, icon: React.ReactNode }[] = 
 
 
 export function QrickApp() {
+  const searchParams = useSearchParams();
   const [generatorType, setGeneratorType] = useState<GeneratorType>("qr");
   const [barcodeFormat, setBarcodeFormat] = useState<BarcodeFormat>("CODE128");
   const [content, setContent] = useState<string>("camly.in");
@@ -296,6 +298,25 @@ export function QrickApp() {
       latitude, longitude,
       eventTitle, eventLocation, eventStart, eventEnd, eventDescription,
       whatsappPhone, socialUsername, youtubeUrl]);
+      
+  useEffect(() => {
+    const type = searchParams.get('type');
+    const format = searchParams.get('format');
+    
+    if (type === 'barcode') {
+        setGeneratorType('barcode');
+        const validFormats = ["CODE128", "CODE128A", "CODE128B", "CODE128C", "EAN13", "EAN8", "EAN5", "EAN2", "UPC", "UPCE", "CODE39", "ITF14", "ITF", "MSI", "MSI10", "MSI11", "MSI1010", "MSI1110", "pharmacode", "codabar"];
+        if (format && validFormats.includes(format.toUpperCase() as BarcodeFormat)) {
+            handleBarcodeFormatChange(format.toUpperCase() as BarcodeFormat, true);
+        }
+    } else if (type === 'qr-code') {
+        setGeneratorType('qr');
+        const validQrTypes = qrDataTypes.map(d => d.id);
+        if (format && validQrTypes.includes(format as QrDataType)) {
+            handleQrDataTypeChange(format as QrDataType);
+        }
+    }
+  }, [searchParams]);
 
   const handleQrDataTypeChange = (value: QrDataType) => {
     setQrDataType(value);
