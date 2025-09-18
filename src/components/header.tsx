@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -62,7 +63,7 @@ export function Header() {
       )}
     >
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-        <div className="relative flex items-center justify-center h-10">
+        <Link href="/" className="relative flex items-center justify-center h-10">
             <Image 
                 src="/camly.png" 
                 alt="QRick Background Logo" 
@@ -72,7 +73,7 @@ export function Header() {
                 aria-hidden="true"
             />
             <CardTitle className="text-xl font-bold tracking-tight pl-2">QRick</CardTitle>
-        </div>
+        </Link>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
