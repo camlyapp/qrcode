@@ -1,4 +1,5 @@
 import { Heart, Twitter, Github, Linkedin } from 'lucide-react';
+import Link from 'next/link';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -10,6 +11,7 @@ export function Footer() {
           © {currentYear} Camly. All rights reserved.
         </p>
         <div className="flex items-center justify-center gap-4">
+            <Link href="/features" className="hover:text-primary">Features</Link>
             <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary"><Twitter className="h-5 w-5" /></a>
             <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary"><Github className="h-5 w-5" /></a>
             <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary"><Linkedin className="h-5 w-5" /></a>
