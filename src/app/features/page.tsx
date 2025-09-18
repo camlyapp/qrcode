@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { QrCode, Barcode, Palette, Download, Share2, CreditCard, Wifi, User, Calendar, MessageSquare, Text, Phone, Mail, MapPin, Instagram, Facebook, Linkedin, Twitter, Youtube, Rss } from "lucide-react";
+import { QrCode, Palette, Download, Wifi, User, Calendar, MessageSquare, Text, Phone, Mail, MapPin, Instagram, Facebook, Linkedin, Twitter, Youtube, Rss } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
