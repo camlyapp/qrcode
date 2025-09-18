@@ -1,4 +1,4 @@
-import type {Metadata} from 'next';
+import type {Metadata, Viewport} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { PWAInstaller } from '@/components/pwa-installer';
@@ -44,11 +44,12 @@ export const metadata: Metadata = {
     images: [`${appUrl}/og-image.png`],
     creator: '@vercel',
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 const jsonLd = {
