@@ -16,13 +16,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       url: `${baseUrl}/#qr-code`,
       lastModified: new Date(),
-      changeFrequency: 'monthly',
+      changeFrequency: 'weekly',
       priority: 0.9,
     },
      {
       url: `${baseUrl}/#barcode`,
       lastModified: new Date(),
-      changeFrequency: 'monthly',
+      changeFrequency: 'weekly',
       priority: 0.9,
     },
   ];
@@ -37,7 +37,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const qrCodeRoutes = qrDataTypes.map(type => ({
     url: `${baseUrl}/#qr-code/${type}`,
     lastModified: new Date(),
-    changeFrequency: 'yearly',
+    changeFrequency: 'monthly',
     priority: 0.8,
   }));
 
