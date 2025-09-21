@@ -2,6 +2,7 @@ import type {Metadata, Viewport} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { PWAInstaller } from '@/components/pwa-installer';
+import Script from 'next/script';
 
 const appUrl = 'https://qrick.vercel.app';
 
@@ -79,7 +80,17 @@ export default function RootLayout({
   return (
     <html lang="en" className="!scroll-smooth">
       <head>
-      <meta name="google-site-verification" content="vAXaQAf1AwfzrK402zrQbne-DlogUKuiHaQAWg7P09A" />
+        <Script async src="https://www.googletagmanager.com/gtag/js?id=G-KMZXV9B6FS"></Script>
+        <Script id="google-analytics">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-KMZXV9B6FS');
+          `}
+        </Script>
+        <meta name="google-site-verification" content="vAXaQAf1AwfzrK402zrQbne-DlogUKuiHaQAWg7P09A" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#ffffff" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
