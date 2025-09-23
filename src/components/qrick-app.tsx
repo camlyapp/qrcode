@@ -1358,14 +1358,23 @@ export function QrickApp() {
 
   const handleShare = async () => {
     if (!content || barcodeError) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: barcodeError || "Could not find code to share.",
-      });
-      return;
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: barcodeError || "Could not find code to share.",
+        });
+        return;
     }
-    
+
+    if (!navigator.share) {
+        toast({
+            variant: "destructive",
+            title: "Not Supported",
+            description: "Web Share API is not supported in your browser.",
+        });
+        return;
+    }
+
     try {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -1373,25 +1382,31 @@ export function QrickApp() {
         const dataUrl = canvas.toDataURL('image/png');
         const blob = await (await fetch(dataUrl)).blob();
         const file = new File([blob], `${generatorType}-code.png`, { type: 'image/png' });
+        
+        const shareData = {
+            title: 'QRick Code',
+            text: `Here is my ${generatorType === 'qr' ? 'QR code' : 'barcode'}. Generated with QRick.`,
+            files: [file],
+        };
 
-        if (navigator.share) {
-            await navigator.share({
-                title: 'QRick Code',
-                text: `Here is my ${generatorType === 'qr' ? 'QR code' : 'barcode'}. Generated with QRick.`,
-                files: [file],
-            });
+        if (navigator.canShare && navigator.canShare(shareData)) {
+            await navigator.share(shareData);
             toast({
                 title: "Shared!",
                 description: "The code was shared successfully.",
             });
         } else {
-            toast({
+             toast({
                 variant: "destructive",
-                title: "Not Supported",
-                description: "Web Share API is not supported in your browser.",
+                title: "Cannot Share",
+                description: "This image is too large to be shared directly. Please download it instead.",
             });
         }
-    } catch (err) {
+    } catch (err: any) {
+        // Don't show an error if the user cancels the share dialog
+        if (err.name === 'AbortError') {
+            return;
+        }
         console.error("Share failed:", err);
         toast({
             variant: "destructive",
@@ -1595,10 +1610,6 @@ export function QrickApp() {
   const updateSelectedElement = (prop: keyof CardElement, value: any) => {
     if (!selectedElement) return;
 
-    setCardElements(prev => prev.map(el => 
-        el.id === selectedElement ? { ...el, [prop]: value } : el
-    ));
-
     if (prop === 'fontSize' || prop === 'content') {
         const ctx = canvasRef.current?.getContext('2d');
         if (ctx) {
@@ -1611,6 +1622,10 @@ export function QrickApp() {
                 return el;
             }));
         }
+    } else {
+        setCardElements(prev => prev.map(el => 
+            el.id === selectedElement ? { ...el, [prop]: value } : el
+        ));
     }
   };
 
