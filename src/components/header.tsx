@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -20,6 +21,8 @@ type Theme = "light" | "dark";
 export function Header() {
   const [theme, setTheme] = useState<Theme>("light");
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("qrick-theme") as Theme | null;
@@ -30,14 +33,24 @@ export function Header() {
     }
 
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
+        const currentScrollY = window.scrollY;
+        setIsScrolled(currentScrollY > 10);
+
+        if (currentScrollY > lastScrollY && currentScrollY > 100) {
+            // Scrolling down
+            setIsHidden(true);
+        } else {
+            // Scrolling up
+            setIsHidden(false);
+        }
+        setLastScrollY(currentScrollY);
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [lastScrollY]);
 
   useEffect(() => {
     if (theme === "dark") {
@@ -59,7 +72,8 @@ export function Header() {
         "sticky top-0 z-50 w-full transition-all duration-300",
         isScrolled
           ? "border-b border-border/40 bg-background/95 backdrop-blur-sm"
-          : "bg-transparent"
+          : "bg-transparent",
+        isHidden && "-translate-y-full"
       )}
     >
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
