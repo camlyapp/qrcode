@@ -10,14 +10,22 @@ const appUrl = 'https://qrick.vercel.app';
 export const metadata: Metadata = {
     title: 'Features - QRick | Advanced QR Code & Barcode Generator',
     description: 'Explore the powerful features of QRick. Create custom QR codes for Wi-Fi, vCards, events, and social media. Generate various barcode formats like EAN, UPC, and CODE128. Design and download for free.',
-    keywords: ['QR code features', 'barcode types', 'custom QR codes', 'Wi-Fi QR code', 'vCard QR code', 'EAN-13 barcode', 'CODE128 generator', 'free barcode tool'],
+    keywords: ['QR code features', 'barcode types', 'custom QR codes', 'Wi-Fi QR code', 'vCard QR code', 'EAN-13 barcode', 'CODE128 generator', 'free barcode tool', 'online qr code creator'],
     alternates: {
         canonical: `${appUrl}/features`,
     },
     openGraph: {
         title: 'Features - QRick | Advanced QR Code & Barcode Generator',
-        description: 'Discover the extensive capabilities of QRick for all your code generation needs.',
+        description: 'Discover the extensive capabilities of QRick for all your code generation needs, from custom styling to a wide array of data types and barcode formats.',
         url: `${appUrl}/features`,
+        images: [
+          {
+            url: '/og-image.png',
+            width: 1200,
+            height: 630,
+            alt: 'QRick Features Overview',
+          },
+        ],
     },
     twitter: {
         title: 'Features - QRick | Advanced QR Code & Barcode Generator',
